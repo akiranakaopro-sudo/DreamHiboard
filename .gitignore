@@ -1,0 +1,53 @@
+# Gradle files
+.gradle/
+build/
+
+# Cursor
+.cursor/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.aab
+*.apk
+.apk-ref/
+output-metadata.json
+
+# IDE
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+.vscode/
+.agent/
+.tmp*.xml
+gradle-assemble-*.txt
+gradle-*.txt
+gradle_compile_out.txt
+calllog_*.png
+ui*.xml
+tools/
+androguard.db
+tmp_*.py
+screenshot*
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# CoUI Library
+ColorOS_Hiboard/
