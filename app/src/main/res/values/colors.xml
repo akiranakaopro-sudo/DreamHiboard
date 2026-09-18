@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="hiboard_background">#FFF2F3F5</color>
+    <color name="hiboard_card">#FFFFFFFF</color>
+    <color name="hiboard_text">#FF1A1A1A</color>
+    <color name="hiboard_muted">#8A1A1A1A</color>
+    <color name="hiboard_primary">#FF2F6BFF</color>
+    <color name="hiboard_primary_soft">#1F2F6BFF</color>
+    <color name="hiboard_chip">#FFE8EAED</color>
+    <color name="hiboard_badge">#B31A1A1A</color>
+    <color name="hiboard_on_badge">#FFFFFFFF</color>
+</resources>

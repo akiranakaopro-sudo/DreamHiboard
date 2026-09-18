@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hiboard</string>
+    <string name="header_search_hint">Search</string>
+    <string name="subscribe_section">Pinned</string>
+    <string name="recommend_section">Discover</string>
+    <string name="edit_done">Done</string>
+    <string name="edit">Edit</string>
+    <string name="add_cards">Add cards</string>
+    <string name="catalog_title">Card store</string>
+    <string name="unsubscribe">Remove</string>
+    <string name="subscribe">Add</string>
+    <string name="empty_pinned">Pin cards from the store to build your minus-one screen.</string>
+    <string name="shortcuts_label">Shortcuts</string>
+    <string name="weather_label">Weather</string>
+    <string name="notes_label">Notes</string>
+    <string name="notes_hint">Opens DreamNote if installed</string>
+    <string name="infoflow_label">For you</string>
+    <string name="store_close">Close</string>
+</resources>
