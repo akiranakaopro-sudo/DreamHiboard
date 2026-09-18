@@ -2,13 +2,15 @@ package gd.app.hiboard.ui.grid
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
-import android.view.HapticFeedbackConstants
+import android.view.animation.DecelerateInterpolator
 import android.widget.ScrollView
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.GridPlacement
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 
@@ -26,13 +28,18 @@ class PackedCardLayout @JvmOverloads constructor(
     private val rowHeightPx = (52 * resources.displayMetrics.density).roundToInt()
     private val elevationPx = 12 * resources.displayMetrics.density
     private val scrollEdgePx = (64 * resources.displayMetrics.density).roundToInt()
+    private val reflowMs = 200L
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
+    private val reflowInterpolator = DecelerateInterpolator()
     private var cards: List<CardInstance> = emptyList()
     private val cardViews = mutableListOf<View>()
 
     var isDragging: Boolean = false
         private set
     private var originCards: List<CardInstance> = emptyList()
+    private var originPlacements: List<GridPlacement> = emptyList()
+    private var originIndex: Int = -1
+    private var dropIndex: Int = -1
     private var dragIndex: Int = -1
     private var pendingIndex: Int = -1
     private var grabOffsetX = 0f
@@ -66,11 +73,12 @@ class PackedCardLayout @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        val placements = packCards(cards, columns)
+        val source = visibleCards()
+        val placements = packCards(source, columns)
         val cellWidth = cellWidth(width)
-        cards.forEachIndexed { index, _ ->
-            val place = placements.getOrNull(index) ?: return@forEachIndexed
-            val child = cardViews.getOrNull(index) ?: return@forEachIndexed
+        source.forEach { card ->
+            val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
+            val child = viewFor(card.instanceId) ?: return@forEach
             val childWidth = cellWidth * place.columns + gutterPx * (place.columns - 1)
             val childHeight = rowHeightPx * place.rows + gutterPx * (place.rows - 1)
             child.measure(
@@ -85,19 +93,22 @@ class PackedCardLayout @JvmOverloads constructor(
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val width = r - l
-        val placements = packCards(cards, columns)
+        val source = visibleCards()
+        val placements = packCards(source, columns)
         val cellWidth = cellWidth(width)
-        cards.forEachIndexed { index, _ ->
-            val place = placements.getOrNull(index) ?: return@forEachIndexed
-            val child = cardViews.getOrNull(index) ?: return@forEachIndexed
-            if (isDragging && index == dragIndex) {
-                layoutDragged(child)
+        val draggedId = draggedInstanceId()
+        source.forEach { card ->
+            val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
+            val child = viewFor(card.instanceId) ?: return@forEach
+            val x = place.column * (cellWidth + gutterPx)
+            val y = place.row * (rowHeightPx + gutterPx)
+            if (isDragging && card.instanceId != draggedId) {
+                layoutReflow(child, x, y)
             } else {
-                val x = place.column * (cellWidth + gutterPx)
-                val y = place.row * (rowHeightPx + gutterPx)
                 child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
             }
         }
+        if (isDragging) followPointer()
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -174,12 +185,16 @@ class PackedCardLayout @JvmOverloads constructor(
         val child = cardViews.getOrNull(index) ?: return
         if (cards.getOrNull(index)?.canDrag != true) return
         isDragging = true
+        originIndex = index
+        dropIndex = index
         dragIndex = index
         originCards = cards
+        originPlacements = packCards(cards, columns)
         grabOffsetX = downX - child.left
         grabOffsetY = downY - child.top
         dragX = downX
         dragY = downY
+        child.animate().cancel()
         child.animate().scaleX(1.04f).scaleY(1.04f).setDuration(120).start()
         child.translationZ = elevationPx
         child.alpha = 0.94f
@@ -189,69 +204,117 @@ class PackedCardLayout @JvmOverloads constructor(
         parent.requestDisallowInterceptTouchEvent(true)
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         onDragStarted?.invoke()
-        layoutDragged(child)
-        invalidate()
+        followPointer()
     }
 
     private fun onDrag(x: Float, y: Float, rawY: Float) {
         dragX = x
         dragY = y
         autoScroll(rawY)
-        val dragged = cardViews.getOrNull(dragIndex)
-        if (dragged != null) layoutDragged(dragged)
-        val target = targetIndexForPointer(x, y)
-        if (target != dragIndex && target in cards.indices) {
-            cards = moveItem(cards, dragIndex, target)
-            val movedViews = moveItem(cardViews, dragIndex, target)
-            cardViews.clear()
-            cardViews.addAll(movedViews)
-            dragIndex = target
+        followPointer()
+        updateDropIndex()
+    }
+
+    private fun updateDropIndex() {
+        val child = cardViews.getOrNull(dragIndex) ?: return
+        val strideX = (cellWidth(width.coerceAtLeast(1)) + gutterPx).toFloat()
+        val strideY = (rowHeightPx + gutterPx).toFloat()
+        val centerX = child.left + child.translationX + child.width / 2f
+        val centerY = child.top + child.translationY + child.height / 2f
+        val next = dropIndexFromOrigin(
+            originPlacements,
+            originIndex,
+            dragX / strideX,
+            dragY / strideY,
+            centerX / strideX,
+            centerY / strideY,
+        )
+        if (next != dropIndex) {
+            dropIndex = next
             requestLayout()
         }
-        invalidate()
     }
 
     private fun endDrag(commit: Boolean) {
         val dragged = cardViews.getOrNull(dragIndex)
-        dragged?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(120)?.start()
-        dragged?.translationZ = 0f
-        dragged?.alpha = 1f
-        parent.requestDisallowInterceptTouchEvent(false)
-        val next = if (commit) cards else originCards
-        val changed = commit && next.map { it.catalogId } != originCards.map { it.catalogId }
-        isDragging = false
-        dragIndex = -1
-        pendingIndex = -1
-        activePointerId = MotionEvent.INVALID_POINTER_ID
-        if (!commit) {
-            val byId = cardViews.associateBy { it.tag as? String }
-            cards = originCards
-            cardViews.clear()
-            originCards.forEach { card ->
-                byId[card.instanceId]?.let(cardViews::add)
+        cardViews.forEach { child ->
+            child.animate().cancel()
+            if (child !== dragged) {
+                child.translationX = 0f
+                child.translationY = 0f
             }
         }
+        dragged?.animate()?.cancel()
+        parent.requestDisallowInterceptTouchEvent(false)
+        val from = originIndex
+        val to = dropIndex
+        val nextCards = if (commit) reorderCards(originCards, from, to) else originCards
+        val nextViews = if (commit) {
+            reorderItems(cardViews.toList(), originCards, from, to)
+        } else {
+            cardViews.toList()
+        }
+        val changed = commit && nextCards.map { it.catalogId } != originCards.map { it.catalogId }
+        isDragging = false
+        dragIndex = -1
+        originIndex = -1
+        dropIndex = -1
+        pendingIndex = -1
+        activePointerId = MotionEvent.INVALID_POINTER_ID
+        cards = nextCards
+        cardViews.clear()
+        cardViews.addAll(nextViews)
         originCards = emptyList()
+        originPlacements = emptyList()
+        dragged?.translationX = 0f
+        dragged?.translationY = 0f
+        dragged?.scaleX = 1f
+        dragged?.scaleY = 1f
+        dragged?.translationZ = 0f
+        dragged?.alpha = 1f
         requestLayout()
         if (changed) {
-            onReorder?.invoke(next.map { it.catalogId })
+            onReorder?.invoke(nextCards.map { it.catalogId })
         }
         onDragEnded?.invoke()
     }
 
-    private fun layoutDragged(child: View) {
-        val left = (dragX - grabOffsetX).roundToInt()
-        val top = (dragY - grabOffsetY).roundToInt()
-        child.layout(left, top, left + child.measuredWidth, top + child.measuredHeight)
+    private fun layoutReflow(child: View, x: Int, y: Int) {
+        if (child.left == x && child.top == y) return
+        val visualX = child.left + child.translationX
+        val visualY = child.top + child.translationY
+        child.animate().cancel()
+        child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
+        if (visualX == x.toFloat() && visualY == y.toFloat()) {
+            child.translationX = 0f
+            child.translationY = 0f
+            return
+        }
+        child.translationX = visualX - x
+        child.translationY = visualY - y
+        child.animate()
+            .translationX(0f)
+            .translationY(0f)
+            .setDuration(reflowMs)
+            .setInterpolator(reflowInterpolator)
+            .start()
     }
 
-    private fun targetIndexForPointer(x: Float, y: Float): Int {
-        val width = width.coerceAtLeast(1)
-        val cellWidth = cellWidth(width).toFloat()
-        val column = x / (cellWidth + gutterPx)
-        val row = y / (rowHeightPx + gutterPx)
-        return targetIndexAt(packCards(cards, columns), column, row)
+    private fun followPointer() {
+        val child = cardViews.getOrNull(dragIndex) ?: return
+        child.translationX = dragX - grabOffsetX - child.left
+        child.translationY = dragY - grabOffsetY - child.top
     }
+
+    private fun visibleCards(): List<CardInstance> {
+        if (!isDragging) return cards
+        return reorderCards(originCards, originIndex, dropIndex)
+    }
+
+    private fun draggedInstanceId(): String? = originCards.getOrNull(originIndex)?.instanceId
+
+    private fun viewFor(instanceId: String): View? =
+        cardViews.firstOrNull { it.tag == instanceId }
 
     private fun hitIndex(x: Float, y: Float): Int {
         for (index in cardViews.indices.reversed()) {
