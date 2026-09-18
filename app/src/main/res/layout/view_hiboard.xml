@@ -4,25 +4,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/couiColorBackgroundWithCard"
-    android:clipChildren="false"
     android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/boardRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="false"
         android:orientation="vertical">
 
         <LinearLayout
+            android:id="@+id/boardHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="?attr/couiColorBackgroundWithCard"
+            android:elevation="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
+            android:outlineProvider="none"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:paddingTop="12dp"
-            android:paddingBottom="12dp">
+            android:paddingBottom="12dp"
+            android:translationZ="16dp">
 
             <com.coui.appcompat.searchview.COUISearchBar
                 android:id="@+id/searchBar"
@@ -52,11 +55,14 @@
         </LinearLayout>
 
         <com.coui.appcompat.scrollview.COUIScrollView
+            android:id="@+id/boardScroll"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:clipChildren="false"
-            android:clipToPadding="false"
+            android:background="?attr/couiColorBackgroundWithCard"
+            android:clipChildren="true"
+            android:clipToOutline="true"
+            android:clipToPadding="true"
             android:fillViewport="true">
 
             <LinearLayout
