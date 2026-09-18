@@ -60,6 +60,21 @@ class BoardRepository(context: Context) {
         }
     }
 
+    suspend fun reorder(area: CardArea, catalogIds: List<String>) {
+        dataStore.edit { prefs ->
+            val key = if (area == CardArea.Subscribe) KEY_SUBSCRIBED else KEY_RECOMMENDED
+            val defaults = if (area == CardArea.Subscribe) {
+                DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
+            } else {
+                DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
+            }
+            val current = prefs[key].toIdList().ifEmpty { defaults }
+            val incoming = catalogIds.filter { it in current.toSet() }
+            val rest = current.filter { it !in incoming.toSet() }
+            prefs[key] = (incoming + rest).joinToString(",")
+        }
+    }
+
     suspend fun move(catalogId: String, from: CardArea, to: CardArea) {
         if (from == to) return
         if (to == CardArea.Subscribe) subscribe(catalogId) else unsubscribe(catalogId)

@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import gd.app.hiboard.R
 import gd.app.hiboard.databinding.ViewHiboardBinding
+import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -39,6 +40,18 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.setOnClickListener { viewModel.openStore() }
         binding.emptyAddButton.setOnClickListener { viewModel.openStore() }
         binding.storeClose.setOnClickListener { viewModel.closeStore() }
+        binding.subscribedGrid.onDragStarted = { viewModel.enterEdit() }
+        binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
+        binding.subscribedGrid.onDragEnded = {
+            lastGridKey = null
+            render(viewModel.state.value, viewModel, binder)
+        }
+        binding.recommendedGrid.onDragStarted = { viewModel.enterEdit() }
+        binding.recommendedGrid.onReorder = { viewModel.reorder(CardArea.Recommend, it) }
+        binding.recommendedGrid.onDragEnded = {
+            lastGridKey = null
+            render(viewModel.state.value, viewModel, binder)
+        }
 
         collectJob?.cancel()
         collectJob = lifecycleOwner.lifecycleScope.launch {
@@ -70,8 +83,9 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.isVisible = state.editMode
         binding.emptyPinned.isVisible = state.board.subscribed.isEmpty()
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
+        val dragging = binding.subscribedGrid.isDragging || binding.recommendedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
-        if (gridKey != lastGridKey) {
+        if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)

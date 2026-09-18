@@ -10,8 +10,10 @@ import gd.app.hiboard.engine.CardEngineRegistry
 import gd.app.hiboard.host.HostEvent
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardAction
+import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardContent
+import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -107,6 +109,25 @@ class HiboardViewModel(
         viewModelScope.launch { repository.unsubscribe(catalogId) }
     }
 
+    fun enterEdit() {
+        _state.update { if (it.editMode) it else it.copy(editMode = true, showStore = false) }
+    }
+
+    fun reorder(area: CardArea, catalogIds: List<String>) {
+        _state.update { state ->
+            val board = when (area) {
+                CardArea.Subscribe -> state.board.copy(
+                    subscribed = sortByCatalog(state.board.subscribed, catalogIds),
+                )
+                CardArea.Recommend -> state.board.copy(
+                    recommended = sortByCatalog(state.board.recommended, catalogIds),
+                )
+            }
+            state.copy(board = board)
+        }
+        viewModelScope.launch { repository.reorder(area, catalogIds) }
+    }
+
     fun consumeDeeplink() {
         _state.update { it.copy(pendingDeeplinkCard = null) }
     }
@@ -127,6 +148,13 @@ class HiboardViewModel(
     fun openNotes() = engines.openNotes()
 
     fun openApp(app: ShortcutApp) = engines.openApp(app)
+
+    private fun sortByCatalog(cards: List<CardInstance>, catalogIds: List<String>): List<CardInstance> {
+        val byId = cards.associateBy { it.catalogId }
+        val ordered = catalogIds.mapNotNull(byId::get)
+        val rest = cards.filter { it.catalogId !in catalogIds.toSet() }
+        return (ordered + rest).mapIndexed { index, card -> card.copy(order = index) }
+    }
 
     private fun startHints() {
         hintJob?.cancel()
