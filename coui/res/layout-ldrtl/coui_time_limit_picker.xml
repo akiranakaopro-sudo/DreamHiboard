@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:coui="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/time_pickers"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/coui_number_picker_view_padding_vertical">
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/minute"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/coui_timepicker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_middle"
+        coui:internalMaxWidth="@dimen/coui_numberPicker_width_bigger"
+        coui:internalMinWidth="@dimen/coui_number_picker_width_middle" />
+
+    <TextView
+        android:id="@+id/coui_timepicker_minute_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/coui_minute"
+        android:textColor="?attr/couiColorPrimaryText"
+        android:textSize="@dimen/coui_timepicker_text_size" />
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/hour"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/coui_timepicker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_middle"
+        coui:internalMaxWidth="@dimen/coui_numberPicker_width_bigger"
+        coui:internalMinWidth="@dimen/coui_number_picker_width_middle" />
+
+    <TextView
+        android:id="@+id/coui_timepicker_hour_text"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/coui_hour"
+        android:textColor="?attr/couiColorPrimaryText"
+        android:textSize="@dimen/coui_timepicker_text_size" />
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/amPm"
+        android:layout_width="@dimen/coui_number_picker_width_small"
+        android:layout_height="@dimen/coui_timepicker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_small"
+        coui:endTextSize="@dimen/coui_numberpicker_textSize_middle" />
+</LinearLayout>

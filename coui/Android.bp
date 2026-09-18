@@ -1,0 +1,51 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+java_import {
+    name: "coui-rebound-0.3.8",
+    jars: ["libs/rebound-0.3.8.jar"],
+    sdk_version: "current",
+}
+
+android_library {
+    name: "coui-appcompat",
+    manifest: "AndroidManifest.xml",
+    srcs: [
+        "java/**/*.java",
+        "java/**/*.kt",
+    ],
+    resource_dirs: ["res"],
+    asset_dirs: ["assets"],
+    sdk_version: "current",
+    min_sdk_version: "30",
+    static_libs: [
+        "com.google.android.material_material",
+        "coui-rebound-0.3.8",
+        // Leapy added 2026-07-26: Use AOSP's real Lottie renderer in place of
+        // the incomplete com.oplus.anim.EffectiveAnimationView placeholder.
+        "lottie",
+        "okio-lib",
+        "androidx.activity_activity",
+        "androidx.annotation_annotation",
+        "androidx.appcompat_appcompat",
+        "androidx-constraintlayout_constraintlayout",
+        "androidx.coordinatorlayout_coordinatorlayout",
+        "androidx.core_core",
+        "androidx.customview_customview",
+        "androidx.dynamicanimation_dynamicanimation",
+        "androidx.fragment_fragment",
+        "androidx.lifecycle_lifecycle-common",
+        "androidx.lifecycle_lifecycle-runtime",
+        "androidx.lifecycle_lifecycle-viewmodel",
+        "androidx.preference_preference",
+        "androidx.recyclerview_recyclerview",
+        "androidx.savedstate_savedstate",
+        "androidx.viewpager_viewpager",
+        "androidx.viewpager2_viewpager2",
+    ],
+    // Leapy note 2026-08-08: This Soong tree rejects both
+    // optimize.consumer_proguard_flags_files and consumer_proguard_files.
+    // Keep COUIComponentsViewInflater via COUIThemeOverlay hard reference and
+    // MtkSettings proguard-coui.flags instead.
+}

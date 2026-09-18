@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI toolbar attrs (monolith feature-split) -->
+<resources>
+    <attr name="couiToolbarStyle" format="reference" />
+    <declare-styleable name="COUIToolbar">
+            <attr name="android:gravity" />
+            <attr name="minTitleTextSize" />
+            <attr name="supportButtonGravity" />
+            <attr name="supportCollapseContentDescription" />
+            <attr name="supportCollapseIcon" />
+            <attr name="supportContentInsetEnd" />
+            <attr name="supportContentInsetLeft" />
+            <attr name="supportContentInsetRight" />
+            <attr name="supportContentInsetStart" />
+            <attr name="supportIsTiny" />
+            <attr name="supportMaxButtonHeight" />
+            <attr name="supportNavigationContentDescription" />
+            <attr name="supportNavigationIcon" />
+            <attr name="supportPanelStyle" />
+            <attr name="supportPopupTheme" />
+            <attr name="supportSubtitle" />
+            <attr name="supportSubtitleTextAppearance" />
+            <attr name="supportTitle" />
+            <attr name="supportTitleMarginBottom" />
+            <attr name="supportTitleMarginEnd" />
+            <attr name="supportTitleMargins" />
+            <attr name="supportTitleMarginStart" />
+            <attr name="supportTitleMarginTop" />
+            <attr name="supportTitlePaddingBottom" />
+            <attr name="supportTitlePaddingTop" />
+            <attr name="supportTitleTextAppearance" />
+            <attr name="titleCenter" />
+            <attr name="titleType" />
+        </declare-styleable>
+    <declare-styleable name="COUIDividerAppBarLayout">
+            <attr name="dividerEndAlpha" />
+            <attr name="dividerEndMarginHorizontal" />
+            <attr name="dividerStartAlpha" />
+            <attr name="dividerStartMarginHorizontal" />
+            <attr name="hasDivider" />
+        </declare-styleable>
+</resources>

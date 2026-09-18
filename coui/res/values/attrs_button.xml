@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI button attrs (monolith feature-split) -->
+<resources>
+    <attr name="circleButton" format="boolean" />
+    <attr name="couiTextAppearanceSmallButton" format="reference" />
+    <attr name="couiCheckBoxStyle" format="reference" />
+    <attr name="couiCheckBoxAssignment" format="string" />
+    <attr name="couiSmallButtonColorStyle" format="reference" />
+    <attr name="couiShapeCheckBoxStyle" format="reference" />
+    <attr name="couiSwitchStyle" format="reference" />
+    <attr name="couiButton" format="reference" />
+    <attr name="couiCheckBoxState">
+            <enum name="unSelected" value="0" />
+            <enum name="partSelected" value="1" />
+            <enum name="allSelected" value="2" />
+        </attr>
+    <attr name="couiHideFunctionalButton" format="boolean" />
+    <attr name="functionalButtonText" format="string|reference" />
+    <attr name="functionalButtonTextColor" format="color|reference" />
+    <attr name="loadingButtonNeedVibrate" format="boolean" />
+    <attr name="bottomButtonText" format="string" />
+    <attr name="exitButtonText" format="string" />
+    <attr name="couiTabButtonMarginEnd" format="dimension" />
+    <attr name="couiToolbarNavigationButtonStyle" format="reference" />
+    <attr name="supportButtonGravity"><enum name="top" value="48" /><enum name="center_vertical" value="16" /><enum name="bottom" value="80" /></attr>
+    <attr name="supportMaxButtonHeight" format="dimension" />
+    <declare-styleable name="COUIButton">
+            <attr name="android:textColor" />
+            <attr name="animEnable" />
+            <attr name="animType" />
+            <attr name="brightness" />
+            <attr name="closeLimitTextSize" />
+            <attr name="couiRoundType" />
+            <attr name="descText" />
+            <attr name="disabledColor" />
+            <attr name="drawableColor" />
+            <attr name="drawableRadius" />
+            <attr name="isDescType" />
+            <attr name="isShowLoadingText" />
+            <attr name="loadingText" />
+            <attr name="needVibrate" />
+            <attr name="pressColor" />
+            <attr name="scaleEnable" />
+            <attr name="strokeColor" />
+            <attr name="strokeWidth" />
+        </declare-styleable>
+    <declare-styleable name="COUIButtonLayout">
+            <attr name="horizontalLayoutPadding" />
+            <attr name="verticalLayoutPadding" />
+            <attr name="couiLimitMaxWidth" />
+        </declare-styleable>
+    <declare-styleable name="COUICheckBox">
+            <attr name="couiAsyncLoad" />
+            <attr name="couiButton" />
+            <attr name="couiCheckBoxState" />
+        </declare-styleable>
+    <declare-styleable name="COUISwitch">
+            <attr name="barCheckedDisabledColor" />
+            <attr name="barHeight" />
+            <attr name="barUncheckedDisabledColor" />
+            <attr name="circlePadding" />
+            <attr name="innerCircleCheckedDisabledColor" />
+            <attr name="innerCircleColor" />
+            <attr name="innerCircleUncheckedDisabledColor" />
+            <attr name="innerCircleWidth" />
+            <attr name="loadingDrawable" />
+            <attr name="outerCircleCheckedDisabledColor" />
+            <attr name="outerCircleColor" />
+            <attr name="outerCircleStrokeWidth" />
+            <attr name="outerCircleUncheckedDisabledColor" />
+            <attr name="outerCircleWidth" />
+            <attr name="outerUnCheckedCircleColor" />
+            <attr name="themedCheckedDrawable" />
+            <attr name="themedLoadingCheckedBackground" />
+            <attr name="themedLoadingDrawable" />
+            <attr name="themedLoadingUncheckedBackground" />
+            <attr name="themedUncheckedDrawable" />
+        </declare-styleable>
+    <declare-styleable name="COUIButtonBarLayout">
+            <attr name="buttonBarDividerSize" />
+            <attr name="buttonBarShowDivider" />
+            <attr name="forceVertical" />
+            <attr name="verNegButVerPaddingOffset" />
+        </declare-styleable>
+    <attr name="actionOverflowButtonStyle" format="reference" />
+    <attr name="borderlessButtonSolidColor" format="color" />
+    <attr name="borderlessButtonSolidDisabledColor" format="color" />
+    <attr name="borderlessButtonSolidSelectColor" format="color" />
+    <attr name="borderlessButtonTextColor" format="color" />
+    <attr name="borderlessButtonTextDisabledColor" format="color" />
+    <attr name="borderlessButtonTextSelectColor" format="color" />
+    <attr name="colorButtonNormal" format="color" />
+    <attr name="colorSwitchThumbNormal" format="color" />
+    <attr name="couiButtonColorfulDefaultStyle" format="reference" />
+    <attr name="couiButtonColorfulLargeStyle" format="reference" />
+    <attr name="couiButtonColorfulWhiteStyle" format="reference" />
+    <attr name="couiButtonNextStyle" format="reference" />
+    <attr name="couiTextAppearanceButton" format="reference" />
+    <attr name="couiTextAppearanceButtonL" format="reference" />
+    <attr name="couiTextButtonL" format="reference" />
+    <attr name="couiTextButtonM" format="reference" />
+    <attr name="couiTextButtonS" format="reference" />
+    <attr name="couiTinyFullButtonColorStyle" format="reference" />
+    <attr name="couiTinyFullButtonSecondaryColorStyle" format="reference" />
+    <attr name="couiTinyHalfColorButtonColorStyle" format="reference" />
+    <attr name="couiTinySmallButtonColorStyle" format="reference" />
+    <attr name="couiTinySmallButtonSecondaryColorStyle" format="reference" />
+    <attr name="couiTinyTranslateButtonColorStyle" format="reference" />
+    <attr name="radioButtonStyle" format="reference" />
+    <attr name="negativeButtonText" format="string" />
+    <attr name="positiveButtonText" format="string" />
+    <attr name="couiChipStyle" format="reference" />
+    <attr name="couiChipGroupStyle" format="reference" />
+    <attr name="checkedChipIconTint" format="color|reference" />
+    <attr name="checkedDisabledChipIconTint" format="color|reference" />
+    <attr name="uncheckedChipIconTint" format="color|reference" />
+    <attr name="uncheckedDisabledChipIconTint" format="color|reference" />
+    <attr name="checkedChip" format="reference" />
+    <declare-styleable name="COUIChip">
+            <attr name="android:checkable" />
+            <attr name="android:checked" />
+            <attr name="android:ellipsize" />
+            <attr name="android:maxWidth" />
+            <attr name="android:minHeight" />
+            <attr name="android:minWidth" />
+            <attr name="android:text" />
+            <attr name="android:textAppearance" />
+            <attr name="android:textSize" />
+            <attr name="checkedBackgroundColor" />
+            <attr name="checkedChipIconTint" />
+            <attr name="checkedDisabledBackgroundColor" />
+            <attr name="checkedDisabledChipIconTint" />
+            <attr name="checkedDisabledTextColor" />
+            <attr name="checkedTextAppearance" />
+            <attr name="checkedTextColor" />
+            <attr name="chipCornerRadius" />
+            <attr name="chipEndPadding" />
+            <attr name="chipIcon" />
+            <attr name="chipIconApplyTint" />
+            <attr name="chipIconEndPadding" />
+            <attr name="chipIconSize" />
+            <attr name="chipIconStartPadding" />
+            <attr name="chipIconVisible" />
+            <attr name="chipStartPadding" />
+            <attr name="chipTextMaxWidth" />
+            <attr name="closeIcon" />
+            <attr name="closeIconEndPadding" />
+            <attr name="closeIconSize" />
+            <attr name="closeIconStartPadding" />
+            <attr name="closeIconTouchBoundsSize" />
+            <attr name="closeIconVisible" />
+            <attr name="textEndPadding" />
+            <attr name="textStartPadding" />
+            <attr name="uncheckedBackgroundColor" />
+            <attr name="uncheckedChipIconTint" />
+            <attr name="uncheckedDisabledBackgroundColor" />
+            <attr name="uncheckedDisabledChipIconTint" />
+            <attr name="uncheckedDisabledTextColor" />
+            <attr name="uncheckedTextColor" />
+        </declare-styleable>
+    <declare-styleable name="COUIChipGroup">
+            <attr name="checkedChip" />
+            <attr name="chipSpacing" />
+            <attr name="chipSpacingHorizontal" />
+            <attr name="chipSpacingVertical" />
+            <attr name="collapsedMaxRows" />
+            <attr name="isCollapsable" />
+            <attr name="isCollapsed" />
+            <attr name="selectionRequired" />
+            <attr name="singleLine" />
+            <attr name="singleSelection" />
+        </declare-styleable>
+    <attr name="couiSegmentButtonStyle" format="reference" />
+    <attr name="couiColorSegmentButtonBackground" format="color|reference" />
+    <attr name="segmentButtonTextSize" format="dimension" />
+    <declare-styleable name="COUISegmentButtonLayout">
+            <attr name="UnSelectedTextColor" />
+            <attr name="selectedTextColor" />
+            <attr name="segmentButtonTextSize" />
+            <attr name="enableTextScale" />
+            <attr name="enableResponsiveWidth" />
+        </declare-styleable>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <size android:height="16.0dp" android:width="@dimen/coui_search_linear_divider_width" />
+    <solid android:color="?couiColorDivider" />
+</shape>

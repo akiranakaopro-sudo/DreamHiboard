@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.coui.appcompat.grid.COUIPercentWidthListView
+        android:id="@id/coui_preference_listview"
+        style="@style/Widget.COUI.ListView.Group"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:cacheColorHint="@android:color/transparent"
+        android:clipToPadding="false"
+        android:drawSelectorOnTop="false"
+        android:overScrollMode="always"
+        android:paddingBottom="@dimen/coui_list_to_ex_bottom_padding"
+        android:requiresFadingEdge="none"
+        android:scrollbars="vertical"
+        app:couiListGridNumber="@integer/grid_guide_column_preference"
+        app:paddingSize="small"
+        app:paddingType="cardListType" />
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@id/abl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/coui_window_bg_with_card"
+        android:touchscreenBlocksFocus="false"
+        app:elevation="0dp"
+        app:layout_behavior="com.coui.appcompat.behavior.SecondToolbarBehavior">
+
+        <com.coui.appcompat.toolbar.COUIToolbar
+            android:id="@id/toolbar"
+            style="@style/COUIToolBarInAppBarLayoutStyle"
+            android:layout_width="match_parent"
+            app:supportTitleTextAppearance="@style/textAppearanceSecondTitle" />
+
+        <View
+            android:id="@id/divider_line"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_divider_height"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="@dimen/toolbar_horizontal_padding"
+            android:layout_marginRight="@dimen/toolbar_horizontal_padding"
+            android:alpha="0"
+            android:background="?attr/couiColorDivider"
+            android:forceDarkAllowed="false" />
+    </com.google.android.material.appbar.AppBarLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

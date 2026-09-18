@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI dialog styles (monolith feature-split) -->
+<resources>
+    <style name="COUIComponentStatementTitleStyle">
+            <item name="android:textSize">@dimen/coui_full_page_title_text_size</item>
+            <item name="android:textColor">?couiColorPrimaryNeutral</item>
+            <item name="android:gravity">center</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:layout_marginTop">18.0dp</item>
+            <item name="android:layout_marginBottom">12.0dp</item>
+            <item name="android:includeFontPadding">false</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+            <item name="android:paddingStart">24.0dp</item>
+            <item name="android:paddingEnd">24.0dp</item>
+        </style>
+    <style name="COUIDialogTextAppearance" parent="@style/couiTextAppearanceHeadline6">
+            <item name="android:textColor">?couiColorLabelPrimary</item>
+        </style>
+    <style name="COUIDialogTextAppearance.Title" parent="@style/COUIDialogTextAppearance">
+            <item name="android:textSize">18.0sp</item>
+            <item name="android:lineSpacingMultiplier">1.1</item>
+        </style>
+    <style name="COUIDialogTextAppearance.Title.Tiny" parent="@style/COUIDialogTextAppearance.Title">
+            <item name="android:textSize">18.0dp</item>
+        </style>
+    <style name="DefaultDialogItemTextStyle" parent="@style/TextAppearance.AppCompat.Medium">
+            <item name="android:textSize">16.0sp</item>
+            <item name="android:textColor">@color/coui_dialog_button_text_color_center</item>
+            <item name="fontFamily">sans-serif-medium</item>
+        </style>
+    <style name="TextAppearance.COUI.DialogWindowTitle" parent="@style/TextAppearance.COUI">
+            <item name="android:textSize">@dimen/coui_dialog_title_text_size</item>
+            <item name="android:textColor">@color/coui_dialog_title_text_color</item>
+        </style>
+    <style name="AlertDialogCustomImageViewStyle">
+            <item name="android:layout_width">wrap_content</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:layout_marginTop">
+                @dimen/coui_alert_dialog_customer_layout_imageview_margin_top
+            </item>
+            <item name="android:layout_marginBottom">
+                @dimen/coui_alert_dialog_customer_layout_imageview_margin_bottom
+            </item>
+            <item name="android:layout_marginStart">
+                @dimen/coui_alert_dialog_customer_layout_imageview_margin_start
+            </item>
+            <item name="android:layout_marginEnd">
+                @dimen/coui_alert_dialog_customer_layout_imageview_margin_end
+            </item>
+            <item name="couiBorderRadius">0.0dp</item>
+            <item name="couiType">round</item>
+        </style>
+    <style name="AlertDialogBuildStyle" parent="@style/AlertDialog.AppCompat">
+            <item name="isTinyDialog">false</item>
+            <item name="listItemLayout">@layout/coui_select_dialog_item</item>
+            <item name="listLayout">@layout/coui_alert_dialog_list_layout</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Bottom" parent="@style/AlertDialogBuildStyle">
+            <item name="android:gravity">bottom</item>
+            <item name="android:layout">@layout/coui_bottom_alert_dialog_layout</item>
+            <item name="windowAnimStyle">@style/Animation.COUI.Dialog</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Bottom.ListDialog" parent="@style/AlertDialogBuildStyle.Bottom">
+            <item name="android:layout">@layout/coui_center_list_alert_dialog_layout</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Bottom.ListDialog.Tiny" parent="@style/AlertDialogBuildStyle.Bottom.ListDialog">
+            <item name="android:layout">@layout/coui_bottom_list_alert_dialog_layout_tiny</item>
+            <item name="isTinyDialog">true</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Bottom.Tiny" parent="@style/AlertDialogBuildStyle.Bottom">
+            <item name="android:layout">@layout/coui_bottom_alert_dialog_layout_tiny</item>
+            <item name="isTinyDialog">true</item>
+        </style>
+    <style name="AlertDialogBuildStyle.BottomAssignment" parent="@style/AlertDialogBuildStyle">
+            <item name="android:gravity">bottom</item>
+            <item name="android:layout">@layout/coui_bottom_assignment_alert_dialog_layout</item>
+            <item name="isAssignMentLayout">true</item>
+            <item name="windowAnimStyle">@style/Animation.COUI.Dialog</item>
+        </style>
+    <style name="AlertDialogBuildStyle.BottomAssignment.NoFlag" parent="@style/AlertDialogBuildStyle.BottomAssignment">
+            <item name="isAssignMentLayout">false</item>
+        </style>
+    <style name="AlertDialogBuildStyle.BottomWarning" parent="@style/AlertDialogBuildStyle">
+            <item name="android:gravity">bottom</item>
+            <item name="android:layout">@layout/coui_center_alert_dialog_layout</item>
+            <item name="windowAnimStyle">@style/Animation.COUI.Dialog</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Center" parent="@style/AlertDialogBuildStyle">
+            <item name="android:gravity">center</item>
+            <item name="android:layout">@layout/coui_center_alert_dialog_layout</item>
+            <item name="windowAnimStyle">@style/Animation.COUI.Dialog.Alpha</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Center.ListDialog" parent="@style/AlertDialogBuildStyle.Center">
+            <item name="android:layout">@layout/coui_center_list_alert_dialog_layout</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Center.ListDialog.Tiny" parent="@style/AlertDialogBuildStyle.Center.ListDialog">
+            <item name="android:gravity">center</item>
+            <item name="android:layout">@layout/coui_center_list_alert_dialog_layout_tiny</item>
+            <item name="isTinyDialog">true</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Center.Rotate" parent="@style/AlertDialogBuildStyle.Center">
+            <item name="android:layout">@layout/coui_rotate_alert_dialog_layout</item>
+        </style>
+    <style name="AlertDialogBuildStyle.Center.Tiny" parent="@style/AlertDialogBuildStyle.Center">
+            <item name="android:gravity">bottom</item>
+            <item name="android:layout">@layout/coui_center_alert_dialog_layout_tiny</item>
+            <item name="isTinyDialog">true</item>
+            <item name="windowAnimStyle">@style/Animation.COUI.Dialog</item>
+        </style>
+    <style name="COUIAlertDialog">
+            <item name="alertDialogTheme">@style/AlertDialogBuildTheme</item>
+            <item name="contentMaxWidth">@dimen/coui_dialog_max_width</item>
+        </style>
+    <style name="COUIAlertDialog.BBIRMenu" parent="@style/COUIAlertDialog.BottomAssignment" />
+    <style name="COUIAlertDialog.Bottom" parent="@style/COUIAlertDialog">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Bottom</item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.Bottom.Tiny" parent="@style/COUIAlertDialog.Bottom">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Bottom.Tiny</item>
+            <item name="contentMaxHeight">@dimen/coui_tiny_dialog_max_height</item>
+            <item name="isForceCenterStyleInLargeScreen">false</item>
+        </style>
+    <style name="COUIAlertDialog.BottomAssignment" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.BottomAssignment</item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.BottomAssignment.NoFlag" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.BottomAssignment.NoFlag</item>
+        </style>
+    <style name="COUIAlertDialog.BottomWarning" parent="@style/COUIAlertDialog">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.BottomWarning</item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.Center" parent="@style/COUIAlertDialog">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center</item>
+        </style>
+    <style name="COUIAlertDialog.Center.Rotate" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center.Rotate</item>
+        </style>
+    <style name="COUIAlertDialog.Center.Tiny" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center.Tiny</item>
+            <item name="contentMaxHeight">@dimen/coui_tiny_dialog_max_height</item>
+        </style>
+    <style name="COUIAlertDialog.Custom" parent="@style/COUIAlertDialog.BottomWarning">
+            <item name="customContentLayout">@layout/coui_custom_style_icon_with_two_text</item>
+            <item name="isCustomStyle">true</item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.DatePicker" parent="@style/COUIAlertDialog.BottomAssignment">
+            <item name="customContentLayout">@layout/coui_date_picker_bottom_alert_dialog_layout</item>
+        </style>
+    <style name="COUIAlertDialog.DateSingle" parent="@style/COUIAlertDialog.BottomAssignment">
+            <item name="customContentLayout">
+                @layout/coui_date_single_picker_bottom_alert_dialog_layout
+            </item>
+        </style>
+    <style name="COUIAlertDialog.Guide" parent="@style/COUIAlertDialog.BottomWarning">
+            <item name="clip_radius_root">@dimen/coui_dialog_guide_clip_radius_root</item>
+            <item name="contentMaxHeight">@dimen/coui_dialog_guide_max_height</item>
+        </style>
+    <style name="COUIAlertDialog.List" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center.ListDialog</item>
+        </style>
+    <style name="COUIAlertDialog.List.Bottom" parent="@style/COUIAlertDialog.Bottom">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Bottom.ListDialog</item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.List.Bottom.Tiny" parent="@style/COUIAlertDialog.List.Bottom">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Bottom.ListDialog.Tiny</item>
+            <item name="contentMaxHeight">@dimen/coui_tiny_dialog_max_height</item>
+        </style>
+    <style name="COUIAlertDialog.List.Tiny" parent="@style/COUIAlertDialog.List">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center.ListDialog.Tiny</item>
+            <item name="contentMaxHeight">@dimen/coui_tiny_dialog_max_height</item>
+        </style>
+    <style name="COUIAlertDialog.Progress" parent="@style/COUIAlertDialog.BottomWarning">
+            <item name="customContentLayout">@layout/coui_progress_dialog_horizontal</item>
+        </style>
+    <style name="COUIAlertDialog.Progress.Cancelable" parent="@style/COUIAlertDialog.Progress">
+            <item name="customContentLayout">@layout/coui_cancelable_progress_dialog_horizontal</item>
+        </style>
+    <style name="COUIAlertDialog.Rotate" parent="@style/COUIAlertDialog.Center">
+            <item name="alertDialogStyle">@style/AlertDialogBuildStyle.Center</item>
+        </style>
+    <style name="COUIAlertDialog.Rotating" parent="@style/COUIAlertDialog.Center.Rotate">
+            <item name="contentMaxWidth">@dimen/coui_loading_alert_dialog_max_width</item>
+            <item name="customContentLayout">@layout/coui_progress_dialog_rotating</item>
+            <item name="hasLoading">true</item>
+        </style>
+    <style name="COUIAlertDialog.Rotating.Cancelable" parent="@style/COUIAlertDialog.Center">
+            <item name="contentMaxWidth">@dimen/coui_loading_alert_dialog_max_width_cancelable</item>
+            <item name="customContentLayout">@layout/coui_cancelable_progress_dialog_rotating</item>
+        </style>
+    <style name="COUIAlertDialog.Security" parent="@style/COUIAlertDialog.Center">
+            <item name="customContentLayout">@layout/coui_security_alert_dialog_statement_or_checkbox
+            </item>
+        </style>
+    <style name="COUIAlertDialog.Security.Bottom" parent="@style/COUIAlertDialog.BottomAssignment.NoFlag">
+            <item name="customContentLayout">@layout/coui_security_alert_dialog_statement_or_checkbox
+            </item>
+            <item name="isForceCenterStyleInLargeScreen">true</item>
+        </style>
+    <style name="COUIAlertDialog.SingleEdit" parent="@style/COUIAlertDialog.BottomAssignment" />
+    <style name="COUIAlertDialogBottomButton" parent="@style/couiTextAppearanceButtonL">
+            <item name="android:textColor">@color/coui_dialog_button_text_color_center</item>
+            <item name="android:background">@drawable/coui_alert_dialog_item_background</item>
+            <item name="android:paddingTop">@dimen/coui_alert_dialog_button_padding_top</item>
+            <item name="android:paddingBottom">@dimen/coui_alert_dialog_button_padding_bottom</item>
+            <item name="android:layout_width">0.0dp</item>
+            <item name="android:layout_height">match_parent</item>
+            <item name="android:layout_weight">1.0</item>
+            <item name="android:paddingStart">@dimen/coui_alert_dialog_button_horizontal_padding</item>
+            <item name="android:paddingEnd">@dimen/coui_alert_dialog_button_horizontal_padding</item>
+            <item name="android:stateListAnimator">@null</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="COUIAlertDialogBottomButton.Bottom" parent="@style/COUIAlertDialogBottomButton">
+            <item name="android:lineSpacingMultiplier">1.1</item>
+        </style>
+    <style name="COUIAlertDialogBottomButton.Bottom.Last" parent="@style/COUIAlertDialogBottomButton.Bottom">
+            <item name="android:textColor">?couiColorError</item>
+        </style>
+    <style name="COUIAlertDialogBottomButton.Bottom.Tiny" parent="@style/COUIAlertDialogBottomButton.Bottom">
+            <item name="android:textColor">@color/coui_dialog_button_text_color_center</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonDivider">
+            <item name="android:layout_width">
+                @dimen/coui_delete_alert_dialog_divider_height_verticalbutton
+            </item>
+            <item name="android:layout_height">match_parent</item>
+            <item name="android:layout_marginTop">
+                @dimen/coui_bottom_alert_dialog_horizontal_button_padding_top_extra_new
+            </item>
+            <item name="android:layout_marginBottom">
+                @dimen/coui_bottom_alert_dialog_horizontal_button_padding_bottom_extra_divider_new
+            </item>
+            <item name="android:src">?couiColorDivider</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonDivider.Tiny" parent="@style/COUIAlertDialogBottomButtonDivider">
+            <item name="android:layout_width">@dimen/coui_delete_alert_dialog_divider_height_tiny</item>
+            <item name="android:layout_marginTop">0.0dp</item>
+            <item name="android:layout_marginBottom">0.0dp</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonNewNormal" parent="@style/Widget.COUI.Button.Large">
+            <item name="android:textAppearance">@style/couiTextAppearanceButtonL</item>
+            <item name="android:textColor">@color/coui_dialog_button_text_color_center</item>
+            <item name="android:background">@null</item>
+            <item name="android:paddingTop">
+                @dimen/coui_bottom_alert_dialog_vertical_button_padding_vertical_new
+            </item>
+            <item name="android:paddingBottom">
+                @dimen/coui_bottom_alert_dialog_vertical_button_padding_vertical_new
+            </item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">match_parent</item>
+            <item name="android:maxLines">2</item>
+            <item name="android:singleLine">false</item>
+            <item name="android:paddingStart">@dimen/coui_alert_dialog_button_horizontal_padding</item>
+            <item name="android:paddingEnd">@dimen/coui_alert_dialog_button_horizontal_padding</item>
+            <item name="android:stateListAnimator">@null</item>
+            <item name="android:forceDarkAllowed">false</item>
+            <item name="animEnable">true</item>
+            <item name="animType">2</item>
+            <item name="disabledColor">@color/coui_transparence</item>
+            <item name="drawableColor">@color/coui_transparence</item>
+            <item name="drawableRadius">0.0dp</item>
+            <item name="scaleEnable">false</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonNewNormal.Last" parent="@style/COUIAlertDialogBottomButtonNewNormal">
+            <item name="android:textColor">?couiColorError</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonNewNormal.Recommend" parent="@style/COUIAlertDialogBottomButtonNewNormal">
+            <item name="android:textAppearance">@style/couiTextAppearanceButtonL</item>
+            <item name="android:textColor">@color/coui_btn_default_text_color</item>
+            <item name="android:ellipsize">end</item>
+            <item name="android:padding">0.0dp</item>
+            <item name="android:paddingTop">
+                @dimen/coui_bottom_alert_dialog_recommend_button_padding_vertical
+            </item>
+            <item name="android:paddingBottom">
+                @dimen/coui_bottom_alert_dialog_recommend_button_padding_vertical
+            </item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:minWidth">@dimen/coui_btn_large_width_min</item>
+            <item name="android:minHeight">@dimen/coui_btn_large_height_min</item>
+            <item name="animEnable">@bool/coui_button_anim_enable</item>
+            <item name="brightness">0.8</item>
+            <item name="drawableColor">?couiColorPrimary</item>
+            <item name="drawableRadius">-1.0dp</item>
+        </style>
+    <style name="COUIAlertDialogBottomButtonNewNormal.Recommend.Normal" parent="@style/COUIAlertDialogBottomButtonNewNormal.Recommend">
+            <item name="android:textColor">?couiColorPrimaryTextOnPopup</item>
+            <item name="drawableColor">@color/coui_transparence</item>
+        </style>
+    <style name="COUIAlertDialogClipCornerLayoutStyle">
+            <item name="android:orientation">vertical</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogContentPanelStyle">
+            <item name="android:orientation">vertical</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogCustomPanelStyle">
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogCustomStyle">
+            <item name="android:gravity">center</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogIconStyle">
+            <item name="android:layout_gravity">top</item>
+            <item name="android:visibility">gone</item>
+            <item name="android:layout_width">wrap_content</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogLayoutStyle">
+            <item name="android:layout_gravity">center_horizontal</item>
+            <item name="android:orientation">vertical</item>
+            <item name="android:background">@drawable/coui_alert_dialog_builder_background</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="maxHeight">@dimen/coui_dialog_max_height</item>
+            <item name="maxWidth">@dimen/coui_dialog_max_width</item>
+        </style>
+    <style name="COUIAlertDialogLayoutStyle.Bottom" parent="@style/COUIAlertDialogLayoutStyle">
+            <item name="android:background">@drawable/coui_alert_dialog_builder_bottom_background</item>
+        </style>
+    <style name="COUIAlertDialogLayoutStyle.Rotate" parent="@style/COUIAlertDialogLayoutStyle">
+            <item name="android:background">@drawable/coui_alert_dialog_builder_rotate_background</item>
+        </style>
+    <style name="COUIAlertDialogLayoutStyle.Tiny" parent="@style/COUIAlertDialogLayoutStyle">
+            <item name="android:background">@drawable/coui_alert_dialog_tiny_builder_background</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="COUIAlertDialogLinearLayoutStyle">
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogListPanelStyle">
+            <item name="android:orientation">vertical</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertDialogMessageScrollViewStyle">
+            <item name="android:scrollbarThumbVertical">@drawable/coui_scrollbar_handle_vertical</item>
+            <item name="android:scrollbarStyle">insideOverlay</item>
+            <item name="android:paddingTop">
+                @dimen/coui_alert_dialog_scroll_padding_top_message_tallDialog
+            </item>
+            <item name="android:paddingBottom">
+                @dimen/coui_alert_dialog_scroll_padding_bottom_message_tallDialog
+            </item>
+            <item name="android:scrollbars">vertical</item>
+            <item name="android:fadingEdgeLength">@dimen/center_dialog_scroll_fading_edge_length</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:overScrollMode">ifContentScrolls</item>
+            <item name="android:requiresFadingEdge">vertical</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="COUIAlertDialogMessageStyle" parent="@style/couiTextAppearanceArticleBody">
+            <item name="android:textColor">?couiColorLabelPrimary</item>
+            <item name="android:gravity">center_horizontal</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:paddingStart">@dimen/coui_alert_dialog_message_padding_left</item>
+            <item name="android:paddingEnd">@dimen/coui_alert_dialog_message_padding_left</item>
+        </style>
+    <style name="COUIAlertDialogMessageStyle.Tiny" parent="@style/COUIAlertDialogMessageStyle">
+            <item name="android:textSize">14.0dp</item>
+            <item name="android:paddingStart">@dimen/coui_tiny_dialog_message_padding_horizontal</item>
+            <item name="android:paddingEnd">@dimen/coui_tiny_dialog_message_padding_horizontal</item>
+        </style>
+    <style name="COUIAlertDialogTinyButton" parent="@style/Widget.COUI.Button.Large.TinyFull">
+            <item name="android:layout_marginTop">@dimen/coui_tiny_dialog_btn_margin_vertical</item>
+            <item name="android:layout_marginBottom">@dimen/coui_tiny_dialog_btn_margin_vertical</item>
+            <item name="drawableColor">@color/coui_alert_dialog_button_color_tiny</item>
+        </style>
+    <style name="COUIAlertDialogTinyButton.Last" parent="@style/COUIAlertDialogTinyButton">
+            <item name="android:textColor">?couiColorError</item>
+        </style>
+    <style name="COUIAlertDialogTinyButton.Normal" parent="@style/COUIAlertDialogTinyButton">
+            <item name="android:textColor">@color/coui_alert_dialog_button_text_color_tiny</item>
+        </style>
+    <style name="COUIAlertDialogTitleScrollViewStyle">
+            <item name="android:fadingEdgeLength">@dimen/center_dialog_scroll_fading_edge_length</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:requiresFadingEdge">vertical</item>
+            <item name="android:forceDarkAllowed">false</item>
+            <item name="scrollViewMaxHeight">@dimen/coui_alert_dialog_builder_title_scroll_max_height
+            </item>
+        </style>
+    <style name="COUIAlertDialogTitleStyle">
+            <item name="android:textAppearance">@style/COUIDialogTextAppearance.Title</item>
+            <item name="android:gravity">center</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:minHeight">22.0dp</item>
+        </style>
+    <style name="COUIAlertDialogTitleStyle.Tiny" parent="@style/COUIAlertDialogTitleStyle">
+            <item name="android:textAppearance">@style/COUIDialogTextAppearance.Title.Tiny</item>
+            <item name="android:gravity">center</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:minHeight">22.0dp</item>
+        </style>
+    <style name="COUIAlertDialogTitleTemplateStyle">
+            <item name="android:gravity">center_vertical</item>
+            <item name="android:orientation">horizontal</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:layout_marginTop">@dimen/coui_alert_dialog_title_margin_top</item>
+            <item name="android:layout_marginBottom">@dimen/coui_alert_dialog_title_margin_bottom</item>
+            <item name="android:layout_marginStart">@dimen/coui_alert_dialog_message_padding_left</item>
+            <item name="android:layout_marginEnd">@dimen/coui_alert_dialog_message_padding_left</item>
+        </style>
+    <style name="COUIAlertDialogTitleTemplateStyle.Tiny" parent="@style/COUIAlertDialogTitleTemplateStyle">
+            <item name="android:layout_marginTop">@dimen/coui_tiny_dialog_title_margin_top</item>
+            <item name="android:layout_marginBottom">@dimen/coui_tiny_dialog_title_margin_bottom</item>
+            <item name="android:layout_marginStart">@dimen/coui_tiny_dialog_message_padding_horizontal
+            </item>
+            <item name="android:layout_marginEnd">@dimen/coui_tiny_dialog_message_padding_horizontal
+            </item>
+        </style>
+    <style name="COUIAlertDialogTopPanelStyle">
+            <item name="android:orientation">vertical</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="COUIAlertEmptyViewMessageScrollViewStyle">
+            <item name="android:scrollbarThumbVertical">@drawable/coui_emptyview_handle_vertical</item>
+            <item name="android:scrollbarStyle">insideOverlay</item>
+            <item name="android:paddingTop">
+                @dimen/coui_alert_emptyview_scroll_padding_top_message_tallDialog
+            </item>
+            <item name="android:paddingBottom">
+                @dimen/coui_alert_emptyview_scroll_padding_bottom_message_tallDialog
+            </item>
+            <item name="android:scrollbars">vertical</item>
+            <item name="android:fadingEdgeLength">@dimen/center_empty_view_scroll_fading_edge_length
+            </item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:overScrollMode">ifContentScrolls</item>
+            <item name="android:requiresFadingEdge">vertical</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="AlertController">
+            <item name="couiAlertDialogContentTextColor">?couiAlertDialogContentTextColor</item>
+        </style>
+    <style name="AlertDialog" parent="@style/AlertDialog.AppCompatSupport.Light" />
+    <style name="AlertDialog.AppCompatSupport.Light" parent="@style/Base.AlertDialog.AppCompatSupport" />
+    <style name="AlertDialog.COUI" parent="@style/AlertDialog">
+            <item name="android:fullDark">@drawable/coui_alertdialog_content_full_background</item>
+            <item name="android:topDark">@drawable/coui_alertdialog_title_bar</item>
+            <item name="android:centerDark">@drawable/coui_alertdialog_content_background</item>
+            <item name="android:bottomDark">@drawable/coui_alertdialog_list_area</item>
+            <item name="android:fullBright">@drawable/coui_alertdialog_content_full_background</item>
+            <item name="android:topBright">@drawable/coui_alertdialog_title_bar</item>
+            <item name="android:centerBright">@drawable/coui_alertdialog_content_background</item>
+            <item name="android:bottomBright">@drawable/coui_alertdialog_list_area</item>
+            <item name="android:bottomMedium">@drawable/coui_alertdialog_button_background</item>
+            <item name="android:centerMedium">@drawable/coui_alertdialog_content_background</item>
+        </style>
+    <style name="Base.AlertDialog.AppCompatSupport" parent="@android:style/Widget">
+            <item name="android:layout">@layout/coui_center_alert_dialog_layout</item>
+            <item name="android:textDirection">anyRtl</item>
+            <item name="listItemLayout">@layout/coui_select_dialog_item</item>
+            <item name="listLayout">@layout/coui_alert_dialog_list_layout</item>
+            <item name="multiChoiceItemLayout">@layout/coui_select_dialog_multichoice</item>
+            <item name="singleChoiceItemLayout">@layout/coui_select_dialog_singlechoice</item>
+        </style>
+    <style name="Animation.COUI.ActivityDialog" parent="@android:style/Animation">
+            <item name="android:windowEnterAnimation">@anim/coui_open_slide_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_close_slide_exit</item>
+        </style>
+    <style name="Animation.COUI.Dialog" parent="@android:style/Animation">
+            <item name="android:windowEnterAnimation">@anim/coui_bottom_dialog_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_bottom_dialog_exit</item>
+        </style>
+    <style name="Animation.COUI.Dialog.Alpha" parent="@style/Animation.COUI.Dialog">
+            <item name="android:windowEnterAnimation">@anim/coui_center_dialog_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_center_dialog_exit</item>
+        </style>
+    <style name="Animation.COUI.DialogListWindow" parent="@style/Animation.COUI">
+            <item name="android:windowEnterAnimation">@anim/coui_dialog_list_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_dialog_list_exit</item>
+        </style>
+    <style name="COUIDialogAnimation">
+            <item name="android:windowEnterAnimation">@anim/coui_bottom_dialog_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_bottom_dialog_exit</item>
+        </style>
+    <style name="Widget.COUI.COUIFullPageStatement" parent="@android:style/Widget">
+            <item name="android:layout">@layout/coui_full_page_statement</item>
+            <item name="couiFullPageStatementDividerColor">
+                @color/coui_full_page_statement_divider_line_color
+            </item>
+            <item name="couiFullPageStatementTextButtonColor">?couiColorPrimaryTextOnPopup</item>
+            <item name="couiFullPageStatementTextColor">?couiColorSecondNeutral</item>
+        </style>
+    <style name="Widget.COUI.COUIFullPageStatement.Dark" parent="@style/Widget.COUI.COUIFullPageStatement">
+            <item name="couiFullPageStatementDividerColor">
+                @color/coui_full_page_statement_divider_line_dark_color
+            </item>
+            <item name="couiFullPageStatementTextColor">?couiColorSecondNeutral</item>
+        </style>
+    <style name="Widget.COUI.COUIFullPageStatement.Tiny" parent="@android:style/Widget">
+            <item name="android:layout">@layout/coui_full_page_statement_tiny</item>
+            <item name="couiFullPageStatementDividerColor">
+                @color/coui_full_page_statement_divider_line_color
+            </item>
+            <item name="couiFullPageStatementTextColor">?couiColorSecondNeutral</item>
+        </style>
+</resources>

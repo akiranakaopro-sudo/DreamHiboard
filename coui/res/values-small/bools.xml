@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="is_coui_bottom_sheet_ime_adjust_in_constraint_layout">true</bool>
+    <bool name="is_ignore_nav_height_in_panel_ime_adjust">true</bool>
+</resources>

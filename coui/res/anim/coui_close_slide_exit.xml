@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false"
+    android:zAdjustment="top">
+    <translate
+        android:duration="350"
+        android:fillAfter="true"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromXDelta="0.0%"
+        android:interpolator="@interpolator/coui_close_slide_exit_translate_interpolator"
+        android:toXDelta="100.0%" />
+    <alpha
+        android:duration="350"
+        android:fillAfter="true"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromAlpha="1.0"
+        android:interpolator="@interpolator/coui_ease"
+        android:toAlpha="1.0" />
+</set>

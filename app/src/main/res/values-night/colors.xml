@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="hiboard_background">#FF121212</color>
-    <color name="hiboard_card">#FF1E1E1E</color>
-    <color name="hiboard_text">#FFF2F3F5</color>
-    <color name="hiboard_muted">#99F2F3F5</color>
-    <color name="hiboard_primary">#FF8AB4FF</color>
-    <color name="hiboard_primary_soft">#338AB4FF</color>
-    <color name="hiboard_chip">#FF2A2A2A</color>
-    <color name="hiboard_badge">#CCF2F3F5</color>
-    <color name="hiboard_on_badge">#FF121212</color>
+    <color name="hiboard_background">@color/coui_color_background_with_card_dark</color>
+    <color name="hiboard_card">@color/coui_color_card_background_dark</color>
+    <color name="hiboard_text">@color/coui_color_label_primary_dark</color>
+    <color name="hiboard_muted">@color/coui_color_label_secondary_dark</color>
+    <color name="hiboard_primary">@color/coui_color_primary_blue_dark</color>
+    <color name="hiboard_primary_soft">@color/coui_color_container_theme_halftone_blue_dark</color>
+    <color name="hiboard_chip">@color/coui_color_container4_dark</color>
+    <color name="hiboard_badge">@color/coui_color_label_primary_dark</color>
+    <color name="hiboard_on_badge">@color/coui_color_label_on_color_dark</color>
 </resources>

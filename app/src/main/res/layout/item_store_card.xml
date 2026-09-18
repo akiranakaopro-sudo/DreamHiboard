@@ -1,47 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.coui.appcompat.cardview.COUICardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    android:background="@drawable/bg_card"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:padding="16dp">
+    app:cardBackgroundColor="?attr/couiColorCardBackground"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:contentPadding="16dp"
+    app:couiCardRoundCornerRadius="16dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/storeName"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="@color/hiboard_text"
-            android:textStyle="bold" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/storeDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/hiboard_muted"
-            android:textSize="13sp" />
+            <TextView
+                android:id="@+id/storeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/couiColorLabelPrimary"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/storeGroup"
-            android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/storeDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?attr/couiColorLabelSecondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/storeGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?attr/couiColorLabelTheme"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <com.coui.appcompat.button.COUIButton
+            android:id="@+id/storeAction"
+            style="@style/Widget.COUI.Button.Small.ButtonNew.Secondary"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/hiboard_primary"
-            android:textSize="12sp" />
+            android:layout_marginStart="8dp" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/storeAction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:textColor="@color/hiboard_primary" />
-</LinearLayout>
+</com.coui.appcompat.cardview.COUICardView>

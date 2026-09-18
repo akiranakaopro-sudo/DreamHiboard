@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI search attrs (monolith feature-split) -->
+<resources>
+    <attr name="couiSearchBarStyle" format="reference" />
+    <attr name="couiSearchClearSelector" format="reference" />
+    <attr name="couiSearchIcon" format="reference" />
+    <attr name="couiSearchViewAnimateStyle" format="reference" />
+    <attr name="couiSearchViewAnimateType">
+            <enum name="typeInstantSearch" value="0" />
+            <enum name="typeNonInstantSearch" value="1" />
+        </attr>
+    <attr name="couiSearchViewMainIcon" format="reference" />
+    <attr name="couiSearchViewNormalHintColorDisable" format="color" />
+    <attr name="couiSearchViewSelectorColorPressed" format="color" />
+    <attr name="couiSearchViewSubIcon" format="reference" />
+    <attr name="couiSearchviewHintBgColorDisabled" format="color" />
+    <attr name="couiSearchviewHintBgColorNormal" format="color" />
+    <attr name="couiTouchSearchVibrateLevel">
+            <enum name="crisp" value="0" />
+            <enum name="soft" value="1" />
+        </attr>
+    <attr name="couiTouchSearchViewStyle" format="reference" />
+    <declare-styleable name="COUITouchSearchView">
+            <attr name="couiAdaptiveVibrator" />
+            <attr name="couiBackgroundAlignMode" />
+            <attr name="couiFirstIsCharacter" />
+            <attr name="couiFirstMarginTop" />
+            <attr name="couiKeyCollect" />
+            <attr name="couiKeyTextColor" />
+            <attr name="couiKeyTextSize" />
+            <attr name="couiMarginLeft" />
+            <attr name="couiMarginRigh" />
+            <attr name="couiPopupCollect" />
+            <attr name="couiPopupWinFirstHeight" />
+            <attr name="couiPopupWinFirstTextColor" />
+            <attr name="couiPopupWinFirstTextSize" />
+            <attr name="couiPopupWinFirstWidth" />
+            <attr name="couiPopupWinMinTop" />
+            <attr name="couiPopupWinSecondHeight" />
+            <attr name="couiPopupWinSecondMargin" />
+            <attr name="couiPopupWinSecondOffset" />
+            <attr name="couiPopupWinSecondTextSize" />
+            <attr name="couiPopupWinSecondWidth" />
+            <attr name="couiTouchSearchVibrateLevel" />
+        </declare-styleable>
+    <declare-styleable name="COUISearchBar">
+            <attr name="couiHideFunctionalButton" />
+            <attr name="couiSearchClearSelector" />
+            <attr name="couiSearchIcon" />
+            <attr name="functionalButtonText" />
+            <attr name="functionalButtonTextColor" />
+            <attr name="inputTextColor" />
+            <attr name="inputTextSize" />
+            <attr name="normalHintColor" />
+            <attr name="searchHint" />
+        </declare-styleable>
+    <declare-styleable name="COUISearchViewAnimate">
+            <attr name="android:gravity" />
+            <attr name="buttonDivider" />
+            <attr name="couiSearchClearSelector" />
+            <attr name="couiSearchIcon" />
+            <attr name="couiSearchViewAnimateType" />
+            <attr name="couiSearchViewMainIcon" />
+            <attr name="couiSearchViewSubIcon" />
+            <attr name="functionalButtonText" />
+            <attr name="functionalButtonTextColor" />
+            <attr name="inputHintTextColor" />
+            <attr name="inputTextColor" />
+            <attr name="inputTextSize" />
+            <attr name="normalBackground" />
+            <attr name="normalHintColor" />
+            <attr name="searchBackground" />
+            <attr name="searchHint" />
+        </declare-styleable>
+</resources>

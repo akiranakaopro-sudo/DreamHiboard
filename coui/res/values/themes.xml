@@ -1,0 +1,1018 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base Themes -->
+    <style name="BaseActivityDialog" parent="@style/Theme.COUI" />
+    <style name="Theme.COUI" parent="@style/ThemeOverrideBase">
+        <item name="android:textAppearance">@style/TextAppearance.COUI</item>
+        <item name="android:textAppearanceInverse">@style/TextAppearance.COUI.Inverse</item>
+        <item name="android:textColorPrimary">@color/coui_primary_text_dark</item>
+        <item name="android:textColorPrimaryDisableOnly">@color/coui_primary_text_dark</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance.COUI.List.Title</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance.COUI.List.Title</item>
+        <item name="android:textAppearanceSmall">@style/TextAppearance.COUI.Preference.Summary</item>
+        <item name="android:buttonStyleSmall">@style/Widget.COUI.Button.Small.ButtonNew.Secondary</item>
+        <item name="android:listPreferredItemHeight">@dimen/coui_list_item_preferred_height</item>
+        <item name="android:expandableListPreferredItemPaddingLeft">40.0dp</item>
+        <item name="android:expandableListPreferredChildPaddingLeft">?android:expandableListPreferredItemPaddingLeft</item>
+        <item name="android:expandableListPreferredItemIndicatorLeft">16.0dp</item>
+        <item name="android:expandableListPreferredItemIndicatorRight">0.0dp</item>
+        <item name="android:expandableListPreferredChildIndicatorLeft">?android:expandableListPreferredItemIndicatorLeft</item>
+        <item name="android:expandableListPreferredChildIndicatorRight">?android:expandableListPreferredItemIndicatorRight</item>
+        <item name="android:windowBackground">@drawable/coui_window_background_selector</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTitleBackgroundStyle">@style/COUIWindowTitleBackground</item>
+        <item name="android:panelBackground">@drawable/coui_menu_background</item>
+        <item name="android:panelFullBackground">@drawable/coui_menu_background</item>
+        <item name="android:scrollbarThumbHorizontal">@drawable/coui_scrollbar_thumb</item>
+        <item name="android:scrollbarThumbVertical">@drawable/coui_scrollbar_thumb</item>
+        <item name="android:autoCompleteTextViewStyle">@style/Widget.COUI.AutoCompleteTextView</item>
+        <item name="android:checkboxStyle">@style/Widget.COUI.CompoundButton.CheckBox</item>
+        <item name="android:dropDownListViewStyle">@style/Widget.COUI.ListView.DropDown</item>
+        <item name="android:editTextStyle">@style/Widget.COUI.EditText</item>
+        <item name="android:radioButtonStyle">@style/Widget.COUI.CompoundButton.RadioButton</item>
+        <item name="android:textColorHighlight">?couiColorSecondary</item>
+        <item name="android:textColorHint">?couiColorHintNeutral</item>
+        <item name="android:textColorLink">@android:color/holo_blue_light</item>
+        <item name="android:windowAnimationStyle">@style/Animation.COUI.Activity</item>
+        <item name="android:listSeparatorTextViewStyle">@style/Widget.COUI.TextView.ListSeparator</item>
+        <item name="android:listDivider">@drawable/coui_divider_horizontal_default</item>
+        <item name="android:listChoiceIndicatorSingle">@drawable/coui_btn_radio</item>
+        <item name="android:listChoiceIndicatorMultiple">@drawable/coui_btn_check</item>
+        <item name="android:webTextViewStyle">@style/Widget.COUI.WebTextView</item>
+        <item name="android:textSelectHandleLeft">@drawable/coui_text_select_left_tint</item>
+        <item name="android:textSelectHandleRight">@drawable/coui_text_select_right_tint</item>
+        <item name="android:textSelectHandle">@drawable/coui_text_select_middle_tint</item>
+        <item name="android:windowActionBar">true</item>
+        <item name="android:listChoiceBackgroundIndicator">@drawable/coui_list_selector_background</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/TextAppearance.COUI.Widget.PopupMenu.Large</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/TextAppearance.COUI.Widget.PopupMenu.Small</item>
+        <item name="android:homeAsUpIndicator">@drawable/coui_back_arrow</item>
+        <item name="android:textColorLinkInverse">@android:color/holo_blue_light</item>
+        <item name="android:editTextColor">@color/coui_edit_text_color</item>
+        <item name="android:editTextBackground">@drawable/coui_edittext_default_background</item>
+        <item name="android:alertDialogIcon">@null</item>
+        <item name="android:textCursorDrawable">@drawable/coui_text_cursor_default</item>
+        <item name="android:listPreferredItemHeightLarge">72.0dp</item>
+        <item name="android:listPreferredItemHeightSmall">48.0dp</item>
+        <item name="android:colorPressedHighlight">@android:color/holo_blue_light</item>
+        <item name="android:colorLongPressedHighlight">@android:color/holo_blue_bright</item>
+        <item name="android:colorFocusedHighlight">@android:color/holo_blue_dark</item>
+        <item name="android:colorActivatedHighlight">@android:color/holo_blue_dark</item>
+        <item name="android:colorMultiSelectHighlight">@android:color/holo_green_light</item>
+        <item name="android:textAppearanceListItemSmall">?android:textAppearanceMedium</item>
+        <item name="android:listPreferredItemPaddingLeft">20.0dp</item>
+        <item name="android:listPreferredItemPaddingRight">20.0dp</item>
+        <item name="android:statusBarColor">@color/coui_status_bar_color</item>
+        <item name="android:navigationBarColor">?couiColorBackground</item>
+        <item name="actionOverflowButtonStyle">@style/OverFlowMenuStyle</item>
+        <item name="barCheckedDisabledColor">@color/switchCheckedGreenBarDisabledColor</item>
+        <item name="borderlessButtonSolidColor">@color/coui_button_sub</item>
+        <item name="borderlessButtonSolidDisabledColor">@color/coui_button_sub_disable</item>
+        <item name="borderlessButtonSolidSelectColor">@color/coui_button_sub_press</item>
+        <item name="borderlessButtonTextColor">@color/coui_button_sub_text</item>
+        <item name="borderlessButtonTextDisabledColor">@color/coui_button_sub_text_disable</item>
+        <item name="borderlessButtonTextSelectColor">@color/coui_button_sub_text_press</item>
+        <item name="buttonStyle">@style/Widget.COUI.Button</item>
+        <item name="buttonTextColor">@color/coui_btn_default_text_normal_color</item>
+        <item name="buttonTextDisableColor">?couiColorDisabledNeutral</item>
+        <item name="buttonTextSelectColor">@color/coui_btn_default_text_pressed_color</item>
+        <item name="checkboxStyle">@style/Widget.COUI.CompoundButton.CheckBox</item>
+        <item name="colorAccent">@color/coui_theme_primary_color</item>
+        <item name="colorButtonNormal">@color/support_button_material_dark</item>
+        <item name="colorControlActivated">?colorAccent</item>
+        <item name="colorControlHighlight">@color/coui_color_control_highlight</item>
+        <item name="colorControlNormal">?android:textColorSecondary</item>
+        <item name="colorPrimary">@color/coui_theme_primary_color</item>
+        <item name="colorPrimaryDark">@color/coui_theme_primary_color</item>
+        <item name="colorSwitchThumbNormal">@color/support_switch_thumb_material_dark</item>
+        <item name="couiBtnDefaultTextColorDisable">@color/coui_btn_default_text_color_disable</item>
+        <item name="couiBtnDrawableColorDisabled">@color/coui_btn_drawable_color_disabled</item>
+        <item name="couiBtnPartCheckInnerColorOnDisabled">@color/coui_btn_part_check_inner_color_on_disabled</item>
+        <item name="couiBtnRadioColorOn">@color/coui_btn_radio_color_on_disabled</item>
+        <item name="couiBtnSecondaryTextColorDisable">@color/coui_btn_secondary_text_color_disable</item>
+        <item name="couiButtonColorfulDefaultStyle">@style/Widget.COUI.Button.Large</item>
+        <item name="couiButtonColorfulLargeStyle">@style/Widget.COUI.Button.Large</item>
+        <item name="couiButtonColorfulWhiteStyle">@style/Widget.COUI.Button.Large.ButtonNew.Secondary.NoMargin</item>
+        <item name="couiPageIndicatorStyle">@style/Widget.COUI.COUIPageIndicator</item>
+        <!-- Leapy added 2026-08-13: OPPO lockview theme defaults. -->
+        <item name="couiNumericKeyboardStyle">@style/Widget.COUI.COUINumericKeyboard</item>
+        <item name="couiSimpleLockStyle">@style/Widget.COUI.COUISimpleLock</item>
+        <item name="couiLockPatternViewStyle">@style/Widget.COUI.COUILockPatternView</item>
+        <!-- Leapy end -->
+        <item name="couiButtonNextStyle">@drawable/coui_btn_next</item>
+        <item name="couiCheckBoxStyle">@style/Widget.COUI.CompoundButton.COUICheckBox</item>
+        <!-- Leapy added 2026-07-31: Decoded OPPO COUI chip theme defaults. -->
+        <item name="couiChipStyle">@style/Widget.COUI.Chip</item>
+        <item name="couiChipGroupStyle">@style/Widget.COUI.ChipGroup</item>
+        <!-- Leapy end -->
+        <item name="couiColorAdditional">@color/coui_color_additional_blue</item>
+        <item name="couiColorAssist">@color/coui_color_assist_blue</item>
+        <item name="couiColorAzure">@color/coui_color_azure</item>
+        <item name="couiColorAzureVariant">@color/coui_color_azure_variant</item>
+        <item name="couiColorBackground">@color/coui_color_background</item>
+        <item name="couiColorBackgroundElevated">@color/coui_color_background_elevated</item>
+        <item name="couiColorBackgroundElevatedWithCard">@color/coui_color_background_elevatedWithCard</item>
+        <item name="couiColorBackgroundTop">@color/coui_color_background_top</item>
+        <item name="couiColorBackgroundWithCard">@color/coui_color_background_with_card</item>
+        <item name="couiColorBar">@color/coui_color_bar</item>
+        <item name="couiColorBlue">@color/coui_color_blue</item>
+        <item name="couiColorBlueVariant">@color/coui_color_blue_variant</item>
+        <item name="couiColorBottomBar">@color/coui_color_bottom_bar</item>
+        <item name="couiColorCard">@color/coui_color_card</item>
+        <item name="couiColorCardBackground">@color/coui_color_card_background</item>
+        <item name="couiColorCardPressed">@color/coui_color_card_pressed</item>
+        <item name="couiColorContainer12">@color/coui_color_container12</item>
+        <item name="couiColorContainer16">@color/coui_color_container16</item>
+        <item name="couiColorContainer4">@color/coui_color_container4</item>
+        <item name="couiColorContainer8">@color/coui_color_container8</item>
+        <item name="couiColorContainerAzure">@color/coui_color_container_azure</item>
+        <item name="couiColorContainerBlue">@color/coui_color_container_blue</item>
+        <item name="couiColorContainerCyan">@color/coui_color_container_cyan</item>
+        <item name="couiColorContainerGreen">@color/coui_color_container_green</item>
+        <item name="couiColorContainerMint">@color/coui_color_container_mint</item>
+        <item name="couiColorContainerOrange">@color/coui_color_container_orange</item>
+        <item name="couiColorContainerPurple">@color/coui_color_container_purple</item>
+        <item name="couiColorContainerRed">@color/coui_color_container_red</item>
+        <item name="couiColorContainerSolid">@color/coui_color_container_solid</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue</item>
+        <item name="couiColorContainerViolet">@color/coui_color_container_violet</item>
+        <item name="couiColorContainerYellow">@color/coui_color_container_yellow</item>
+        <item name="couiColorControls">@color/coui_color_controls</item>
+        <item name="couiColorCyan">@color/coui_color_cyan</item>
+        <item name="couiColorCyanVariant">@color/coui_color_cyan_variant</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue</item>
+        <item name="couiColorDisabledNeutral">@color/coui_color_disabled_neutral</item>
+        <item name="couiColorDivider">@color/coui_color_divider</item>
+        <item name="couiColorError">@color/coui_color_error</item>
+        <item name="couiColorErrorTextBg">@color/coui_color_error_text_bg</item>
+        <item name="couiColorFillSolid">@color/coui_color_fill_solid</item>
+        <item name="couiColorFillThin">@color/coui_color_fill_thin</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue</item>
+        <item name="couiColorGreen">@color/coui_color_green</item>
+        <item name="couiColorGreenVariant">@color/coui_color_green_variant</item>
+        <item name="couiColorHintNeutral">@color/coui_color_hint_neutral</item>
+        <item name="couiColorHover">@color/coui_color_hover</item>
+        <item name="couiColorLabelOnColor">@color/coui_color_label_on_color</item>
+        <item name="couiColorLabelPrimary">@color/coui_color_label_primary</item>
+        <item name="couiColorLabelQuaternary">@color/coui_color_label_quaternary</item>
+        <item name="couiColorLabelSecondary">@color/coui_color_label_secondary</item>
+        <item name="couiColorLabelSecondaryVariant">@color/coui_color_label_secondary_variant</item>
+        <item name="couiColorLabelTertiary">@color/coui_color_label_tertiary</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue</item>
+        <item name="couiColorLink">?couiColorLabelTheme</item>
+        <item name="couiColorMask">@color/coui_color_mask</item>
+        <item name="couiColorMint">@color/coui_color_mint</item>
+        <item name="couiColorMintVariant">@color/coui_color_mint_variant</item>
+        <item name="couiColorOnPrimary">@color/coui_color_on_primary</item>
+        <item name="couiColorOnSecondary">?couiColorPrimaryText</item>
+        <item name="couiColorOrange">@color/coui_color_orange</item>
+        <item name="couiColorOrangeVariant">@color/coui_color_orange_variant</item>
+        <item name="couiColorPress">@color/coui_color_press</item>
+        <item name="couiColorPressBackground">@color/coui_color_press_background</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue</item>
+        <item name="couiColorPrimaryNeutral">@color/coui_color_primary_neutral</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue</item>
+        <item name="couiColorPurple">@color/coui_color_purple</item>
+        <item name="couiColorPurpleVariant">@color/coui_color_purple_variant</item>
+        <item name="couiColorQuarternaryNeutral">@color/coui_color_quarternary_neutral</item>
+        <item name="couiColorRed">@color/coui_color_red</item>
+        <item name="couiColorRedVariant">@color/coui_color_red_variant</item>
+        <item name="couiColorRipplePressBackground">@color/coui_color_ripple_press_background</item>
+        <item name="couiColorSecondNeutral">@color/coui_color_secondary_neutral</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue</item>
+        <item name="couiColorSuccess">@color/coui_color_success</item>
+        <item name="couiColorSurface">@color/coui_color_surface</item>
+        <item name="couiColorSurfaceTop">@color/coui_color_surface_top</item>
+        <item name="couiColorSurfaceWithCard">@color/coui_color_surface_with_card</item>
+        <item name="couiColorTips">@color/coui_color_tips</item>
+        <item name="couiColorViolet">@color/coui_color_violet</item>
+        <item name="couiColorVioletVariant">@color/coui_color_violet_variant</item>
+        <item name="couiColorYellow">@color/coui_color_yellow</item>
+        <item name="couiColorYellowVariant">@color/coui_color_yellow_variant</item>
+        <item name="couiDefaultTextColor">#ff30c67e</item>
+        <item name="couiEditTextDeleteBgColorNormal">?couiColorLabelTertiary</item>
+        <item name="couiEditTextLineHintDisableStyle">@style/Widget.COUI.EditText.HintAnim.Line.HintDisable</item>
+        <item name="couiEditTextLineStyle">@style/Widget.COUI.EditText.HintAnim.Line</item>
+        <item name="couiEditTextRectangleStyle">@style/Widget.COUI.EditText.HintAnim.Rectangle</item>
+        <item name="couiPrimaryTextColor">@color/coui_primary_text_color</item>
+        <item name="couiRotatingSpinnerJsonName">@string/coui_loading_rotating_json</item>
+        <item name="couiRoundCornerFULL">@dimen/coui_round_corner_full</item>
+        <item name="couiRoundCornerL">@dimen/coui_round_corner_l</item>
+        <item name="couiRoundCornerLRadius">@dimen/coui_round_corner_l_radius</item>
+        <item name="couiRoundCornerLWeight">@dimen/coui_round_corner_l_weight</item>
+        <item name="couiRoundCornerM">@dimen/coui_round_corner_m</item>
+        <item name="couiRoundCornerMRadius">@dimen/coui_round_corner_m_radius</item>
+        <item name="couiRoundCornerMWeight">@dimen/coui_round_corner_m_weight</item>
+        <item name="couiRoundCornerS">@dimen/coui_round_corner_s</item>
+        <item name="couiRoundCornerSRadius">@dimen/coui_round_corner_s_radius</item>
+        <item name="couiRoundCornerSWeight">@dimen/coui_round_corner_s_weight</item>
+        <item name="couiRoundCornerXL">@dimen/coui_round_corner_xl</item>
+        <item name="couiRoundCornerXLRadius">@dimen/coui_round_corner_xl_radius</item>
+        <item name="couiRoundCornerXLWeight">@dimen/coui_round_corner_xl_weight</item>
+        <item name="couiRoundCornerXS">@dimen/coui_round_corner_xs</item>
+        <item name="couiRoundCornerXSRadius">@dimen/coui_round_corner_xs_radius</item>
+        <item name="couiRoundCornerXSWeight">@dimen/coui_round_corner_xs_weight</item>
+        <item name="couiRoundCornerXXL">@dimen/coui_round_corner_xxl</item>
+        <item name="couiRoundCornerXXLRadius">@dimen/coui_round_corner_xxl_radius</item>
+        <item name="couiRoundCornerXXLWeight">@dimen/coui_round_corner_xxl_weight</item>
+        <item name="couiShapeCheckBoxStyle">@style/Widget.COUI.CompoundButton.COUICheckBox.Shape</item>
+        <item name="couiSmallButtonColorStyle">@style/Widget.COUI.Button.Small</item>
+        <item name="couiSwitchStyle">@style/COUISwitchStyle</item>
+        <item name="couiTextAppearanceArticleBody">@style/couiTextAppearanceArticleBody</item>
+        <item name="couiTextAppearanceBody">@style/couiTextAppearanceBody</item>
+        <item name="couiTextAppearanceBodyL">@style/couiTextAppearanceBodyL</item>
+        <item name="couiTextAppearanceButton">@style/couiTextAppearanceButton</item>
+        <item name="couiTextAppearanceButtonL">@style/couiTextAppearanceButtonL</item>
+        <item name="couiTextAppearanceCaption">@style/couiTextAppearanceCaption</item>
+        <item name="couiTextAppearanceDescription">@style/couiTextAppearanceDescription</item>
+        <item name="couiTextAppearanceDisplay">@style/couiTextAppearanceDisplay</item>
+        <item name="couiTextAppearanceDisplayL">@style/couiTextAppearanceDisplayL</item>
+        <item name="couiTextAppearanceDisplayM">@style/couiTextAppearanceDisplayM</item>
+        <item name="couiTextAppearanceHeadline1">@style/couiTextAppearanceHeadline1</item>
+        <item name="couiTextAppearanceHeadline2">@style/couiTextAppearanceHeadline2</item>
+        <item name="couiTextAppearanceHeadline3">@style/couiTextAppearanceHeadline3</item>
+        <item name="couiTextAppearanceHeadline4">@style/couiTextAppearanceHeadline4</item>
+        <item name="couiTextAppearanceHeadline5">@style/couiTextAppearanceHeadline5</item>
+        <item name="couiTextAppearanceHeadline6">@style/couiTextAppearanceHeadline6</item>
+        <item name="couiTextAppearanceSmallButton">@style/couiTextAppearanceSmallButton</item>
+        <item name="couiTextAppearanceTag">@style/couiTextAppearanceTag</item>
+        <item name="couiTextBodyL">@style/couiTextBodyL</item>
+        <item name="couiTextBodyM">@style/couiTextBodyM</item>
+        <item name="couiTextBodyS">@style/couiTextBodyS</item>
+        <item name="couiTextBodyXS">@style/couiTextBodyXS</item>
+        <item name="couiTextButtonL">@style/couiTextButtonL</item>
+        <item name="couiTextButtonM">@style/couiTextButtonM</item>
+        <item name="couiTextButtonS">@style/couiTextButtonS</item>
+        <item name="couiTextCaption">@style/couiTextCaption</item>
+        <item name="couiTextDescription">@style/couiTextDescription</item>
+        <item name="couiTextDisplayL">@style/couiTextDisplayL</item>
+        <item name="couiTextDisplayM">@style/couiTextDisplayM</item>
+        <item name="couiTextDisplayS">@style/couiTextDisplayS</item>
+        <item name="couiTextDisplayXS">@style/couiTextDisplayXS</item>
+        <item name="couiTextHeadlineL">@style/couiTextHeadlineL</item>
+        <item name="couiTextHeadlineM">@style/couiTextHeadlineM</item>
+        <item name="couiTextHeadlineS">@style/couiTextHeadlineS</item>
+        <item name="couiTextHeadlineXS">@style/couiTextHeadlineXS</item>
+        <item name="couiTextTag">@style/couiTextTag</item>
+        <item name="couiTinyFullButtonColorStyle">@style/Widget.COUI.Button.Large.TinyFull</item>
+        <item name="couiTinyFullButtonSecondaryColorStyle">@style/Widget.COUI.Button.Large.TinyFull.Secondary</item>
+        <item name="couiTinyHalfColorButtonColorStyle">@style/Widget.COUI.Button.Small.TinySmall.HalfColor</item>
+        <item name="couiTinySmallButtonColorStyle">@style/Widget.COUI.Button.Small.TinySmall</item>
+        <item name="couiTinySmallButtonSecondaryColorStyle">@style/Widget.COUI.Button.Small.TinySmall.Secondary</item>
+        <item name="couiTinyTranslateButtonColorStyle">@style/Widget.COUI.Button.Small.TinySmall.Translate</item>
+        <item name="dropDownListViewStyle">@style/Widget.COUI.ListView.DropDown</item>
+        <item name="innerCircleCheckedDisabledColor">@color/switchCheckedGreenInnerCircleDisabledColor</item>
+        <item name="isCOUITheme">true</item>
+        <item name="listChoiceBackgroundIndicator">@drawable/coui_list_selector_background</item>
+        <item name="listPreferredItemHeight">@dimen/coui_list_item_preferred_height</item>
+        <item name="listPreferredItemHeightLarge">72.0dp</item>
+        <item name="listPreferredItemHeightSmall">52.0dp</item>
+        <item name="listPreferredItemPaddingLeft">20.0dp</item>
+        <item name="listPreferredItemPaddingRight">20.0dp</item>
+        <item name="radioButtonStyle">@style/Widget.COUI.CompoundButton.RadioButton</item>
+        <item name="toolbarStyle">@style/Widget.COUI.CoreToolbar</item>
+    </style>
+    <style name="Theme.COUI.ActivityDialog" parent="@style/BaseActivityDialog">
+        <item name="android:backgroundDimAmount">1.0</item>
+        <item name="android:windowBackground">?couiColorBackgroundWithCard</item>
+        <item name="android:windowAnimationStyle">@style/Animation.COUI.ActivityDialog</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:navigationBarColor">?couiColorBackgroundWithCard</item>
+        <item name="selectSystemForceDarkType">0</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="Theme.COUI.Blue" parent="@style/Theme.COUI">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue</item>
+        <item name="couiDefaultTextColor">#ff32ceb2</item>
+        <item name="couiThemeIdentifier">@integer/couiBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Blue.Alert" parent="@style/Theme.COUI.Blue">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.COUI.Blue.COUIBottomSheetDialog" parent="@style/Theme.COUI.Blue.Alert">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+    <style name="Theme.COUI.Dark" parent="@style/Theme.COUI">
+        <item name="android:backgroundDimAmount">0.5</item>
+        <item name="android:windowBackground">?couiColorBackground</item>
+        <item name="android:editTextStyle">@style/Widget.COUI.EditText.Dark</item>
+        <item name="buttonStyle">@style/Widget.COUI.Button.Dark</item>
+        <!-- Leapy added 2026-08-13: Dark lockview widgets. -->
+        <item name="couiNumericKeyboardStyle">@style/Widget.COUI.COUINumericKeyboard.Dark</item>
+        <item name="couiSimpleLockStyle">@style/Widget.COUI.COUISimpleLock.Dark</item>
+        <item name="couiLockPatternViewStyle">@style/Widget.COUI.COUILockPatternView.Dark</item>
+        <!-- Leapy end -->
+        <item name="couiBtnDefaultTextColorDisable">@color/coui_btn_default_text_color_disable_dark</item>
+        <item name="couiBtnDrawableColorDisabled">@color/coui_dark_btn_drawable_color_disabled</item>
+        <item name="couiBtnPartCheckInnerColorOnDisabled">@color/coui_btn_part_check_inner_dark_color_on_disabled</item>
+        <item name="couiBtnRadioColorOn">@color/coui_btn_radio_dark_color_on</item>
+        <item name="couiBtnSecondaryTextColorDisable">@color/coui_btn_secondary_text_color_disable_dark</item>
+        <item name="couiColorAdditional">@color/coui_color_additional_blue_dark</item>
+        <item name="couiColorAssist">@color/coui_color_assist_blue_dark</item>
+        <item name="couiColorAzure">@color/coui_color_azure_dark</item>
+        <item name="couiColorAzureVariant">@color/coui_color_azure_variant_dark</item>
+        <item name="couiColorBackground">@color/coui_color_background_dark</item>
+        <item name="couiColorBackgroundElevated">@color/coui_color_background_elevated_dark</item>
+        <item name="couiColorBackgroundElevatedWithCard">@color/coui_color_background_elevatedWithCard_dark</item>
+        <item name="couiColorBackgroundTop">@color/coui_color_background_top_dark</item>
+        <item name="couiColorBackgroundWithCard">@color/coui_color_background_with_card_dark</item>
+        <item name="couiColorBar">@color/coui_color_bar_dark</item>
+        <item name="couiColorBlue">@color/coui_color_blue_dark</item>
+        <item name="couiColorBlueVariant">@color/coui_color_blue_variant_dark</item>
+        <item name="couiColorCard">@color/coui_color_card_dark</item>
+        <item name="couiColorCardBackground">@color/coui_color_card_background_dark</item>
+        <item name="couiColorCardPressed">@color/coui_color_card_pressed_dark</item>
+        <item name="couiColorContainer12">@color/coui_color_container12_dark</item>
+        <item name="couiColorContainer16">@color/coui_color_container16_dark</item>
+        <item name="couiColorContainer4">@color/coui_color_container4_dark</item>
+        <item name="couiColorContainer8">@color/coui_color_container8_dark</item>
+        <item name="couiColorContainerAzure">@color/coui_color_container_azure_dark</item>
+        <item name="couiColorContainerBlue">@color/coui_color_container_blue_dark</item>
+        <item name="couiColorContainerCyan">@color/coui_color_container_cyan_dark</item>
+        <item name="couiColorContainerGreen">@color/coui_color_container_green_dark</item>
+        <item name="couiColorContainerMint">@color/coui_color_container_mint_dark</item>
+        <item name="couiColorContainerOrange">@color/coui_color_container_orange_dark</item>
+        <item name="couiColorContainerPurple">@color/coui_color_container_purple_dark</item>
+        <item name="couiColorContainerRed">@color/coui_color_container_red_dark</item>
+        <item name="couiColorContainerSolid">@color/coui_color_container_solid_dark</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_dark</item>
+        <item name="couiColorContainerViolet">@color/coui_color_container_violet_dark</item>
+        <item name="couiColorContainerYellow">@color/coui_color_container_yellow_dark</item>
+        <item name="couiColorControls">@color/coui_color_controls_dark</item>
+        <item name="couiColorCyan">@color/coui_color_cyan_dark</item>
+        <item name="couiColorCyanVariant">@color/coui_color_cyan_variant_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_dark</item>
+        <item name="couiColorDisabledNeutral">@color/coui_color_disabled_neutral_dark</item>
+        <item name="couiColorDivider">@color/coui_color_divider_dark</item>
+        <item name="couiColorError">@color/coui_color_error_dark</item>
+        <item name="couiColorErrorTextBg">@color/coui_color_error_text_bg_dark</item>
+        <item name="couiColorFillSolid">@color/coui_color_fill_solid_dark</item>
+        <item name="couiColorFillThin">@color/coui_color_fill_thin_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_dark</item>
+        <item name="couiColorGreen">@color/coui_color_green_dark</item>
+        <item name="couiColorGreenVariant">@color/coui_color_green_variant_dark</item>
+        <item name="couiColorHintNeutral">@color/coui_color_hint_neutral_dark</item>
+        <item name="couiColorHover">@color/coui_color_hover_dark</item>
+        <item name="couiColorLabelOnColor">@color/coui_color_label_on_color_dark</item>
+        <item name="couiColorLabelPrimary">@color/coui_color_label_primary_dark</item>
+        <item name="couiColorLabelQuaternary">@color/coui_color_label_quaternary_dark</item>
+        <item name="couiColorLabelSecondary">@color/coui_color_label_secondary_dark</item>
+        <item name="couiColorLabelSecondaryVariant">@color/coui_color_label_secondary_variant_dark</item>
+        <item name="couiColorLabelTertiary">@color/coui_color_label_tertiary_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_dark</item>
+        <item name="couiColorLink">?couiColorLabelTheme</item>
+        <item name="couiColorMask">@color/coui_color_mask_dark</item>
+        <item name="couiColorMint">@color/coui_color_mint_dark</item>
+        <item name="couiColorMintVariant">@color/coui_color_mint_variant_dark</item>
+        <item name="couiColorOnPrimary">@color/coui_color_on_primary_dark</item>
+        <item name="couiColorOnSecondary">?couiColorPrimaryText</item>
+        <item name="couiColorOrange">@color/coui_color_orange_dark</item>
+        <item name="couiColorOrangeVariant">@color/coui_color_orange_variant_dark</item>
+        <item name="couiColorPress">@color/coui_color_press_dark</item>
+        <item name="couiColorPressBackground">@color/coui_color_press_background_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_dark</item>
+        <item name="couiColorPrimaryNeutral">@color/coui_color_primary_neutral_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_dark</item>
+        <item name="couiColorPurple">@color/coui_color_purple_dark</item>
+        <item name="couiColorPurpleVariant">@color/coui_color_purple_variant_dark</item>
+        <item name="couiColorQuarternaryNeutral">@color/coui_color_quarternary_neutral_dark</item>
+        <item name="couiColorRed">@color/coui_color_red_dark</item>
+        <item name="couiColorRedVariant">@color/coui_color_red_variant_dark</item>
+        <item name="couiColorRipplePressBackground">@color/coui_color_ripple_press_background_dark</item>
+        <item name="couiColorSecondNeutral">@color/coui_color_secondary_neutral_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_dark</item>
+        <item name="couiColorSuccess">@color/coui_color_success_dark</item>
+        <item name="couiColorSurface">@color/coui_color_surface_dark</item>
+        <item name="couiColorSurfaceTop">@color/coui_color_surface_top_dark</item>
+        <item name="couiColorSurfaceWithCard">@color/coui_color_surface_with_card_dark</item>
+        <item name="couiColorTips">@color/coui_color_tips_dark</item>
+        <item name="couiColorViolet">@color/coui_color_violet_dark</item>
+        <item name="couiColorVioletVariant">@color/coui_color_violet_variant_dark</item>
+        <item name="couiColorYellow">@color/coui_color_yellow_dark</item>
+        <item name="couiColorYellowVariant">@color/coui_color_yellow_variant_dark</item>
+        <item name="couiEditTextDeleteBgColorNormal">?couiColorLabelTertiary</item>
+        <item name="couiEditTextLineHintDisableStyle">@style/Widget.COUI.EditText.Dark.HintAnim.Line.HintDisable</item>
+        <item name="couiEditTextLineStyle">@style/Widget.COUI.EditText.Dark.HintAnim.Line</item>
+        <item name="couiEditTextRectangleStyle">@style/Widget.COUI.EditText.Dark.HintAnim.Rectangle</item>
+        <item name="couiPrimaryTextColor">@color/coui_primary_text_color_dark</item>
+        <item name="couiRotatingSpinnerJsonName">@string/coui_loading_rotating_json_dark</item>
+        <item name="couiSwitchStyle">@style/COUISwitchStyle.Dark</item>
+        <item name="isCOUIDarkTheme">true</item>
+    </style>
+    <style name="Theme.COUI.Dark.Blue" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dark.Green" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_green_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_green_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_green_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_green_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_green_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_green_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_green_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_green_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_green_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_green_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiGreenIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dark.Orange" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_orange_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_orange_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_orange_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_orange_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_orange_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_orange_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_orange_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_orange_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_orange_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_orange_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiOrangeIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dark.Purple" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorPrimary">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_purple</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_purple</item>
+    </style>
+    <style name="Theme.COUI.Dark.Red" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_red_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_red_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_red_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_red_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_red_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_red_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_red_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_red_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_red_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_red_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiRedIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dark.Skyblue" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiSkyBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dark.Yellow" parent="@style/Theme.COUI.Dark">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_yellow_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_yellow_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_yellow_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_yellow_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_yellow_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_yellow_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_yellow_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_yellow_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_yellow_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_yellow_dark</item>
+        <item name="couiThemeIdentifier">@integer/couiYellowIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Dialog" parent="@style/Theme.COUI">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="layoutBackgroundTint">@color/coui_color_surface</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.COUI.Dialog.Alert" parent="@style/Theme.COUI.Dialog" />
+    <style name="Theme.COUI.Dialog.Alert.Share" parent="@style/Theme.COUI.Dialog.Alert" />
+    <style name="Theme.COUI.Green" parent="@style/Theme.COUI">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_green</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_green</item>
+        <item name="couiColorDisable">@color/coui_color_disable_green</item>
+        <item name="couiColorFocus">@color/coui_color_focus_green</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_green</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_green</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_green</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_green</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_green</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_green</item>
+        <item name="couiThemeIdentifier">@integer/couiGreenIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Green.Alert" parent="@style/Theme.COUI.Dialog.Alert" />
+    <style name="Theme.COUI.Green.COUIBottomSheetDialog" parent="@style/Theme.COUI.Green.Alert">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+    <style name="Theme.COUI.Light" parent="@style/Theme.COUI">
+        <item name="android:backgroundDimAmount">0.2</item>
+        <item name="android:windowBackground">@drawable/coui_window_background_selector</item>
+        <item name="android:editTextStyle">@style/Widget.COUI.EditText.Light</item>
+        <item name="borderlessButtonSolidDisabledColor">@color/coui_button_sub_disable_light</item>
+        <item name="borderlessButtonTextColor">@color/coui_button_sub_text_light</item>
+        <item name="borderlessButtonTextDisabledColor">@color/coui_button_sub_text_disable_light</item>
+        <item name="buttonStyle">@style/Widget.COUI.Button</item>
+        <item name="couiBtnDefaultTextColorDisable">@color/coui_btn_default_text_color_disable_light</item>
+        <item name="couiBtnDrawableColorDisabled">@color/coui_light_btn_drawable_color_disabled</item>
+        <item name="couiBtnPartCheckInnerColorOnDisabled">@color/coui_btn_part_check_inner_light_color_on_disabled</item>
+        <item name="couiBtnRadioColorOn">@color/coui_btn_radio_light_color_on_disabled</item>
+        <item name="couiBtnSecondaryTextColorDisable">@color/coui_btn_secondary_text_color_disable_light</item>
+        <item name="couiColorAdditional">@color/coui_color_additional_blue_light</item>
+        <item name="couiColorAssist">@color/coui_color_assist_blue_light</item>
+        <item name="couiColorAzure">@color/coui_color_azure_light</item>
+        <item name="couiColorAzureVariant">@color/coui_color_azure_variant_light</item>
+        <item name="couiColorBackground">@color/coui_color_background_light</item>
+        <item name="couiColorBackgroundElevated">@color/coui_color_background_elevated_light</item>
+        <item name="couiColorBackgroundElevatedWithCard">@color/coui_color_background_elevatedWithCard_light</item>
+        <item name="couiColorBackgroundTop">@color/coui_color_background_top_light</item>
+        <item name="couiColorBackgroundWithCard">@color/coui_color_background_with_card_light</item>
+        <item name="couiColorBar">@color/coui_color_bar_light</item>
+        <item name="couiColorBlue">@color/coui_color_blue_light</item>
+        <item name="couiColorBlueVariant">@color/coui_color_blue_variant_light</item>
+        <item name="couiColorCard">@color/coui_color_card_light</item>
+        <item name="couiColorCardBackground">@color/coui_color_card_background_light</item>
+        <item name="couiColorCardPressed">@color/coui_color_card_pressed_light</item>
+        <item name="couiColorContainer12">@color/coui_color_container12_light</item>
+        <item name="couiColorContainer16">@color/coui_color_container16_light</item>
+        <item name="couiColorContainer4">@color/coui_color_container4_light</item>
+        <item name="couiColorContainer8">@color/coui_color_container8_light</item>
+        <item name="couiColorContainerAzure">@color/coui_color_container_azure_light</item>
+        <item name="couiColorContainerBlue">@color/coui_color_container_blue_light</item>
+        <item name="couiColorContainerCyan">@color/coui_color_container_cyan_light</item>
+        <item name="couiColorContainerGreen">@color/coui_color_container_green_light</item>
+        <item name="couiColorContainerMint">@color/coui_color_container_mint_light</item>
+        <item name="couiColorContainerOrange">@color/coui_color_container_orange_light</item>
+        <item name="couiColorContainerPurple">@color/coui_color_container_purple_light</item>
+        <item name="couiColorContainerRed">@color/coui_color_container_red_light</item>
+        <item name="couiColorContainerSolid">@color/coui_color_container_solid_light</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_light</item>
+        <item name="couiColorContainerViolet">@color/coui_color_container_violet_light</item>
+        <item name="couiColorContainerYellow">@color/coui_color_container_yellow_light</item>
+        <item name="couiColorControls">@color/coui_color_controls_light</item>
+        <item name="couiColorCyan">@color/coui_color_cyan_light</item>
+        <item name="couiColorCyanVariant">@color/coui_color_cyan_variant_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_light</item>
+        <item name="couiColorDisabledNeutral">@color/coui_color_disabled_neutral_light</item>
+        <item name="couiColorDivider">@color/coui_color_divider_light</item>
+        <item name="couiColorError">@color/coui_color_error_light</item>
+        <item name="couiColorErrorTextBg">@color/coui_color_error_text_bg_light</item>
+        <item name="couiColorFillSolid">@color/coui_color_fill_solid_light</item>
+        <item name="couiColorFillThin">@color/coui_color_fill_thin_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_light</item>
+        <item name="couiColorGreen">@color/coui_color_green_light</item>
+        <item name="couiColorGreenVariant">@color/coui_color_green_variant_light</item>
+        <item name="couiColorHintNeutral">@color/coui_color_hint_neutral_light</item>
+        <item name="couiColorHover">@color/coui_color_hover_light</item>
+        <item name="couiColorLabelOnColor">@color/coui_color_label_on_color_light</item>
+        <item name="couiColorLabelPrimary">@color/coui_color_label_primary_light</item>
+        <item name="couiColorLabelQuaternary">@color/coui_color_label_quaternary_light</item>
+        <item name="couiColorLabelSecondary">@color/coui_color_label_secondary_light</item>
+        <item name="couiColorLabelSecondaryVariant">@color/coui_color_label_secondary_variant_light</item>
+        <item name="couiColorLabelTertiary">@color/coui_color_label_tertiary_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_light</item>
+        <item name="couiColorLink">?couiColorLabelTheme</item>
+        <item name="couiColorMask">@color/coui_color_mask_light</item>
+        <item name="couiColorMint">@color/coui_color_mint_light</item>
+        <item name="couiColorMintVariant">@color/coui_color_mint_variant_light</item>
+        <item name="couiColorOnPrimary">@color/coui_color_on_primary_light</item>
+        <item name="couiColorOnSecondary">?couiColorPrimaryText</item>
+        <item name="couiColorOrange">@color/coui_color_orange_light</item>
+        <item name="couiColorOrangeVariant">@color/coui_color_orange_variant_light</item>
+        <item name="couiColorPress">@color/coui_color_press_light</item>
+        <item name="couiColorPressBackground">@color/coui_color_press_background_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_light</item>
+        <item name="couiColorPrimaryNeutral">@color/coui_color_primary_neutral_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_light</item>
+        <item name="couiColorPurple">@color/coui_color_purple_light</item>
+        <item name="couiColorPurpleVariant">@color/coui_color_purple_variant_light</item>
+        <item name="couiColorQuarternaryNeutral">@color/coui_color_quarternary_neutral_light</item>
+        <item name="couiColorRed">@color/coui_color_red_light</item>
+        <item name="couiColorRedVariant">@color/coui_color_red_variant_light</item>
+        <item name="couiColorRipplePressBackground">@color/coui_color_ripple_press_background_light</item>
+        <item name="couiColorSecondNeutral">@color/coui_color_secondary_neutral_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_light</item>
+        <item name="couiColorSuccess">@color/coui_color_success_light</item>
+        <item name="couiColorSurface">@color/coui_color_surface_light</item>
+        <item name="couiColorSurfaceTop">@color/coui_color_surface_top_light</item>
+        <item name="couiColorSurfaceWithCard">@color/coui_color_surface_with_card_light</item>
+        <item name="couiColorTips">@color/coui_color_tips_light</item>
+        <item name="couiColorViolet">@color/coui_color_violet_light</item>
+        <item name="couiColorVioletVariant">@color/coui_color_violet_variant_light</item>
+        <item name="couiColorYellow">@color/coui_color_yellow_light</item>
+        <item name="couiColorYellowVariant">@color/coui_color_yellow_variant_light</item>
+        <item name="couiEditTextDeleteBgColorNormal">?couiColorLabelTertiary</item>
+        <item name="couiEditTextLineHintDisableStyle">@style/Widget.COUI.EditText.HintAnim.Line.HintDisable</item>
+        <item name="couiEditTextLineStyle">@style/Widget.COUI.EditText.HintAnim.Line</item>
+        <item name="couiEditTextRectangleStyle">@style/Widget.COUI.EditText.HintAnim.Rectangle</item>
+        <item name="couiPrimaryTextColor">@color/coui_primary_text_color_light</item>
+        <item name="couiRotatingSpinnerJsonName">@string/coui_loading_rotating_json_light</item>
+        <item name="couiSwitchStyle">@style/COUISwitchStyle.Light</item>
+    </style>
+    <style name="Theme.COUI.Light.Blue" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_light</item>
+        <item name="couiThemeIdentifier">@integer/couiBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Light.Green" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_green_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_green_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_green_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_green_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_green_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_green_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_green_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_green_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_green_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_green_light</item>
+        <item name="couiThemeIdentifier">@integer/couiGreenIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Light.Orange" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_orange_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_orange_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_orange_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_orange_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_orange_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_orange_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_orange_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_orange_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_orange_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_orange_light</item>
+        <item name="couiThemeIdentifier">@integer/couiOrangeIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Light.Purple" parent="@style/Theme.COUI.Light">
+        <item name="couiColorPrimary">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_purple</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_purple</item>
+    </style>
+    <style name="Theme.COUI.Light.Red" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_red_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_red_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_red_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_red_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_red_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_red_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_red_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_red_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_red_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_red_light</item>
+        <item name="couiThemeIdentifier">@integer/couiRedIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Light.Skyblue" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_light</item>
+        <item name="couiThemeIdentifier">@integer/couiSkyBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Light.Yellow" parent="@style/Theme.COUI.Light">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_yellow_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_yellow_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_yellow_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_yellow_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_yellow_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_yellow_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_yellow_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_yellow_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_yellow_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_yellow_light</item>
+        <item name="couiThemeIdentifier">@integer/couiYellowIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Main" parent="@style/Theme.COUI.Blue">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue</item>
+    </style>
+    <style name="Theme.COUI.Main.Dark" parent="@style/Theme.COUI.Dark.Blue">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_dark</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_dark</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_dark</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_dark</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_dark</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_dark</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_dark</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_dark</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_dark</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_dark</item>
+    </style>
+    <style name="Theme.COUI.Main.Light" parent="@style/Theme.COUI.Light.Blue">
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue_light</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue_light</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue_light</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue_light</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue_light</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue_light</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue_light</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue_light</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue_light</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue_light</item>
+    </style>
+    <style name="Theme.COUI.Orange" parent="@style/Theme.COUI">
+        <item name="android:textColorHighlight">@color/couiTextOrangeHighlight</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_orange</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_orange</item>
+        <item name="couiColorDisable">@color/coui_color_disable_orange</item>
+        <item name="couiColorFocus">@color/coui_color_focus_orange</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_orange</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_orange</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_orange</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_orange</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_orange</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_orange</item>
+        <item name="couiDefaultTextColor">#ff3399ff</item>
+        <item name="couiThemeIdentifier">@integer/couiOrangeIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Orange.Alert" parent="@style/Theme.COUI.Orange">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.COUI.Orange.COUIBottomSheetDialog" parent="@style/Theme.COUI.Orange.Alert">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+    <style name="Theme.COUI.Purple" parent="@style/Theme.COUI">
+        <item name="couiColorPrimary">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_purple</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_purple</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_purple</item>
+        <item name="couiDefaultTextColor">#ff3399ff</item>
+    </style>
+    <style name="Theme.COUI.Red" parent="@style/Theme.COUI">
+        <item name="android:textColorHighlight">@color/couiTextRedHighlight</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_red</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_red</item>
+        <item name="couiColorDisable">@color/coui_color_disable_red</item>
+        <item name="couiColorFocus">@color/coui_color_focus_red</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_red</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_red</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_red</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_red</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_red</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_red</item>
+        <item name="couiDefaultTextColor">#ffff7a59</item>
+        <item name="couiThemeIdentifier">@integer/couiRedIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Red.Alert" parent="@style/Theme.COUI.Red">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.COUI.Red.COUIBottomSheetDialog" parent="@style/Theme.COUI.Red.Alert">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+    <style name="Theme.COUI.Skyblue" parent="@style/Theme.COUI">
+        <item name="android:textColorHighlight">@color/couiTextSkyblueHighlight</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_blue</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_blue</item>
+        <item name="couiColorDisable">@color/coui_color_disable_blue</item>
+        <item name="couiColorFocus">@color/coui_color_focus_blue</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_blue</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_blue</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_blue</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_blue</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_blue</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_blue</item>
+        <item name="couiDefaultTextColor">#fff47048</item>
+        <item name="couiThemeIdentifier">@integer/couiSkyBlueIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Yellow" parent="@style/Theme.COUI">
+        <item name="android:textColorHighlight">@color/couiTextYellowHighlight</item>
+        <item name="couiColorContainerTheme">@color/coui_color_container_theme_yellow</item>
+        <item name="couiColorContainerThemeHalftone">@color/coui_color_container_theme_halftone_yellow</item>
+        <item name="couiColorDisable">@color/coui_color_disable_yellow</item>
+        <item name="couiColorFocus">@color/coui_color_focus_yellow</item>
+        <item name="couiColorFocusOutline">@color/coui_color_focus_outline_yellow</item>
+        <item name="couiColorLabelTheme">@color/coui_color_label_theme_yellow</item>
+        <item name="couiColorPrimary">@color/coui_color_primary_yellow</item>
+        <item name="couiColorPrimaryText">@color/coui_color_primary_text_yellow</item>
+        <item name="couiColorPrimaryTextOnPopup">@color/coui_color_primary_on_popup_yellow</item>
+        <item name="couiColorSecondary">@color/coui_color_secondary_yellow</item>
+        <item name="couiDefaultTextColor">#fff47048</item>
+        <item name="couiThemeIdentifier">@integer/couiYellowIdentifier</item>
+    </style>
+    <style name="Theme.COUI.Yellow.Alert" parent="@style/Theme.COUI.Yellow">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.COUI.Yellow.COUIBottomSheetDialog" parent="@style/Theme.COUI.Yellow.Alert">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+    <style name="ThemeOverrideBase" parent="@style/Theme.AppCompat.Light">
+        <item name="android:backgroundDimAmount">@integer/coui_backgroundDimAmount</item>
+        <item name="colorPrimaryVariant">?couiColorPrimary</item>
+    </style>
+
+    <!-- Dialog Themes -->
+    <style name="AlertDialog.Style" parent="@style/AlertDialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">adjustPan</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="layoutBackgroundTint">@color/coui_color_surface</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="AlertDialog.Style.Dark" parent="@style/AlertDialog.Style">
+        <item name="layoutBackgroundTint">@color/coui_color_surface_dark</item>
+    </style>
+    <style name="AlertDialog.Style.Light" parent="@style/AlertDialog.Style">
+        <item name="layoutBackgroundTint">@color/coui_color_surface_light</item>
+    </style>
+    <style name="AlertDialogBuildTheme" parent="@style/AlertDialog.Style">
+        <item name="android:backgroundDimAmount">@dimen/dim_background</item>
+        <item name="android:windowBackground">@color/coui_transparence</item>
+    </style>
+    <style name="COUIFitContentBottomSheetDialog" parent="@style/DefaultBottomSheetDialog">
+        <item name="couiShowMaxHeight">false</item>
+    </style>
+    <style name="COUIHandleBottomSheetDialog" parent="@style/DefaultBottomSheetDialog">
+        <item name="couiIsHandlePanel">true</item>
+        <item name="couiShowMaxHeight">true</item>
+    </style>
+    <style name="DefaultBottomSheetDialog" parent="@style/Theme.MaterialComponents.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:background">@null</item>
+        <item name="android:navigationBarColor">?couiColorSurface</item>
+        <item name="android:windowElevation">0.0dp</item>
+        <item name="couiHandleViewHasPressAnim">true</item>
+        <item name="couiIsHandlePanel">false</item>
+        <item name="couiShowMaxHeight">false</item>
+        <item name="panelBackground">@drawable/coui_default_panel_bg_without_shadow</item>
+        <item name="panelBackgroundTintColor">?couiColorSurface</item>
+        <item name="panelDragViewIcon">@drawable/coui_panel_drag_view</item>
+        <item name="panelDragViewTintColor">?couiColorControls</item>
+    </style>
+    <style name="DefaultBottomSheetDialog.Dark" parent="@style/DefaultBottomSheetDialog">
+        <item name="android:navigationBarColor">@color/coui_panel_navigation_bar_color_dark</item>
+        <item name="panelBackgroundTintColor">@color/coui_panel_layout_tint_dark</item>
+        <item name="panelDragViewTintColor">@color/coui_color_controls_dark</item>
+    </style>
+    <style name="DefaultBottomSheetDialog.EdgeToEdge" parent="@style/DefaultBottomSheetDialog">
+        <item name="couiPanelEdgeToEdge">true</item>
+    </style>
+    <style name="DefaultBottomSheetDialog.Light" parent="@style/DefaultBottomSheetDialog">
+        <item name="panelDragViewTintColor">@color/coui_color_controls_light</item>
+    </style>
+    <style name="DefaultBottomSheetDialog.MaxHeight" parent="@style/DefaultBottomSheetDialog">
+        <item name="couiShowMaxHeight">true</item>
+    </style>
+
+    <!-- Theme Overlays -->
+    <style name="COUIInputPreferenceTheme">
+        <item name="couiInputPreferenceEditTextStyle">@style/Widget.COUI.InputPreference</item>
+    </style>
+    <style name="PreferenceThemeOverlay">
+        <item name="android:scrollbars">vertical</item>
+        <item name="checkBoxPreferenceStyle">@style/Preference.CheckBoxPreference.Material</item>
+        <item name="dialogPreferenceStyle">@style/Preference.DialogPreference.Material</item>
+        <item name="dropdownPreferenceStyle">@style/Preference.DropDown.Material</item>
+        <item name="editTextPreferenceStyle">@style/Preference.DialogPreference.EditTextPreference.Material</item>
+        <item name="preferenceCategoryStyle">@style/Preference.Category.Material</item>
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.AppCompat.Body2</item>
+        <item name="preferenceFragmentCompatStyle">@style/PreferenceFragment.Material</item>
+        <item name="preferenceFragmentListStyle">@style/PreferenceFragmentList.Material</item>
+        <item name="preferenceFragmentStyle">@style/PreferenceFragment.Material</item>
+        <item name="preferenceScreenStyle">@style/Preference.PreferenceScreen.Material</item>
+        <item name="preferenceStyle">@style/Preference.Material</item>
+        <item name="seekBarPreferenceStyle">@style/Preference.SeekBarPreference.Material</item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material</item>
+        <item name="switchPreferenceStyle">@style/Preference.SwitchPreference.Material</item>
+    </style>
+    <style name="PreferenceThemeOverlay.COUITheme" parent="@style/PreferenceThemeOverlay">
+        <item name="checkBoxPreferenceStyle">@style/Preference.COUI.CheckBoxPreference</item>
+        <item name="couiActivityDialogPreferenceStyle">@style/Preference.COUI.DialogPreference.Activity</item>
+        <item name="couiButtonPreferenceStyle">@style/Preference.COUI.COUIButtonPreference</item>
+        <item name="couiCheckBoxPreferenceStyle">@style/Preference.COUI.COUICheckBoxPreference</item>
+        <item name="couiCheckBoxWithDividerPreferenceStyle">@style/Preference.COUI.COUICheckBoxWithDividerPreference</item>
+        <item name="couiInputPreferenceStyle">@style/Preference.COUI.COUIInputPreference</item>
+        <item name="couiJumpPreferenceStyle">@style/Preference.COUI.COUIJumpPreference</item>
+        <item name="couiLoadInstallProgressPreferenceStyle">@style/Preference.COUI.COUILoadInstallProgressPreference</item>
+        <item name="couiMarkPreferenceStyle">@style/Preference.COUI.COUIMarkPreference</item>
+        <item name="couiMenuPreferenceStyle">@style/Preference.COUI.COUIMenuPreference</item>
+        <item name="couiRadioWithDividerPreferenceStyle">@style/Preference.COUI.COUIRadioWithDividerPreference</item>
+        <item name="couiRecommendedPreferenceStyle">@style/Preference.COUIRecommendedPreference</item>
+        <item name="couiSlideSelectPreferenceStyle">@style/Preference.COUI.COUISelectPreference</item>
+        <item name="couiSpannablePreferenceStyle">@style/Preference.COUI.COUISpannablePreference</item>
+        <item name="couiStatusSwitchingPreferenceStyle">@style/Preference.COUI.StatusSwitchingPreference</item>
+        <item name="couiSwitchLoadPreferenceStyle">@style/Preference.COUI.SwitchPreference.Loading</item>
+        <item name="couiSwitchWithDividerPreferenceStyle">@style/Preference.COUI.COUISwitchWithDividerPreference</item>
+        <item name="dialogPreferenceStyle">@style/Preference.COUI.DialogPreference</item>
+        <item name="editTextPreferenceStyle">@style/Preference.COUI.DialogPreference.EditTextPreference</item>
+        <item name="preferenceCategoryStyle">@style/Preference.COUI.Category</item>
+        <item name="preferenceScreenStyle">@style/Preference.COUI.PreferenceScreen</item>
+        <item name="preferenceStyle">@style/Preference.COUI</item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.COUI.SwitchPreferenceCompat</item>
+        <item name="switchPreferenceStyle">@style/Preference.COUI.SwitchPreference</item>
+    </style>
+    <style name="PreferenceThemeOverlay.COUITheme.Tiny" parent="@style/PreferenceThemeOverlay.COUITheme">
+        <item name="couiRecyclerGridNumber">@integer/grid_guide_column_preference</item>
+        <item name="paddingSize">small</item>
+        <item name="preferenceCategoryStyle">@style/Preference.COUITiny.Category</item>
+        <item name="preferenceFragmentCompatStyle">@style/PreferenceFragment.Material.WithToolBar</item>
+        <item name="preferenceStyle">@style/Preference.COUITiny</item>
+    </style>
+    <style name="PreferenceThemeOverlay.COUITheme.WithToolBar" parent="@style/PreferenceThemeOverlay.COUITheme">
+        <item name="couiRecyclerGridNumber">@integer/grid_guide_column_preference</item>
+        <item name="paddingSize">small</item>
+        <item name="preferenceFragmentCompatStyle">@style/PreferenceFragment.Material.WithToolBar</item>
+    </style>
+</resources>

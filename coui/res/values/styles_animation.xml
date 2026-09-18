@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI animation styles (monolith feature-split) -->
+<resources>
+    <style name="Widget.COUI.EditText.Dark.HintAnim.Line" parent="@style/Widget.COUI.EditText.Dark.HintAnim">
+            <item name="android:paddingLeft">0.0dp</item>
+            <item name="android:paddingTop">21.0dp</item>
+            <item name="android:paddingRight">0.0dp</item>
+            <item name="android:paddingBottom">9.0dp</item>
+            <item name="couiBackgroundMode">line</item>
+        </style>
+    <style name="Widget.COUI.EditText.Dark.HintAnim.Line.HintDisable" parent="@style/Widget.COUI.EditText.Dark.HintAnim.Line">
+            <item name="android:paddingTop">@dimen/coui_input_edit_text_no_title_padding_top</item>
+            <item name="android:paddingBottom">@dimen/coui_input_edit_text_no_title_padding_bottom
+            </item>
+            <item name="couiHintEnabled">false</item>
+            <item name="quickDelete">true</item>
+        </style>
+    <style name="Widget.COUI.EditText.Dark.HintAnim.Rectangle" parent="@style/Widget.COUI.EditText.Dark.HintAnim">
+            <item name="android:textStyle">bold</item>
+            <item name="android:paddingLeft">16.0dp</item>
+            <item name="android:paddingRight">10.0dp</item>
+            <item name="android:paddingBottom">12.0dp</item>
+            <item name="couiBackgroundMode">rectangle</item>
+            <item name="rectModePaddingTop">12.0dp</item>
+        </style>
+    <style name="Widget.COUI.EditText.HintAnim.Line" parent="@style/Widget.COUI.EditText.HintAnim">
+            <item name="android:paddingLeft">0.0dp</item>
+            <item name="android:paddingTop">27.0dp</item>
+            <item name="android:paddingRight">0.0dp</item>
+            <item name="android:paddingBottom">15.0dp</item>
+            <item name="couiBackgroundMode">line</item>
+        </style>
+    <style name="Widget.COUI.EditText.HintAnim.Line.HintDisable" parent="@style/Widget.COUI.EditText.HintAnim.Line">
+            <item name="android:paddingTop">@dimen/coui_input_edit_text_no_title_padding_top</item>
+            <item name="android:paddingBottom">@dimen/coui_input_edit_text_no_title_padding_bottom
+            </item>
+            <item name="couiHintEnabled">false</item>
+            <item name="quickDelete">true</item>
+        </style>
+    <style name="Widget.COUI.EditText.HintAnim.Rectangle" parent="@style/Widget.COUI.EditText.HintAnim">
+            <item name="android:textStyle">bold</item>
+            <item name="android:paddingLeft">16.0dp</item>
+            <item name="android:paddingRight">10.0dp</item>
+            <item name="android:paddingBottom">12.0dp</item>
+            <item name="couiBackgroundMode">rectangle</item>
+            <item name="rectModePaddingTop">12.0dp</item>
+        </style>
+    <style name="Animation.COUI" parent="@android:style/Animation" />
+    <style name="Animation.COUI.Activity" parent="@android:style/Animation.Activity">
+            <item name="android:activityOpenEnterAnimation">@anim/coui_open_slide_enter</item>
+            <item name="android:activityOpenExitAnimation">@anim/coui_open_slide_exit</item>
+            <item name="android:activityCloseEnterAnimation">@anim/coui_close_slide_enter</item>
+            <item name="android:activityCloseExitAnimation">@anim/coui_close_slide_exit</item>
+            <item name="android:taskOpenEnterAnimation">@anim/coui_task_open_slide_enter</item>
+            <item name="android:taskOpenExitAnimation">@anim/coui_task_open_slide_exit</item>
+            <item name="android:taskCloseEnterAnimation">@anim/coui_task_close_slide_enter</item>
+            <item name="android:taskCloseExitAnimation">@anim/coui_task_close_slide_exit</item>
+            <item name="android:taskToFrontEnterAnimation">@anim/coui_task_open_slide_enter</item>
+            <item name="android:taskToFrontExitAnimation">@anim/coui_task_open_slide_exit</item>
+            <item name="android:taskToBackEnterAnimation">@anim/coui_task_close_slide_enter</item>
+            <item name="android:taskToBackExitAnimation">@anim/coui_task_close_slide_exit</item>
+        </style>
+    <style name="Animation.COUI.IsolatedPopupListWindow" parent="@style/Animation.COUI">
+            <item name="android:windowEnterAnimation">@anim/coui_popup_list_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_isolated_popup_list_exit</item>
+        </style>
+    <style name="Animation.COUI.PopupListWindow" parent="@style/Animation.COUI">
+            <item name="android:windowEnterAnimation">@anim/coui_popup_list_enter</item>
+            <item name="android:windowExitAnimation">@anim/coui_popup_list_exit</item>
+        </style>
+</resources>

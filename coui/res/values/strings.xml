@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="red_dot_description">New notifications</string>
+    <string name="coui_accessibility_unselected">Not selected</string>
+    <string name="item_view_role_description">Tab</string>
+    <string name="red_dot_more">···</string>
+    <string name="indicator_content_description">Page indicator</string>
+    <string name="indicator_content_end">Double tap to select</string>
+    <plurals name="coui_page_indicator_description">
+        <item quantity="one">%1$d of %2$d page</item>
+        <item quantity="other">%1$d of %2$d pages</item>
+    </plurals>
+    <string name="minus_content">minus</string>
+    <plurals name="red_dot_with_number_description">
+        <item quantity="one">%d new notification</item>
+        <item quantity="other">%d new notifications</item>
+    </plurals>
+    <string name="coui_view_inflater_class">com.coui.appcompat.theme.COUIComponentsViewInflater</string>
+    <string name="bottom_sheet_behavior">com.coui.appcompat.panel.COUIBottomSheetBehavior</string>
+    <string name="coui_toolar_close_button_description">Show less of the title</string>
+    <string name="coui_toolar_expand_button_description">Show the title in full</string>
+    <string name="loading_button_dots">...</string>
+    <string name="morning">AM</string>
+    <string name="afternoon">PM</string>
+    <string name="coui_hour_abbreviation">h</string>
+    <string name="coui_minute_abbreviation">min</string>
+    <string name="coui_hour">h</string>
+    <string name="coui_minute">min</string>
+    <string name="ymdw">yyyy年M月d日 EEEE</string>
+    <string name="ymdwhm">yyyy年M月d日 EEEE HH:mm</string>
+    <string name="ymdwshm">yyyy年M月d日 EEE HH:mm</string>
+    <string name="coui_year" />
+    <string name="coui_month" />
+    <string name="coui_day" />
+    <string name="coui_time_picker_day" />
+    <string name="coui_time_picker_today">Today</string>
+    <string name="coui_accessibility_checked">Checked</string>
+    <string name="coui_accessibility_partchecked">Partially checked</string>
+    <string name="coui_accessibility_unchecked">Not checked</string>
+    <string name="coui_accessibility_select">Select</string>
+    <string name="coui_accessibility_select_all">Select all</string>
+    <string name="coui_accessibility_switch">Switch</string>
+    <string name="coui_inputview_show_password_description">Show password</string>
+    <string name="coui_slide_delete">Delete</string>
+    <string name="coui_lunar_leap_string">闰</string>
+    <string name="switch_loading">Loading</string>
+    <string name="switch_off">Off</string>
+    <string name="switch_on">On</string>
+    <string name="coui_install_download_progress_textview">Download</string>
+    <string name="coui_install_load_progress_apostrophe">...</string>
+    <string name="coui_loading_view_access_string">Loading</string>
+    <string name="coui_seek_bar_role_description">Slider</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_ok">OK</string>
+    <string name="coui_lottie_loading_large_dark_json">coui_lottie_loading_large_night.json</string>
+    <string name="coui_lottie_loading_large_json">coui_lottie_loading_large.json</string>
+    <string name="coui_lottie_loading_large_light_json">coui_lottie_loading_large.json</string>
+    <string name="coui_lottie_loading_small_dark_json">coui_lottie_loading_small_night.json</string>
+    <string name="coui_lottie_loading_small_json">coui_lottie_loading_small.json</string>
+    <string name="coui_lottie_loading_small_light_json">coui_lottie_loading_small.json</string>
+    <string name="lunar_april">四月</string>
+    <string name="lunar_august">八月</string>
+    <string name="lunar_december">腊月</string>
+    <string name="lunar_februry">二月</string>
+    <string name="lunar_january">正月</string>
+    <string name="lunar_july">七月</string>
+    <string name="lunar_june">六月</string>
+    <string name="lunar_march">三月</string>
+    <string name="lunar_may">五月</string>
+    <string name="lunar_november">冬月</string>
+    <string name="lunar_october">十月</string>
+    <string name="lunar_september">九月</string>
+    <string-array name="coui_time_picker_ampm">
+        <item>@string/morning</item>
+        <item>@string/afternoon</item>
+    </string-array>
+    <string-array name="coui_solor_mounth">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+    <string-array name="coui_lunar_month">
+        <item>@string/lunar_january</item>
+        <item>@string/lunar_februry</item>
+        <item>@string/lunar_march</item>
+        <item>@string/lunar_april</item>
+        <item>@string/lunar_may</item>
+        <item>@string/lunar_june</item>
+        <item>@string/lunar_july</item>
+        <item>@string/lunar_august</item>
+        <item>@string/lunar_september</item>
+        <item>@string/lunar_october</item>
+        <item>@string/lunar_november</item>
+        <item>@string/lunar_december</item>
+    </string-array>
+    <string name="coui_search_clear_button_description">Clear text</string>
+    <string name="coui_search_edit_box_description">Search box</string>
+    <string name="coui_search_share_button_description">Share</string>
+    <string name="coui_search_view_cancel">Cancel</string>
+    <string name="coui_search_view_text">Cancel</string>
+    <string name="bottom_recommended_header_title">You might be looking for:</string>
+    <string name="support_abc_searchview_description_clear">Clear query</string>
+    <string name="support_abc_searchview_description_search">Search</string>
+    <string name="support_abc_searchview_description_submit">Submit query</string>
+    <string name="support_abc_searchview_description_voice">Voice search</string>
+    <string name="coui_loading_rotating_json">coui_rotating_loading.json</string>
+    <string name="abc_capital_on">ON</string>
+    <string name="abc_capital_off">OFF</string>
+    <string name="abc_action_menu_overflow_description">More options</string>
+    <string name="coui_toolbar_navigation_back">Back</string>
+    <string name="coui_tool_tips_delete_icon_description">Close this tip</string>
+    <string name="coui_allow_text">Agree and continue</string>
+    <string name="coui_loading_rotating_json_dark">coui_rotating_loading_night.json</string>
+    <string name="coui_loading_rotating_json_light">coui_rotating_loading.json</string>
+    <string name="coui_lock_screen_next_button_description">Next</string>
+    <string name="coui_notification_close_button_description">Dismiss notification</string>
+    <string name="coui_panel_please_input_text">Enter</string>
+    <string name="coui_reject_text">Exit</string>
+    <string name="coui_security_alertdialog_checkbox_msg">"Don't remind me again"</string>
+    <string name="coui_security_alertdailog_privacy">Privacy Policy</string>
+    <string name="coui_security_alertdailog_statement">Tap and view %1$s for more information.</string>
+    <string name="coui_guide_dialog_known_text">Got it</string>
+    <string name="coui_guide_dialog_next_text">Next</string>
+    <string name="coui_guide_dialog_skip_text">Skip</string>
+    <string name="support_abc_toolbar_collapse_description">Collapse</string>
+    <string name="byteShort">&#160;B</string>
+    <string name="byteSpeed">&#160;B/s</string>
+    <string name="gigaByteSpeed">&#160;GB/s</string>
+    <string name="gigabyteShort">&#160;GB</string>
+    <string name="kiloByteSpeed">&#160;KB/s</string>
+    <string name="kilobyteShort">&#160;KB</string>
+    <string name="megaByteSpeed">&#160;MB/s</string>
+    <string name="megabyteShort">&#160;MB</string>
+    <string name="more_time_download">&#160;k</string>
+    <string name="most_time_download">&#160;m</string>
+    <string name="petaByteSpeed">&#160;PB/s</string>
+    <string name="petabyteShort">&#160;PB</string>
+    <string name="teraByteSpeed">&#160;TB/s</string>
+    <string name="terabyteShort">&#160;TB</string>
+    <!-- Leapy added 2026-08-01: Exact decoded COUI fast-scroller truncation token. -->
+    <string name="fast_scroller_dots">...</string>
+    <!-- Leapy end -->
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leapy added 2026-08-04: Keep COUI alert dialog messages from falling
+     back to the base 80dp scroll cap on phones whose available height is
+     below OPPO's h560dp bucket. This preserves the OPPO dialog behavior for
+     normal portrait devices while still letting very short windows use the
+     compact base limits.
+     Leapy end -->
+<resources>
+    <dimen name="coui_alert_dialog_builder_content_max_height">524dp</dimen>
+    <dimen name="coui_alert_dialog_builder_content_max_height_with_adapter">240dp</dimen>
+    <dimen name="coui_alert_dialog_builder_content_min_height">60dp</dimen>
+    <dimen name="coui_alert_dialog_builder_title_scroll_max_height">160dp</dimen>
+</resources>

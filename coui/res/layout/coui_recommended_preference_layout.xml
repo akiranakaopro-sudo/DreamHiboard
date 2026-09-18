@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.recyclerview.widget.COUIRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@id/recommended_recycler_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="false"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:forceDarkAllowed="false" />

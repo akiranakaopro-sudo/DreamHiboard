@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI dialog attrs (monolith feature-split) -->
+<resources>
+    <attr name="couiPanelPaddingBottom" format="dimension" />
+    <attr name="couiPanelSupportExitBlockingAnimation" format="boolean" />
+    <attr name="maxPanelHeight" format="float|reference" />
+    <attr name="couiDialogBlurBackground" format="boolean" />
+    <attr name="isTinyDialog" format="boolean" />
+    <attr name="couiAlertDialogContentTextColor" format="color" />
+    <attr name="couiFullPageStatementDividerColor" format="color|reference" />
+    <attr name="couiFullPageStatementPrivacyIcon" format="reference" />
+    <attr name="couiFullPageStatementStyle" format="reference" />
+    <attr name="couiFullPageStatementTextButtonColor" format="color|reference" />
+    <attr name="couiFullPageStatementTextColor" format="color|reference" />
+    <attr name="couiFullPageStatementTitleText" format="string" />
+    <attr name="appStatement" format="string" />
+    <attr name="couiIsHandlePanel" format="boolean" />
+    <attr name="couiPanelEdgeToEdge" format="boolean" />
+    <attr name="couiPanelLayoutWithShadowTint" format="color" />
+    <attr name="supportPanelStyle" format="boolean" />
+    <declare-styleable name="COUIAlertDialogBuilder">
+            <attr name="android:gravity" />
+            <attr name="contentMaxHeight" />
+            <attr name="contentMaxWidth" />
+            <attr name="customContentLayout" />
+            <attr name="hasLoading" />
+            <attr name="isAssignMentLayout" />
+            <attr name="isCustomStyle" />
+            <attr name="isForceCenterStyleInLargeScreen" />
+            <attr name="isNeedToAdaptMessageAndList" />
+            <attr name="isTinyDialog" />
+            <attr name="windowAnimStyle" />
+        </declare-styleable>
+    <declare-styleable name="COUIAlertDialogMaxLinearLayout">
+            <attr name="clip_radius_root" />
+            <attr name="maxHeight" />
+            <attr name="maxWidth" />
+        </declare-styleable>
+    <declare-styleable name="COUIAlertDialogClipCornerLinearLayout">
+            <attr name="clip_radius" />
+        </declare-styleable>
+    <declare-styleable name="COUIAlertDialogMaxScrollView">
+            <attr name="maxHeight" />
+            <attr name="maxWidth" />
+        </declare-styleable>
+    <declare-styleable name="COUIFullPageStatement">
+            <attr name="android:layout" />
+            <attr name="appStatement" />
+            <attr name="bottomButtonText" />
+            <attr name="couiFullPageStatementDividerColor" />
+            <attr name="couiFullPageStatementPrivacyIcon" />
+            <attr name="couiFullPageStatementTextButtonColor" />
+            <attr name="couiFullPageStatementTextColor" />
+            <attr name="couiFullPageStatementTitleText" />
+            <attr name="exitButtonText" />
+        </declare-styleable>
+    <attr name="alertDialogTheme" format="reference" />
+    <attr name="alertDialogStyle" format="reference" />
+</resources>

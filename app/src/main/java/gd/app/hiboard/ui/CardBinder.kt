@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.coui.appcompat.R as CouiR
 import gd.app.hiboard.R
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
@@ -50,12 +51,12 @@ class CardBinder(
         state.content.adviceItems.forEach { item ->
             val title = TextView(body.context).apply {
                 text = item.title
-                setTextColor(body.context.getColor(R.color.hiboard_text))
+                setTextColor(body.context.couiColor(CouiR.attr.couiColorLabelPrimary))
                 textSize = 14f
             }
             val subtitle = TextView(body.context).apply {
                 text = item.subtitle
-                setTextColor(body.context.getColor(R.color.hiboard_muted))
+                setTextColor(body.context.couiColor(CouiR.attr.couiColorLabelSecondary))
                 textSize = 12f
             }
             items.addView(title)

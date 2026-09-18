@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI edittext styles (monolith feature-split) -->
+<resources>
+    <style name="Widget.AppCompatSupport.SearchView" parent="@style/Base.Widget.AppCompat.SearchView" />
+    <style name="COUICardSingleInputViewStyle">
+            <item name="couiCardSingleInputEditTextStyle">@style/Widget.COUI.SingleInput</item>
+        </style>
+    <style name="COUIInputTitleStyle" parent="@style/couiTextAppearanceHeadline6">
+            <item name="android:textColor">@color/coui_input_title_color</item>
+            <item name="android:minHeight">@dimen/coui_inputView_title_minheight</item>
+        </style>
+    <style name="COUIInputViewStyle">
+            <item name="couiInputPreferenceEditTextStyle">@style/Widget.COUI.InputPreference</item>
+        </style>
+    <style name="COUIMultiInputViewStyle">
+            <item name="couiCardMultiInputEditTextStyle">@style/Widget.COUI.MultiInput</item>
+        </style>
+    <style name="Widget.COUI.AppCompatSupport.SearchView" parent="@style/Widget.AppCompatSupport.SearchView">
+            <item name="closeIcon">@drawable/coui_search_clear_selector</item>
+            <item name="iconifiedByDefault">false</item>
+            <item name="queryBackground">@drawable/coui_searchview_edit_background</item>
+            <item name="searchIcon">@drawable/coui_search_view_icon</item>
+            <item name="submitBackground">@drawable/coui_searchview_edit_background</item>
+            <item name="voiceIcon">@drawable/coui_searchview_voice</item>
+        </style>
+    <style name="Widget.COUI.COUISearchBar" parent="@android:style/Widget">
+            <item name="couiSearchClearSelector">@drawable/ic_edit_text_delete_search_view</item>
+            <item name="couiSearchIcon">@drawable/coui_search_view_icon</item>
+            <item name="functionalButtonTextColor">?couiColorPrimaryText</item>
+            <item name="inputHintTextColor">?couiColorLabelSecondary</item>
+            <item name="inputTextColor">?couiColorPrimaryNeutral</item>
+            <item name="inputTextSize">@dimen/coui_search_view_input_text_size</item>
+            <item name="normalHintColor">@color/coui_search_view_hint_color_selector</item>
+        </style>
+    <style name="Widget.COUI.COUISearchBar.Dark" parent="@style/Widget.COUI.COUISearchBar">
+            <item name="functionalButtonTextColor">?couiColorPrimaryText</item>
+            <item name="inputHintTextColor">@color/coui_color_label_secondary_dark</item>
+            <item name="inputTextColor">@color/coui_search_view_input_text_color_dark</item>
+        </style>
+    <style name="Widget.COUI.COUISearchViewAnimate" parent="@android:style/Widget">
+            <item name="buttonDivider">@drawable/search_linear_divider</item>
+            <item name="couiSearchClearSelector">@drawable/ic_edit_text_delete_search_view</item>
+            <item name="couiSearchIcon">@drawable/coui_search_view_icon</item>
+            <item name="functionalButtonTextColor">?couiColorPrimaryText</item>
+            <item name="inputHintTextColor">?couiColorLabelSecondary</item>
+            <item name="inputTextColor">?couiColorPrimaryNeutral</item>
+            <item name="normalBackground">@drawable/coui_searchview_corner_rect_bg</item>
+            <item name="normalHintColor">@color/coui_search_view_hint_color_selector</item>
+            <item name="searchBackground">@color/coui_search_view_search_background</item>
+        </style>
+    <style name="Widget.COUI.COUISearchViewAnimate.Dark" parent="@style/Widget.COUI.COUISearchViewAnimate">
+            <item name="functionalButtonTextColor">?couiColorPrimaryText</item>
+            <item name="inputHintTextColor">@color/coui_search_view_hint_color_dark</item>
+            <item name="inputTextColor">@color/coui_search_view_input_text_color_dark</item>
+            <item name="searchBackground">@color/coui_search_view_search_background_dark</item>
+        </style>
+    <style name="Widget.COUI.COUITouchSearchView" parent="@android:style/Widget">
+            <item name="couiAdaptiveVibrator">true</item>
+            <item name="couiFirstIsCharacter">false</item>
+            <item name="couiKeyCollect">@drawable/coui_touchsearch_collect_normal</item>
+            <item name="couiKeyTextColor">@color/coui_touchsearchview_text_color</item>
+            <item name="couiPopupCollect">@drawable/coui_touchsearch_collect_popup</item>
+        </style>
+    <style name="Widget.COUI.EditText" parent="@android:style/Widget.EditText">
+            <item name="android:textAppearance">@style/couiEditTextTextAppearance</item>
+            <item name="android:textColorHint">?couiColorLabelSecondary</item>
+            <item name="android:paddingTop">9.0dp</item>
+            <item name="android:paddingBottom">9.0dp</item>
+            <item name="android:minHeight">@dimen/coui_edit_text_height_min</item>
+            <item name="android:editTextColor">@color/coui_edit_text_color</item>
+            <item name="android:textAlignment">viewStart</item>
+            <item name="collapsedTextColor">?couiColorSecondNeutral</item>
+            <item name="couiDefaultStrokeColor">?couiColorDivider</item>
+            <item name="couiDisabledStrokeColor">@color/coui_textinput_stroke_color_disabled</item>
+            <item name="couiEditTextDeleteIconNormal">@drawable/ic_edit_text_delete</item>
+            <item name="couiEditTextDeleteIconPressed">@drawable/ic_edit_text_delete</item>
+            <item name="couiFocusStrokeWidth">@dimen/coui_textinput_focus_stroke_width</item>
+            <item name="couiStrokeColor">?couiColorPrimary</item>
+            <item name="couiStrokeWidth">@dimen/coui_textinput_stroke_width</item>
+        </style>
+    <style name="Widget.COUI.EditText.Dark" parent="@style/Widget.COUI.EditText">
+            <item name="collapsedTextColor">@color/coui_color_secondary_neutral_dark</item>
+            <item name="couiDefaultStrokeColor">?couiColorDivider</item>
+            <item name="couiDisabledStrokeColor">@color/coui_textinput_stroke_color_disabled_dark</item>
+        </style>
+    <style name="Widget.COUI.EditText.Dark.HintAnim" parent="@style/Widget.COUI.EditText.Dark">
+            <item name="collapsedTextSize">@dimen/coui_textinput_hint_text_size</item>
+            <item name="cornerRadius">@dimen/coui_textinput_corner_radius</item>
+            <item name="couiFocusStrokeWidth">@dimen/coui_textinput_focus_stroke_width</item>
+            <item name="couiHintEnabled">true</item>
+            <item name="couiStrokeWidth">@dimen/coui_textinput_stroke_width</item>
+        </style>
+    <style name="Widget.COUI.EditText.HintAnim" parent="@style/Widget.COUI.EditText">
+            <item name="collapsedTextSize">@dimen/coui_textinput_hint_text_size</item>
+            <item name="cornerRadius">@dimen/coui_textinput_corner_radius</item>
+            <item name="couiFocusStrokeWidth">@dimen/coui_textinput_focus_stroke_width</item>
+            <item name="couiHintEnabled">true</item>
+            <item name="couiStrokeWidth">@dimen/coui_textinput_stroke_width</item>
+        </style>
+    <style name="Widget.COUI.EditText.Light" parent="@style/Widget.COUI.EditText">
+            <item name="couiDisabledStrokeColor">@color/coui_textinput_stroke_color_disabled_light
+            </item>
+        </style>
+    <style name="Widget.COUI.EditText.SearchBarStyle" parent="@style/Widget.COUI.EditText">
+            <item name="android:editTextStyle">@style/Widget.COUI.EditText.SearchBarStyle</item>
+            <item name="android:paddingTop">0.0dp</item>
+            <item name="android:paddingBottom">0.0dp</item>
+            <item name="android:editTextBackground">@null</item>
+            <item name="android:paddingEnd">4.0dp</item>
+        </style>
+    <style name="Widget.COUI.EditText.SearchBarStyle.HintText" parent="@style/Widget.COUI.EditText.SearchBarStyle">
+            <item name="android:ellipsize">end</item>
+            <item name="android:focusable">false</item>
+            <item name="android:focusableInTouchMode">false</item>
+            <item name="android:clickable">false</item>
+            <item name="android:maxLines">1</item>
+        </style>
+    <style name="Widget.COUI.EditText.SearchViewStyle" parent="@style/Widget.COUI.EditText">
+            <item name="android:editTextStyle">@style/Widget.COUI.EditText.SearchViewStyle</item>
+            <item name="android:paddingTop">0.0dp</item>
+            <item name="android:paddingBottom">0.0dp</item>
+            <item name="android:editTextBackground">@null</item>
+        </style>
+    <style name="Widget.COUI.EditText.SearchViewStyle.HintText" parent="@style/Widget.COUI.EditText.SearchViewStyle">
+            <item name="android:ellipsize">end</item>
+            <item name="android:focusable">false</item>
+            <item name="android:focusableInTouchMode">false</item>
+            <item name="android:clickable">false</item>
+            <item name="android:maxLines">1</item>
+        </style>
+    <style name="Widget.COUI.Input" parent="@android:style/Widget.EditText">
+            <item name="android:textAppearance">@style/couiTextBodyL</item>
+            <item name="android:paddingTop">@dimen/coui_input_edit_text_no_title_padding_top</item>
+            <item name="android:paddingBottom">@dimen/coui_input_edit_text_no_title_padding_bottom
+            </item>
+            <item name="android:minHeight">0.0dp</item>
+            <item name="android:maxLines">1</item>
+            <item name="android:singleLine">true</item>
+            <item name="android:editTextColor">@color/coui_edit_text_color</item>
+            <item name="android:textAlignment">viewStart</item>
+            <item name="collapsedTextColor">?couiColorSecondNeutral</item>
+            <item name="couiBackgroundMode">line</item>
+            <item name="couiDefaultStrokeColor">?couiColorDivider</item>
+            <item name="couiDisabledStrokeColor">@color/coui_textinput_stroke_color_disabled</item>
+            <item name="couiEditTextDeleteIconNormal">@drawable/ic_edit_text_delete</item>
+            <item name="couiEditTextDeleteIconPressed">@drawable/ic_edit_text_delete</item>
+            <item name="couiFocusStrokeWidth">@dimen/coui_textinput_focus_stroke_width</item>
+            <item name="couiHintEnabled">false</item>
+            <item name="couiStrokeColor">?couiColorPrimary</item>
+            <item name="couiStrokeWidth">@dimen/coui_input_preference_stroke_width</item>
+            <item name="quickDelete">true</item>
+        </style>
+    <style name="Widget.COUI.LockScreeenPwdInputEdit" parent="@style/Widget.COUI.Input">
+            <item name="android:paddingTop">@dimen/coui_single_input_edit_text_padding_vertical</item>
+            <item name="android:paddingBottom">@dimen/coui_single_input_edit_text_padding_vertical
+            </item>
+            <item name="couiBackgroundMode">noLine</item>
+            <item name="quickDelete">false</item>
+        </style>
+    <style name="Widget.COUI.LockScreeenPwdInputEdit.Desktop" parent="@style/Widget.COUI.LockScreeenPwdInputEdit">
+            <item name="android:textCursorDrawable">@drawable/ic_lock_screen_pwd_input_desktop_cursor
+            </item>
+        </style>
+    <style name="Widget.COUI.MultiInput" parent="@style/Widget.COUI.Input">
+            <item name="android:textAppearance">@style/couiTextBodyL</item>
+            <item name="android:paddingTop">@dimen/coui_card_multi_edittext_padding</item>
+            <item name="android:paddingBottom">@dimen/coui_card_multi_edittext_padding</item>
+            <item name="android:scrollbars">none</item>
+            <item name="android:maxLines">5</item>
+            <item name="android:singleLine">false</item>
+            <item name="couiBackgroundMode">noLine</item>
+            <item name="couiEditTextHintLines">3</item>
+            <item name="quickDelete">false</item>
+        </style>
+    <style name="Widget.COUI.SingleInput" parent="@style/Widget.COUI.Input">
+            <item name="android:paddingTop">@dimen/coui_single_input_edit_text_padding_verticalTop
+            </item>
+            <item name="android:paddingBottom">
+                @dimen/coui_single_input_edit_text_padding_verticalBottom
+            </item>
+            <item name="android:scrollbars">none</item>
+            <item name="couiBackgroundMode">noLine</item>
+            <item name="quickDelete">false</item>
+        </style>
+    <style name="couiEditTextTextAppearance" parent="@style/couiTextAppearanceHeadline6">
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-regular</item> -->
+        </style>
+    <style name="couiInputTextAppearance" parent="@style/couiTextAppearanceHeadline6">
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-regular</item> -->
+        </style>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:orientation="vertical" android:id="@id/lock_screen_pwd_card" android:layout_width="match_parent" android:layout_height="@dimen/coui_input_lock_screen_pwd_height" android:paddingStart="@dimen/coui_input_lock_screen_pwd_card_padding" android:paddingEnd="@dimen/coui_input_lock_screen_pwd_card_padding" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
+        <TextView android:textColor="@color/coui_preference_secondary_text_color" android:id="@id/title" android:paddingTop="@dimen/coui_single_input_title_padding_top" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/COUIInputTitleStyle" />
+        <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/title">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/header_container" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_centerVertical="true" android:layout_marginEnd="16.0dp" />
+            <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:id="@id/edittext_container" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_toEndOf="@id/header_container" />
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/button_layout" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:layout_marginEnd="-12.0dp" android:layout_alignParentEnd="true">
+                <CheckBox android:id="@id/checkbox_password" android:background="@null" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:button="@drawable/coui_edittext_password_icon" />
+            </LinearLayout>
+            <TextView android:textSize="12.0sp" android:textColor="?couiColorHintNeutral" android:id="@id/input_count" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:layout_alignParentEnd="true" />
+        </RelativeLayout>
+    </LinearLayout>
+    <TextView android:textAppearance="@style/couiTextAppearanceCaption" android:textColor="?couiColorError" android:id="@id/text_input_error" android:paddingTop="8.0dp" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="32.0dp" android:paddingEnd="32.0dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/lock_screen_pwd_card" />
+</androidx.constraintlayout.widget.ConstraintLayout>

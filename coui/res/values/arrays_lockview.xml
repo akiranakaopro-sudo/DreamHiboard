@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI lockview arrays (from decoded dump consolidation) -->
+<resources>
+    <array name="coui_number_keyboard_letters">
+            <item />
+            <item>@string/abc</item>
+            <item>@string/def</item>
+            <item>@string/ghi</item>
+            <item>@string/jkl</item>
+            <item>@string/mno</item>
+            <item>@string/pqrs</item>
+            <item>@string/tuv</item>
+            <item>@string/wxyz</item>
+            <item />
+            <item />
+            <item />
+        </array>
+</resources>

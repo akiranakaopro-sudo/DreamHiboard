@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI edittext attrs (monolith feature-split) -->
+<resources>
+    <attr name="COUICardLockScreenPwdInputStyleEdit" format="reference" />
+    <attr name="COUICardLockScreenPwdInputStyleEditDesktop" format="reference" />
+    <attr name="couiInputListHorizontalMargin" format="dimension" />
+    <attr name="couiInputRadius" format="dimension" />
+    <attr name="couiEditTextDeleteBgColorNormal" format="reference|color" />
+    <attr name="couiEditTextDeleteIconNormal" format="reference" />
+    <attr name="couiEditTextDeleteIconPressed" format="reference" />
+    <attr name="couiEditTextErrorColor" format="reference|color" />
+    <attr name="couiEditTextHintLines" format="integer" />
+    <attr name="couiEditTextIsEllipsis" format="boolean" />
+    <attr name="couiEditTextLineHintDisableStyle" format="reference" />
+    <attr name="couiEditTextLineStyle" format="reference" />
+    <attr name="couiEditTextNoEllipsisText" format="string" />
+    <attr name="couiEditTextRectangleStyle" format="reference" />
+    <attr name="couiSupportEmptyInput" format="boolean" />
+    <attr name="couiEnableInputCount" format="boolean" />
+    <attr name="couiEnableSecurityInput" format="boolean" />
+    <attr name="couiInputCustomFormat" format="boolean" />
+    <attr name="couiInputMaxCount" format="integer" />
+    <attr name="couiInputMinCount" format="integer" />
+    <attr name="couiCodeInputCount" format="integer" />
+    <attr name="couiInputType">
+            <enum name="text" value="0" />
+            <enum name="number" value="1" />
+            <enum name="numberPassword" value="2" />
+        </attr>
+    <attr name="popInputMethod">
+            <enum name="none" value="0" />
+            <enum name="needed" value="1" />
+            <enum name="notNeeded" value="2" />
+        </attr>
+    <attr name="couiCardMultiInputEditTextStyle" format="reference" />
+    <attr name="couiCardSingleInputEditTextStyle" format="reference" />
+    <declare-styleable name="COUIEditText">
+            <attr name="android:hint" />
+            <attr name="android:textColor" />
+            <attr name="android:textColorHint" />
+            <attr name="collapsedTextColor" />
+            <attr name="collapsedTextSize" />
+            <attr name="cornerRadius" />
+            <attr name="couiBackgroundMode" />
+            <attr name="couiDefaultStrokeColor" />
+            <attr name="couiDisabledStrokeColor" />
+            <attr name="couiEditTextDeleteIconNormal" />
+            <attr name="couiEditTextDeleteIconPressed" />
+            <attr name="couiEditTextErrorColor" />
+            <attr name="couiEditTextHintLines" />
+            <attr name="couiEditTextIsEllipsis" />
+            <attr name="couiEditTextNoEllipsisText" />
+            <attr name="couiFocusStrokeWidth" />
+            <attr name="couiHintAnimationEnabled" />
+            <attr name="couiHintEnabled" />
+            <attr name="couiShowDeleteIcon" />
+            <attr name="couiStrokeColor" />
+            <attr name="couiStrokeWidth" />
+            <attr name="quickDelete" />
+            <attr name="rectModePaddingTop" />
+        </declare-styleable>
+    <declare-styleable name="COUIInputListSelectedItemLayout">
+            <attr name="couiInputListHorizontalMargin" />
+            <attr name="couiInputRadius" />
+            <attr name="listIsTiny" />
+        </declare-styleable>
+    <declare-styleable name="COUIInputView">
+            <attr name="couiTitle" />
+            <attr name="couiHint" />
+            <attr name="couiEnablePassword" />
+            <attr name="couiPasswordType" />
+            <attr name="couiEnableError" />
+            <attr name="couiInputMaxCount" />
+            <attr name="couiEnableInputCount" />
+            <attr name="couiInputType" />
+            <attr name="couiInputCustomFormat" />
+            <attr name="couiEditLineColor" />
+        </declare-styleable>
+    <declare-styleable name="COUILockScreenPwdInputLayout">
+            <attr name="couiEnableInputCount" />
+            <attr name="couiInputMaxCount" />
+            <attr name="couiInputMinCount" />
+            <attr name="couiInputType" />
+            <attr name="couiIsScenesMode" />
+        </declare-styleable>
+    <declare-styleable name="COUICodeInputView">
+            <attr name="couiCodeInputCount" />
+            <attr name="couiEnableSecurityInput" />
+        </declare-styleable>
+</resources>

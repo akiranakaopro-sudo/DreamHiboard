@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.coui.appcompat.cardlist.COUICardListSelectedItemLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/recommended_recyclerView_padding_start"
+    android:paddingEnd="@dimen/recommended_recyclerView_padding_start">
+
+    <TextView
+        android:id="@id/txt_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center"
+        android:paddingTop="@dimen/recommended_preference_list_item_common_margin_vertical"
+        android:paddingBottom="@dimen/recommended_preference_list_item_common_margin_vertical"
+        android:textAlignment="viewStart"
+        android:textAppearance="@style/couiTextAppearanceButton"
+        android:textColor="?couiColorPrimaryNeutral" />
+</com.coui.appcompat.cardlist.COUICardListSelectedItemLayout>

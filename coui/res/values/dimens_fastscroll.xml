@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI fastscroll dimens (monolith feature-split) -->
+<resources>
+    <dimen name="coui_fast_scroller_bar_background_scale_x_offset">12dp</dimen>
+    <dimen name="coui_fast_scroller_bar_thumb_shadow_padding_x">0.33dp</dimen>
+    <dimen name="coui_fast_scroller_bar_thumb_shadow_padding_y">6.5dp</dimen>
+    <dimen name="coui_fast_scroller_bar_thumb_translate_x">0dp</dimen>
+    <dimen name="coui_fast_scroller_bar_thumb_translate_y">1.5dp</dimen>
+    <dimen name="coui_fast_scroller_default_height">101.5dp</dimen>
+    <dimen name="coui_fast_scroller_default_vertical_margin_end">3dp</dimen>
+    <dimen name="coui_fast_scroller_default_width">89.5dp</dimen>
+    <dimen name="coui_fast_scroller_margin">20dp</dimen>
+    <dimen name="coui_fast_scroller_max_message_width">302dp</dimen>
+    <dimen name="coui_fast_scroller_message_background_center_y">29dp</dimen>
+    <dimen name="coui_fast_scroller_message_background_internal_padding">60dp</dimen>
+    <dimen name="coui_fast_scroller_message_background_top_offset">1dp</dimen>
+    <dimen name="coui_fast_scroller_message_margin_end">0dp</dimen>
+    <dimen name="coui_fast_scroller_message_minimum_height">108dp</dimen>
+    <dimen name="coui_fast_scroller_message_minimum_width">108.3dp</dimen>
+    <dimen name="coui_fast_scroller_message_shadow_padding_end">68dp</dimen>
+    <dimen name="coui_fast_scroller_message_shadow_padding_top">20dp</dimen>
+    <dimen name="coui_fast_scroller_message_text_padding">32dp</dimen>
+    <dimen name="coui_fast_scroller_message_text_shadow_padding_top">17.5dp</dimen>
+    <dimen name="coui_fast_scroller_message_text_size">20sp</dimen>
+    <dimen name="coui_fast_scroller_minimum_range">150dp</dimen>
+    <dimen name="coui_fast_scroller_scale_end_height">128dp</dimen>
+    <dimen name="coui_fast_scroller_scale_end_width">112.5dp</dimen>
+    <dimen name="coui_fast_scroller_scale_shadow_padding_end">23dp</dimen>
+    <dimen name="coui_fast_scroller_scale_shadow_padding_top">10dp</dimen>
+    <dimen name="coui_fast_scroller_thumb_bottom_margin">0dp</dimen>
+    <dimen name="coui_fast_scroller_thumb_top_margin">0dp</dimen>
+    <dimen name="coui_fast_scroller_union_clip_rect_top">18dp</dimen>
+    <dimen name="coui_fast_scroller_union_height">12dp</dimen>
+    <dimen name="coui_fast_scroller_union_width">8dp</dimen>
+</resources>

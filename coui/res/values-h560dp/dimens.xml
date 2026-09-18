@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leapy added 2026-08-03: Restore the decoded OPPO COUI dialog height
+     qualifier. Without it, phone displays inherit the 80dp base message cap
+     and long notices are unnecessarily clipped into a scrolling viewport. -->
+<resources>
+    <dimen name="coui_alert_dialog_builder_content_max_height">524dp</dimen>
+    <dimen name="coui_alert_dialog_builder_content_max_height_with_adapter">240dp</dimen>
+    <dimen name="coui_alert_dialog_builder_content_min_height">60dp</dimen>
+    <dimen name="coui_alert_dialog_builder_title_scroll_max_height">160dp</dimen>
+</resources>

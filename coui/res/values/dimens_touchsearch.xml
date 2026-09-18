@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI touchsearch dimens (from decoded dump consolidation) -->
+<resources>
+    <dimen name="coui_touchsearch_background_width">39.0dp</dimen>
+    <dimen name="coui_touchsearch_char_offset">0.0dp</dimen>
+    <dimen name="coui_touchsearch_collect_drawable_popup_height">16.0dp</dimen>
+    <dimen name="coui_touchsearch_collect_drawable_popup_width">16.0dp</dimen>
+    <dimen name="coui_touchsearch_default_height">432.0dp</dimen>
+    <dimen name="coui_touchsearch_each_item_height">14.0dp</dimen>
+    <dimen name="coui_touchsearch_item_spacing">2.0dp</dimen>
+    <dimen name="coui_touchsearch_key_dot_textsize">20.0dp</dimen>
+    <dimen name="coui_touchsearch_key_textsize">12.0dp</dimen>
+    <dimen name="coui_touchsearch_limit1_height">416.0dp</dimen>
+    <dimen name="coui_touchsearch_limit2_height">288.0dp</dimen>
+    <dimen name="coui_touchsearch_limit3_height">224.0dp</dimen>
+    <dimen name="coui_touchsearch_limit4_height">192.0dp</dimen>
+    <dimen name="coui_touchsearch_limit5_height">144.0dp</dimen>
+    <dimen name="coui_touchsearch_min_height">296.0dp</dimen>
+    <dimen name="coui_touchsearch_padding_bottom">16.0dp</dimen>
+    <dimen name="coui_touchsearch_padding_top">16.0dp</dimen>
+    <dimen name="coui_touchsearch_popup_first_default_height">48.0dp</dimen>
+    <dimen name="coui_touchsearch_popup_first_default_width">48.0dp</dimen>
+    <dimen name="coui_touchsearch_popup_first_key_padding_bottom">10.0dp</dimen>
+    <dimen name="coui_touchsearch_popup_first_layout_width">56.0dp</dimen>
+    <dimen name="coui_touchsearch_popupwin_default_offset">23.0dp</dimen>
+    <dimen name="coui_touchsearch_popupwin_first_textsize">20.0sp</dimen>
+    <dimen name="coui_touchsearch_popupwin_margin">4.0dp</dimen>
+    <dimen name="coui_touchsearch_popupwin_right_margin">0.5dp</dimen>
+    <dimen name="coui_touchsearch_popupwin_second_marginEnd">8.0dp</dimen>
+    <dimen name="coui_touchsearch_right_margin">5.0dp</dimen>
+    <dimen name="coui_touchsearch_touch_end_gap">8.0dp</dimen>
+    <dimen name="coui_touchsearch_touch_padding_end">8.5dp</dimen>
+    <dimen name="coui_touchsearch_touch_padding_start">8.5dp</dimen>
+    <dimen name="support_shadow_size_level_for_touch_search_lowerP">1.0dp</dimen>
+</resources>

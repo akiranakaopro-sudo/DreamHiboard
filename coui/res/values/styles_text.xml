@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI text styles (monolith feature-split) -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="couiTextAppearance" parent="@android:style/TextAppearance">
+            <item name="android:textStyle">normal</item>
+            <item name="android:textAllCaps">false</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif</item> -->
+            <item name="android:elegantTextHeight">@bool/coui_support_elegant_text_height</item>
+        </style>
+    <style name="couiTextAppearanceArticleBody" parent="@style/couiTextAppearance">
+            <item name="android:textSize">14.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_body_s</item>
+        </style>
+    <style name="couiTextAppearanceBody" parent="@style/couiTextAppearance">
+            <item name="android:textSize">14.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_body_m</item>
+        </style>
+    <style name="couiTextAppearanceBodyL" parent="@style/couiTextAppearance">
+            <item name="android:textSize">16.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_body_l</item>
+        </style>
+    <style name="couiTextAppearanceButton" parent="@style/couiTextAppearance">
+            <item name="android:textSize">14.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_m</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceButtonL" parent="@style/couiTextAppearance">
+            <item name="android:textSize">16.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_l</item>
+            <item name="fontFamily">sans-serif-medium</item>
+        </style>
+    <style name="couiTextAppearanceCaption" parent="@style/couiTextAppearance">
+            <item name="android:textSize">10.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_cap</item>
+        </style>
+    <style name="couiTextAppearanceDescription" parent="@style/couiTextAppearance">
+            <item name="android:textSize">12.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_body_xs</item>
+        </style>
+    <style name="couiTextAppearanceDisplay" parent="@style/couiTextAppearance">
+            <item name="android:textSize">48.0sp</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceDisplayL" parent="@style/couiTextAppearance">
+            <item name="android:textSize">72.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_display_l</item>
+            <item name="fontFamily">sans-serif-medium</item>
+        </style>
+    <style name="couiTextAppearanceDisplayM" parent="@style/couiTextAppearance">
+            <item name="android:textSize">36.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_display_m</item>
+            <item name="android:textFontWeight">600</item>
+        </style>
+    <style name="couiTextAppearanceHeadline1" parent="@style/couiTextAppearance">
+            <item name="android:textSize">32.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_display_s</item>
+            <item name="android:textFontWeight">600</item>
+        </style>
+    <style name="couiTextAppearanceHeadline2" parent="@style/couiTextAppearance">
+            <item name="android:textSize">28.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_headline_l</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceHeadline3" parent="@style/couiTextAppearance">
+            <item name="android:textSize">24.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_display_xs</item>
+            <item name="android:textFontWeight">600</item>
+        </style>
+    <style name="couiTextAppearanceHeadline4" parent="@style/couiTextAppearance">
+            <item name="android:textSize">20.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_headline_m</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceHeadline5" parent="@style/couiTextAppearance">
+            <item name="android:textSize">18.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_headline_s</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceHeadline6" parent="@style/couiTextAppearance">
+            <item name="android:textSize">16.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_headline_xs</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceSmallButton" parent="@style/couiTextAppearance">
+            <item name="android:textSize">12.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_s</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceTag" parent="@style/couiTextAppearance">
+            <item name="android:textSize">10.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_tag</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceTinyHeadline1" parent="@style/couiTextAppearance">
+            <item name="android:textSize">20.0sp</item>
+            <item name="android:textStyle">bold</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-semibold</item> -->
+        </style>
+    <style name="couiTextAppearanceTinyHeadline2" parent="@style/couiTextAppearance">
+            <item name="android:textSize">18.0sp</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextAppearanceTinyHeadline3" parent="@style/couiTextAppearance">
+            <item name="android:textSize">20.0sp</item>
+            <item name="android:textStyle">bold</item>
+        </style>
+    <style name="TextAppearance.COUI" parent="@android:style/TextAppearance">
+            <item name="android:textSize">@dimen/coui_textview_text_size</item>
+            <item name="android:elegantTextHeight">@bool/coui_support_elegant_text_height</item>
+        </style>
+    <style name="TextAppearance.COUI.AppCompatSupport.Toolbar.SubTitle" parent="@android:style/TextAppearance">
+            <item name="android:textSize">@dimen/coui_toolbar_subtitle_text_size</item>
+            <item name="android:textColor">?couiColorSecondNeutral</item>
+            <item name="android:elegantTextHeight">false</item>
+        </style>
+    <style name="TextAppearance.COUI.AppCompatSupport.Toolbar.Title" parent="@style/couiTextAppearanceHeadline5">
+            <item name="android:textColor">?couiColorPrimaryNeutral</item>
+            <item name="android:textAlignment">viewStart</item>
+            <item name="android:elegantTextHeight">false</item>
+        </style>
+    <style name="TextAppearance.COUI.AppCompatSupport.Toolbar.Title.Panel" parent="@style/TextAppearance.COUI.AppCompatSupport.Toolbar.Title">
+            <item name="android:gravity">center</item>
+            <item name="android:maxWidth">@dimen/coui_action_bar_title_max_width</item>
+            <item name="android:minHeight">26.0dp</item>
+            <item name="android:maxLines">2</item>
+            <item name="android:textAlignment">center</item>
+        </style>
+    <style name="TextAppearance.COUI.AppCompatSupport.Toolbar.Title.Panel.Second" parent="@style/TextAppearance.COUI.AppCompatSupport.Toolbar.Title.Panel">
+            <item name="android:maxLines">1</item>
+            <item name="android:textAlignment">viewStart</item>
+        </style>
+    <style name="TextAppearance.COUI.Inverse" parent="@android:style/TextAppearance.Inverse">
+            <item name="android:textSize">@dimen/coui_textview_text_size</item>
+            <item name="android:textColor">?android:textColorPrimaryInverse</item>
+            <item name="android:textColorHighlight">?android:textColorHighlightInverse</item>
+            <item name="android:textColorHint">?android:textColorHintInverse</item>
+            <item name="android:textColorLink">?android:textColorLinkInverse</item>
+            <item name="android:elegantTextHeight">@bool/coui_support_elegant_text_height</item>
+        </style>
+    <style name="TextAppearance.COUI.List.Assignment" parent="@style/TextAppearance.COUI.Preference.Summary">
+            <item name="android:textColor">@color/coui_preference_assignment_text_color</item>
+            <item name="android:textAlignment">viewStart</item>
+        </style>
+    <style name="TextAppearance.COUI.List.Assignment.End" parent="@style/TextAppearance.COUI.Preference.Summary">
+            <item name="android:textColor">@color/coui_preference_secondary_text_color</item>
+            <item name="android:ellipsize">end</item>
+        </style>
+    <style name="TextAppearance.COUI.List.Assignment.End.Tiny" parent="@style/TextAppearance.COUI.Preference.Summary">
+            <item name="android:textSize">12.0dp</item>
+        </style>
+    <style name="TextAppearance.COUI.List.Assignment.Tiny" parent="@style/TextAppearance.COUI.List.Assignment">
+            <item name="android:textSize">12.0dp</item>
+        </style>
+    <style name="TextAppearance.COUI.List.FocusTitle" parent="@style/TextAppearance.COUI.List.Title">
+            <item name="android:textColor">@color/coui_preference_focus_title_text_color</item>
+            <item name="android:textAlignment">viewStart</item>
+        </style>
+    <style name="TextAppearance.COUI.List.Title" parent="@style/couiTextAppearanceHeadline6">
+            <item name="android:textColor">@color/coui_preference_title_color</item>
+        </style>
+    <style name="TextAppearance.COUI.List.WarnTitle" parent="@style/TextAppearance.COUI.List.Title">
+            <item name="android:textColor">?couiColorError</item>
+            <item name="android:textAlignment">viewStart</item>
+        </style>
+    <style name="TextAppearance.COUI.List.WarnTitle.Tiny" parent="@style/TextAppearance.COUI.List.WarnTitle">
+            <item name="android:textSize" tools:ignore="SpUsage">16dp</item>
+        </style>
+    <style name="TextAppearance.COUI.Toolbar.LargestTitle" parent="@android:style/TextAppearance">
+            <item name="android:textSize" tools:ignore="SpUsage">22dp</item>
+            <item name="android:textStyle">bold</item>
+            <item name="android:textColor">?couiColorPrimaryNeutral</item>
+            <item name="android:elegantTextHeight">false</item>
+        </style>
+    <style name="TextAppearance.COUI.Toolbar.SecondTitle" parent="@style/couiTextAppearanceHeadline5">
+            <item name="android:textSize" tools:ignore="SpUsage">18dp</item>
+            <item name="android:textStyle">normal</item>
+            <item name="android:textColor">?couiColorPrimaryNeutral</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+            <item name="android:elegantTextHeight">false</item>
+        </style>
+    <style name="TextAppearance.COUI.Widget.PopupMenu" parent="@android:style/TextAppearance.Widget.PopupMenu.Large">
+            <item name="android:textColor">?android:textColorPrimary</item>
+            <item name="android:elegantTextHeight">@bool/coui_support_elegant_text_height</item>
+        </style>
+    <style name="TextAppearance.COUI.Widget.PopupMenu.Large" parent="@style/TextAppearance.COUI.Widget.PopupMenu">
+            <item name="android:textSize">18.0sp</item>
+            <item name="android:textColor">@color/coui_list_text_color_large</item>
+        </style>
+    <style name="TextAppearance.COUI.Widget.PopupMenu.Small" parent="@style/TextAppearance.COUI.Widget.PopupMenu">
+            <item name="android:textSize">14.0sp</item>
+            <item name="android:textColor">@color/coui_list_text_color_small</item>
+        </style>
+    <style name="TextAppearance.COUI.WindowTitle" parent="@style/TextAppearance.COUI">
+            <item name="android:textSize">@dimen/coui_title_text_size</item>
+            <item name="android:textStyle">normal</item>
+            <item name="android:textColor">@color/coui_title_text_color_large</item>
+        </style>
+    <style name="TextAppearance_Design_COUITab" parent="@style/TextAppearance.COUI">
+            <item name="android:textSize">@dimen/tablayout_large_text_size</item>
+            <item name="android:textColor">@color/coui_tab_default_color</item>
+        </style>
+</resources>

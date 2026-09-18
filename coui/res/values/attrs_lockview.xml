@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI lockview attrs (from decoded dump consolidation) -->
+<resources>
+    <attr name="couiNumericKeyboardStyle" format="reference" />
+    <attr name="couiSimpleLockStyle" format="reference" />
+    <attr name="couiLockPatternViewStyle" format="reference" />
+    <declare-styleable name="COUINumericKeyboard">
+            <attr name="couiCircleMaxAlpha" format="float" />
+            <attr name="couiDiameter" format="dimension" />
+            <attr name="couiKeyboardBg" format="reference" />
+            <attr name="couiKeyboardDelete" format="reference" />
+            <attr name="couiLetterColor" format="color" />
+            <attr name="couiLevelSpace" format="dimension" />
+            <attr name="couiLineColor" format="color" />
+            <attr name="couiLineWidth" format="dimension" />
+            <attr name="couiNumPressColor" format="color" />
+            <attr name="couiNumberBackgroundColor" format="color" />
+            <attr name="couiNumberColor" format="color" />
+            <attr name="couiNumberOffsetY" format="dimension" />
+            <attr name="couiNumberTextSize" format="dimension" />
+            <attr name="couiPressEffect">
+                <enum name="pressRipple" value="0" />
+                <enum name="pressLight" value="1" />
+            </attr>
+            <attr name="couiSetCustomTypeface" format="boolean" />
+            <attr name="couiSideBackgroundColor" format="color" />
+            <attr name="couiVerticalSpace" format="dimension" />
+            <attr name="couiWordTextNormalColor" format="color" />
+            <attr name="couiWordTextPressColor" format="color" />
+        </declare-styleable>
+    <declare-styleable name="COUISimpleLock">
+            <attr name="couiCircleNum">
+                <enum name="four" value="0" />
+                <enum name="six" value="1" />
+            </attr>
+            <attr name="couiFilledRectangleIconDrawable" format="reference" />
+            <attr name="couiOutLinedRectangleIconDrawable" format="reference" />
+            <attr name="couiRectanglePadding" format="dimension" />
+        </declare-styleable>
+    <declare-styleable name="COUILockPatternView">
+            <attr name="couiErrorColor" format="color" />
+            <attr name="couiOuterCircleMaxAlpha" format="float" />
+            <attr name="couiPathColor" format="color" />
+            <attr name="couiRegularColor" format="color" />
+            <attr name="couiSuccessColor" format="color" />
+        </declare-styleable>
+</resources>

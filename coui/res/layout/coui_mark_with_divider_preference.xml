@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.coui.appcompat.preference.COUICustomListSelectedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:coui="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    coui:couiPreferenceWithDividerItem="true">
+
+    <com.coui.appcompat.preference.ListSelectedItemLayout
+        android:id="@id/main_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/support_preference_min_height"
+        android:paddingStart="@dimen/coui_mark_with_divider_title_padding_start"
+        android:paddingEnd="@dimen/coui_mark_with_divider_title_padding_end">
+
+        <FrameLayout
+            android:id="@id/img_layout"
+            style="@style/PreferenceIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:visibility="gone">
+
+            <com.coui.appcompat.imageview.COUIRoundImageView
+                android:id="@android:id/icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:importantForAccessibility="no"
+                coui:couiType="round" />
+
+            <com.coui.appcompat.reddot.COUIHintRedDot
+                android:id="@id/img_red_dot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|top"
+                android:layout_marginTop="@dimen/support_preference_icon_red_dot_margin_top"
+                android:layout_marginEnd="@dimen/support_preference_icon_red_dot_margin_top"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <RelativeLayout
+            style="@style/PreferenceContent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@android:id/title"
+                style="@style/COUIPreferenceTitleStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@android:id/summary"
+                style="@style/COUIPreferenceSummaryStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@android:id/title"
+                android:layout_marginTop="@dimen/support_preference_margin_between_line" />
+
+            <TextView
+                android:id="@id/assignment"
+                style="@style/TextAppearance.COUI.List.Assignment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@android:id/summary"
+                android:layout_marginTop="@dimen/support_preference_margin_between_line"
+                android:forceDarkAllowed="false"
+                android:visibility="gone" />
+        </RelativeLayout>
+    </com.coui.appcompat.preference.ListSelectedItemLayout>
+
+    <LinearLayout
+        android:id="@id/radio_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:soundEffectsEnabled="false">
+
+        <View
+            android:layout_width="@dimen/preference_divider_width"
+            android:layout_height="@dimen/preference_divider_height"
+            android:layout_marginEnd="@dimen/preference_divider_margin_end"
+            android:background="?couiColorDivider"
+            android:forceDarkAllowed="false" />
+
+        <RadioButton
+            android:id="@id/coui_tail_mark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="@dimen/support_preference_title_padding_end"
+            android:background="@null"
+            android:button="@drawable/coui_btn_check_mark"
+            android:checked="true"
+            android:clickable="false"
+            android:focusable="false"
+            android:forceDarkAllowed="false" />
+    </LinearLayout>
+</com.coui.appcompat.preference.COUICustomListSelectedLinearLayout>

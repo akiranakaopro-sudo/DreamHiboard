@@ -14,7 +14,7 @@
         android:layout_height="40dp"
         android:background="@drawable/bg_shortcut_icon"
         android:gravity="center"
-        android:textColor="@color/hiboard_primary"
+        android:textColor="?attr/couiColorLabelTheme"
         android:textStyle="bold" />
 
     <TextView
@@ -25,6 +25,6 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:textColor="@color/hiboard_text"
+        android:textColor="?attr/couiColorLabelPrimary"
         android:textSize="11sp" />
 </LinearLayout>

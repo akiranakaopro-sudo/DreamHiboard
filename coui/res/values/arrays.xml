@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="coui_theme_arrays_ids">
+        <item>@array/coui_theme_arrays_first</item>
+        <item>@array/coui_theme_arrays_second</item>
+        <item>@array/coui_theme_arrays_third</item>
+        <item>@array/coui_theme_arrays_fourth</item>
+        <item>@array/coui_theme_arrays_fifth</item>
+    </array>
+
+    <array name="coui_theme_arrays_first">
+        <item>@style/COUIOverlay.Theme.Green.First</item>
+        <item>@style/COUIOverlay.Theme.Red.First</item>
+        <item>@style/COUIOverlay.Theme.Yellow.First</item>
+        <item>@style/COUIOverlay.Theme.Blue.First</item>
+        <item>@style/COUIOverlay.Theme.Orange.First</item>
+        <item>@style/COUIOverlay.Theme.SkyBlue.First</item>
+    </array>
+
+    <array name="coui_theme_arrays_second">
+        <item>@style/COUIOverlay.Theme.Green.Second</item>
+        <item>@style/COUIOverlay.Theme.Red.Second</item>
+        <item>@style/COUIOverlay.Theme.Yellow.Second</item>
+        <item>@style/COUIOverlay.Theme.Blue.Second</item>
+        <item>@style/COUIOverlay.Theme.Orange.Second</item>
+        <item>@style/COUIOverlay.Theme.SkyBlue.Second</item>
+    </array>
+
+    <array name="coui_theme_arrays_third">
+        <item>@style/COUIOverlay.Theme.Green.Third</item>
+        <item>@style/COUIOverlay.Theme.Red.Third</item>
+        <item>@style/COUIOverlay.Theme.Yellow.Third</item>
+        <item>@style/COUIOverlay.Theme.Blue.Third</item>
+        <item>@style/COUIOverlay.Theme.Orange.Third</item>
+        <item>@style/COUIOverlay.Theme.SkyBlue.Third</item>
+    </array>
+
+    <array name="coui_theme_arrays_fourth">
+        <item>@style/COUIOverlay.Theme.Green.Fourth</item>
+        <item>@style/COUIOverlay.Theme.Red.Fourth</item>
+        <item>@style/COUIOverlay.Theme.Yellow.Fourth</item>
+        <item>@style/COUIOverlay.Theme.Blue.Fourth</item>
+        <item>@style/COUIOverlay.Theme.Orange.Fourth</item>
+        <item>@style/COUIOverlay.Theme.SkyBlue.Fourth</item>
+    </array>
+
+    <array name="coui_theme_arrays_fifth">
+        <item>@style/COUIOverlay.Theme.Green.Fifth</item>
+        <item>@style/COUIOverlay.Theme.Red.Fifth</item>
+        <item>@style/COUIOverlay.Theme.Yellow.Fifth</item>
+        <item>@style/COUIOverlay.Theme.Blue.Fifth</item>
+        <item>@style/COUIOverlay.Theme.Orange.Fifth</item>
+        <item>@style/COUIOverlay.Theme.SkyBlue.Fifth</item>
+    </array>
+
+    <!-- Merged from theme_overlay_arrays.xml (COUI resource hygiene) -->
+    <array name="coui_theme_arrays_default_patch">
+            <item>@style/COUIOverlay.Theme.Green.Default</item>
+            <item>@style/COUIOverlay.Theme.Red.Default</item>
+            <item>@style/COUIOverlay.Theme.Yellow.Default</item>
+            <item>@style/COUIOverlay.Theme.Blue.Default</item>
+            <item>@style/COUIOverlay.Theme.Orange.Default</item>
+            <item>@style/COUIOverlay.Theme.SkyBlue.Default</item>
+        </array>
+    <array name="coui_theme_arrays_single">
+            <item>@style/COUIOverlay.Theme.Single.First</item>
+            <item>@style/COUIOverlay.Theme.Single.Second</item>
+            <item>@style/COUIOverlay.Theme.Single.Third</item>
+            <item>@style/COUIOverlay.Theme.Single.Fourth</item>
+            <item>@style/COUIOverlay.Theme.Single.Fifth</item>
+            <item>@style/COUIOverlay.Theme.Single.Sixth</item>
+            <item>@style/COUIOverlay.Theme.Single.Seventh</item>
+            <item>@style/COUIOverlay.Theme.Single.Eighth</item>
+            <item>@style/COUIOverlay.Theme.Single.Ninth</item>
+            <item>@style/COUIOverlay.Theme.Single.Tenth</item>
+        </array>
+</resources>

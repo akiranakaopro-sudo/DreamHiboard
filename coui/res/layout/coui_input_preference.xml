@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.coui.appcompat.cardlist.COUICardListSelectedItemLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@id/edittext_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/support_preference_category_layout_title_margin_start"
+        android:paddingEnd="@dimen/support_preference_category_layout_title_margin_end" />
+</com.coui.appcompat.cardlist.COUICardListSelectedItemLayout>

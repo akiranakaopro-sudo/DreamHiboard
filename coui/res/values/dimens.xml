@@ -1,0 +1,1208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Leapy added 2026-08-01: Values recovered from the decoded OPPO
+         COUIFastScroller resource table. Keep these in the shared COUI library
+         because the drawable and touch geometry are library-owned. -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <!-- Leapy end -->
+    
+    
+    
+    
+    
+    <dimen name="bar_height">24dp</dimen>
+    <dimen name="bar_radius">20dp</dimen>
+    <dimen name="bar_width">38dp</dimen>
+    <dimen name="circle_padding">3dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_single_larger_window_screen">360dp</dimen>
+    
+    
+    
+    
+    <dimen name="coui_checkbox_margin_between_text_drawable">8dp</dimen>
+    <dimen name="coui_switch_padding">0dp</dimen>
+    
+    
+    
+    <dimen name="coui_listview_scrollchoice_left_offset">17dp</dimen>
+    <dimen name="coui_listview_scrollchoice_right_offset">43dp</dimen>
+    
+    
+    <dimen name="coui_list_to_ex_bottom_padding">32dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="dim_background">0.2</dimen>
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_center_tiny_title_max_height">72dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_list_divider_height">0.33dp</dimen>
+    <dimen name="coui_scrollbar_drawable_default_inset">5.5dp</dimen>
+    <dimen name="coui_scrollbar_drawable_pressed_inset">4.0dp</dimen>
+    <dimen name="coui_scrollbar_margin_bottom">16.0dp</dimen>
+    <dimen name="coui_scrollbar_margin_top">8.0dp</dimen>
+    <dimen name="coui_scrollbar_min_height">48.0dp</dimen>
+    <dimen name="coui_scrollbar_wight">14.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_list_item_preferred_height">60.0dp</dimen>
+    <dimen name="coui_listview_divider_inset_left">16.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_spinner_layout_min_height">120.0dp</dimen>
+    <dimen name="coui_spinner_layout_width">152.0dp</dimen>
+    
+    
+    <dimen name="coui_spinner_margin_bottom">16.0dp</dimen>
+    <dimen name="coui_spinner_margin_top">26.0dp</dimen>
+    <dimen name="coui_spinner_text_margin_bottom">26.0dp</dimen>
+    <dimen name="coui_spinner_text_margin_horizontal">16.0dp</dimen>
+    <dimen name="coui_textview_text_size">15.0sp</dimen>
+    <dimen name="coui_title_text_size">20.0sp</dimen>
+    
+    
+    
+    
+    <dimen name="cardview_compat_inset_shadow">1.0dp</dimen>
+    <dimen name="cardview_default_elevation">2.0dp</dimen>
+    <dimen name="cardview_default_radius">2.0dp</dimen>
+    
+    <dimen name="coui_autocomplete_text_size">14.0sp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_edit_text_height_min">48dp</dimen>
+    <dimen name="coui_edit_text_hint_start_padding">0dp</dimen>
+    <dimen name="coui_edit_text_shake_amplitude">5.33dp</dimen>
+    
+    
+    
+    <dimen name="coui_text_cursor_width">2dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="inner_circle_width">7.9dp</dimen>
+    <dimen name="coui_max_end_value_height">220dp</dimen>
+    <dimen name="coui_max_end_value_width">328dp</dimen>
+    <dimen name="coui_min_end_value_size">42dp</dimen>
+    <dimen name="default_focus_stroke_radius">3dp</dimen>
+    <dimen name="checkbox_ripple_bg_radius">20dp</dimen>
+    <dimen name="icon_ripple_bg_radius">24dp</dimen>
+    <dimen name="outer_circle_stroke_width">2.7dp</dimen>
+    <dimen name="outer_circle_width">18dp</dimen>
+    <dimen name="coui_round_corner_xxl_weight">1.1</dimen>
+    <dimen name="coui_round_corner_m_weight">0.99</dimen>
+    <dimen name="support_shadow_size_level_for_lowerP">6.0dp</dimen>
+    <dimen name="support_shadow_size_level_three">12.0dp</dimen>
+    <dimen name="support_shadow_size_level_four">24.0dp</dimen>
+    <dimen name="support_shadow_size_level_one">2.0dp</dimen>
+    
+    
+    
+    
+    
+    <dimen name="coui_shadow_blur_r_level1">3.3299866dp</dimen>
+    <dimen name="coui_shadow_blur_r_level2">26.659973dp</dimen>
+    <dimen name="coui_shadow_blur_r_level3">26.659973dp</dimen>
+    <dimen name="coui_shadow_blur_r_level4">0.0dp</dimen>
+    <dimen name="coui_shadow_blur_r_level5">133.32999dp</dimen>
+    <dimen name="coui_shadow_elevation_default">37.0dp</dimen>
+    <dimen name="coui_shadow_elevation_five">57.0dp</dimen>
+    <dimen name="coui_shadow_elevation_four">3.3299866dp</dimen>
+    <dimen name="coui_shadow_light_r_level1">800.0dp</dimen>
+    <dimen name="coui_shadow_light_r_level2">800.0dp</dimen>
+    <dimen name="coui_shadow_light_r_level3">800.0dp</dimen>
+    <dimen name="coui_shadow_light_r_level4">6666.6562dp</dimen>
+    <dimen name="coui_shadow_light_r_level5">800.0dp</dimen>
+    <dimen name="coui_shadow_light_y_level1">-1166.6562dp</dimen>
+    <dimen name="coui_shadow_light_y_level2">-132.32999dp</dimen>
+    <dimen name="coui_shadow_light_y_level3">-116.66dp</dimen>
+    <dimen name="coui_shadow_light_y_level4">-1466.6562dp</dimen>
+    <dimen name="coui_shadow_light_y_level5">63.0dp</dimen>
+    <dimen name="coui_shadow_light_z_level1">16166.656dp</dimen>
+    <dimen name="coui_shadow_light_z_level2">2910.0dp</dimen>
+    <dimen name="coui_shadow_light_z_level3">1000.0dp</dimen>
+    <dimen name="coui_shadow_light_z_level4">0.0dp</dimen>
+    <dimen name="coui_shadow_light_z_level5">466.65625dp</dimen>
+    
+    <dimen name="coui_spacing_multiplier_body_s">1.1</dimen>
+    <dimen name="coui_spacing_multiplier_body_m">1.1</dimen>
+    <dimen name="coui_spacing_multiplier_headline_xs">1.05</dimen>
+    <dimen name="coui_datepicker_height">135dp</dimen>
+    <dimen name="coui_datepicker_width_day">@dimen/coui_numberpicker_width_middle</dimen>
+    <dimen name="coui_datepicker_width_month">@dimen/coui_number_picker_width_big</dimen>
+    <dimen name="coui_datepicker_width_year">@dimen/coui_numberpicker_width_big</dimen>
+    <dimen name="coui_numberPicker_width_bigger">175dp</dimen>
+    <dimen name="coui_number_picker_background_divider_height">0.33dp</dimen>
+    <dimen name="coui_number_picker_text_margin_start">4dp</dimen>
+    <dimen name="coui_number_picker_text_width">18dp</dimen>
+    <dimen name="coui_number_picker_unit_min_width">21dp</dimen>
+    <dimen name="coui_number_picker_view_max_width">640dp</dimen>
+    <dimen name="coui_number_picker_view_padding_vertical">12dp</dimen>
+    <dimen name="coui_number_picker_width_big">96dp</dimen>
+    <dimen name="coui_number_picker_width_bigger">150dp</dimen>
+    <dimen name="coui_number_picker_width_biggest">174dp</dimen>
+    <dimen name="coui_number_picker_width_middle">76dp</dimen>
+    <dimen name="coui_number_picker_width_small">62dp</dimen>
+    <dimen name="coui_numberpicker_height">207dp</dimen>
+    <dimen name="coui_numberpicker_ignore_bar_height">1.67dp</dimen>
+    <dimen name="coui_numberpicker_ignore_bar_spacing">4.67dp</dimen>
+    <dimen name="coui_numberpicker_ignore_bar_width">17.67dp</dimen>
+    <dimen name="coui_numberpicker_textSize_big">20dp</dimen>
+    <dimen name="coui_numberpicker_textSize_middle">14dp</dimen>
+    <dimen name="coui_numberpicker_textSize_small">16dp</dimen>
+    <dimen name="coui_numberpicker_unit_margin_bottom">2dp</dimen>
+    <dimen name="coui_numberpicker_unit_textSize">14dp</dimen>
+    <dimen name="coui_numberpicker_width_big">76dp</dimen>
+    <dimen name="coui_numberpicker_width_middle">66dp</dimen>
+    <dimen name="coui_selected_background_horizontal_padding">16dp</dimen>
+    <dimen name="coui_selected_background_radius">24dp</dimen>
+    <dimen name="coui_time_picker_date_width">@dimen/coui_number_picker_width_bigger</dimen>
+    <dimen name="coui_time_picker_focus_text_height">42dp</dimen>
+    <dimen name="coui_time_picker_height">135dp</dimen>
+    <dimen name="coui_time_picker_normal_text_height">40dp</dimen>
+    <dimen name="coui_timepicker_height">135dp</dimen>
+    <dimen name="coui_timepicker_text_size">16dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="support_abc_dropdownitem_text_padding_left">8dp</dimen>
+    <dimen name="support_abc_dropdownitem_text_padding_right">8dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="grid_card_special_padding">16dp</dimen>
+    <dimen name="coui_fragment_gap_width">0.33000004dp</dimen>
+    <dimen name="coui_main_fragment_max_width">412dp</dimen>
+    <dimen name="coui_main_fragment_min_width">280dp</dimen>
+    <dimen name="grid_guide_column_card_margin_end">16dp</dimen>
+    <dimen name="grid_guide_column_card_margin_start">16dp</dimen>
+    <dimen name="grid_guide_column_default_margin_end">24dp</dimen>
+    <dimen name="grid_guide_column_default_margin_start">24dp</dimen>
+    <dimen name="grid_guide_column_gap">8dp</dimen>
+    <dimen name="grid_list_special_padding">24dp</dimen>
+    <dimen name="layout_grid_gutter">8dp</dimen>
+    <dimen name="layout_grid_gutter_expanded">12dp</dimen>
+    <dimen name="layout_grid_margin_compat_large">24dp</dimen>
+    <dimen name="layout_grid_margin_compat_small">16dp</dimen>
+    <dimen name="layout_grid_margin_expanded_large">40dp</dimen>
+    <dimen name="layout_grid_margin_expanded_small">40dp</dimen>
+    <dimen name="layout_grid_margin_large">24dp</dimen>
+    <dimen name="layout_grid_margin_medium_large">24dp</dimen>
+    <dimen name="layout_grid_margin_medium_small">24dp</dimen>
+    <dimen name="layout_grid_margin_small">16dp</dimen>
+    <dimen name="responsive_ui_extend_hierarchy_parent_width">280dp</dimen>
+    <dimen name="responsive_ui_gutter">8dp</dimen>
+    <dimen name="responsive_ui_gutter_half">4dp</dimen>
+    <dimen name="responsive_ui_gutter_half_negative">-4dp</dimen>
+    <dimen name="responsive_ui_gutter_negative">-8dp</dimen>
+    <dimen name="responsive_ui_margin_large">24dp</dimen>
+    <dimen name="responsive_ui_margin_large_half">12dp</dimen>
+    <dimen name="responsive_ui_margin_negative">-24dp</dimen>
+    <dimen name="responsive_ui_margin_negative_half">-12dp</dimen>
+    <dimen name="responsive_ui_margin_small">16dp</dimen>
+    <dimen name="responsive_ui_margin_small_half">8dp</dimen>
+    <dimen name="responsive_ui_margin_small_negative">-16dp</dimen>
+    <dimen name="responsive_ui_margin_small_negative_half">-8dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="recommended_recyclerView_margin_end">16.0dp</dimen>
+    <dimen name="recommended_recyclerView_margin_start">16.0dp</dimen>
+    <dimen name="recommended_recyclerView_padding_bottom">8.0dp</dimen>
+    <dimen name="recommended_recyclerView_padding_end">32.0dp</dimen>
+    <dimen name="recommended_recyclerView_padding_start">32.0dp</dimen>
+    <dimen name="recommended_recyclerView_padding_top">16.0dp</dimen>
+    <dimen name="recommended_text_ripple_bg_padding_horizontal">8.0dp</dimen>
+    <dimen name="recommended_text_ripple_bg_padding_vertical">4.0dp</dimen>
+    <dimen name="recommended_text_ripple_bg_radius">5.0dp</dimen>
+    <dimen name="coui_round_corner_l_radius">13.0dp</dimen>
+    <dimen name="coui_round_corner_l_weight">0.99</dimen>
+    <dimen name="coui_round_corner_m_radius">9.0dp</dimen>
+    <dimen name="coui_round_corner_s_radius">8.0dp</dimen>
+    <dimen name="coui_round_corner_s_weight">1.5</dimen>
+    <dimen name="coui_round_corner_xl_radius">16.0dp</dimen>
+    <dimen name="coui_round_corner_xl_weight">1.1</dimen>
+    <dimen name="coui_round_corner_xs_radius">4.0dp</dimen>
+    <dimen name="coui_round_corner_xs_weight">1.5</dimen>
+    <dimen name="coui_round_corner_xxl_radius">19.0dp</dimen>
+    <dimen name="coui_spacing_multiplier_display_l">1.0</dimen>
+    <dimen name="coui_spacing_multiplier_display_m">1.08</dimen>
+    <dimen name="coui_spacing_multiplier_display_s">1.12</dimen>
+    <dimen name="coui_spacing_multiplier_headline_l">1.1</dimen>
+    <dimen name="coui_spacing_multiplier_display_xs">1.1</dimen>
+    <dimen name="coui_spacing_multiplier_headline_m">1.1</dimen>
+    <dimen name="coui_spacing_multiplier_tag">1.0</dimen>
+    <dimen name="coui_spacing_multiplier_body_l">1.1</dimen>
+    
+    <dimen name="coui_spacing_multiplier_cap">1.11</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="support_shadow_size_level_five">30.0dp</dimen>
+    <dimen name="assignment_in_right_low_priority_min_width">80dp</dimen>
+    <dimen name="coui_category_title_margin_end_with_icon_large">8dp</dimen>
+    <dimen name="coui_category_title_margin_end_with_icon_small">4dp</dimen>
+    <dimen name="coui_category_title_pading_end_with_reddot_default">8dp</dimen>
+    <dimen name="coui_card_list_os_16_1_radius_17_dp">17dp</dimen>
+    <dimen name="coui_common_category_text_padding_bottom">8dp</dimen>
+    <dimen name="coui_common_category_text_padding_bottom_large_style">7dp</dimen>
+    <dimen name="coui_common_category_text_padding_bottom_medium_style">8dp</dimen>
+    <dimen name="coui_common_category_text_padding_top">8dp</dimen>
+    <dimen name="coui_common_category_text_padding_top_Large_style">7dp</dimen>
+    <dimen name="coui_common_category_text_padding_top_medium_style">8dp</dimen>
+    <dimen name="coui_dot_stroke_width">1dp</dimen>
+    <dimen name="coui_dot_diameter">6dp</dimen>
+    <dimen name="coui_dot_diameter_large">10dp</dimen>
+    <dimen name="coui_dot_diameter_small">6dp</dimen>
+    <dimen name="coui_dot_horizontal_offset">2.0dp</dimen>
+    <dimen name="coui_dot_vertical_offset_number_red">1.0dp</dimen>
+    <dimen name="coui_dot_vertical_offset_only_red">5.0dp</dimen>
+    <dimen name="coui_height">16dp</dimen>
+    <dimen name="coui_hint_red_dot_ellipsis_spacing">2dp</dimen>
+    <dimen name="coui_height_large">18dp</dimen>
+    <dimen name="coui_hint_red_dot_large_icon_size">50dp</dimen>
+    <dimen name="coui_hint_red_dot_large_icon_topend_margin_circle">2dp</dimen>
+    <dimen name="coui_hint_red_dot_large_icon_topend_margin_rectangle">4dp</dimen>
+    <dimen name="coui_hint_red_dot_large_number_topend_margin_rectangle">6dp</dimen>
+    <dimen name="coui_hint_red_dot_large_reddot_size">12dp</dimen>
+    <dimen name="coui_hint_red_dot_medium_icon_size">36dp</dimen>
+    <dimen name="coui_hint_red_dot_medium_icon_topend_margin_circle">2dp</dimen>
+    <dimen name="coui_hint_red_dot_medium_icon_topend_margin_rectangle">2dp</dimen>
+    <dimen name="coui_hint_red_dot_medium_number_topend_margin_rectangle">3dp</dimen>
+    <dimen name="coui_hint_red_dot_medium_reddot_size">8dp</dimen>
+    <dimen name="coui_hint_red_dot_mode_stroke_extra_diameter">2dp</dimen>
+    <dimen name="coui_hint_red_dot_small_icon_topend_margin_circle">1dp</dimen>
+    <dimen name="coui_hint_red_dot_small_icon_topend_margin_rectangle">1dp</dimen>
+    <dimen name="coui_hint_red_dot_small_number_topend_margin_rectangle">6dp</dimen>
+    <dimen name="coui_hint_red_dot_small_reddot_size">6dp</dimen>
+    <dimen name="coui_hint_red_dot_large_text_size">10dp</dimen>
+    <dimen name="coui_hint_red_dot_navi_small_width">12dp</dimen>
+    <dimen name="coui_hint_red_dot_small_text_size">9dp</dimen>
+    <dimen name="coui_hint_text_size">10dp</dimen>
+    <dimen name="coui_hint_text_size_small">10dp</dimen>
+    <dimen name="coui_large_width">26dp</dimen>
+    <dimen name="coui_medium_width">20dp</dimen>
+    <dimen name="coui_list_card_head_or_tail_padding">2dp</dimen>
+    <dimen name="coui_list_to_ex_top_padding">12dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_mark_with_divider_title_padding_end">16dp</dimen>
+    <dimen name="coui_mark_with_divider_title_padding_start">32dp</dimen>
+    
+    
+    <dimen name="coui_checkbox_with_divider_title_padding_end">16dp</dimen>
+    <dimen name="coui_switch_with_divider_title_padding_end">16dp</dimen>
+    <dimen name="coui_switch_with_divider_title_padding_start">32dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_roundimageview_default_radius">42dp</dimen>
+    <dimen name="coui_roundimageView_src_width">60dp</dimen>
+    <dimen name="coui_round_corner_full">72dp</dimen>
+    <dimen name="coui_round_corner_l">16dp</dimen>
+    <dimen name="coui_round_corner_l_radius_os17">22dp</dimen>
+    <dimen name="coui_round_corner_m">12dp</dimen>
+    <dimen name="coui_round_corner_m_radius_os17">16dp</dimen>
+    <dimen name="coui_round_corner_s">8dp</dimen>
+    <dimen name="coui_round_corner_s_radius_os17">11dp</dimen>
+    <dimen name="coui_round_corner_xl">20dp</dimen>
+    <dimen name="coui_round_corner_xl_radius_os17">28dp</dimen>
+    <dimen name="coui_round_corner_xs">4dp</dimen>
+    <dimen name="coui_round_corner_xs_radius_os17">5dp</dimen>
+    <dimen name="coui_round_corner_xxl">24dp</dimen>
+    <dimen name="coui_round_corner_xxl_radius_os17">33dp</dimen>
+    <dimen name="coui_small_width">16dp</dimen>
+    
+    
+    <dimen name="coui_spacing_multiplier_headline_s">1.15</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_spacing_multiplier_body_xs">1.0</dimen>
+    
+    
+    
+    
+    
+    <dimen name="coui_preferenc_widget_checkbox_margin_left">16dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="text_ripple_bg_padding_horizontal">12dp</dimen>
+    <dimen name="text_ripple_bg_padding_vertical">4dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="detail_floating_arrow_overflow">5.6999817dp</dimen>
+    <dimen name="detail_floating_content_text_size">12.0sp</dimen>
+    <dimen name="detail_floating_min_width">80.0dp</dimen>
+    <dimen name="detail_floating_text_margin">12.0dp</dimen>
+    <dimen name="detail_floating_viewport_offset_bottom">0.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="center_empty_view_scroll_fading_edge_length">30.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    <!-- Leapy added 2026-07-20: Exact decoded OPPO collapsed appbar-divider margin. -->
+    
+    <!-- Leapy end -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="design_navigation_icon_size">24dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_full_page_title_text_size">18.0sp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_list_item_left_padding">16.0dp</dimen>
+    <dimen name="coui_list_item_right_padding">16.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_page_indicator_dot_size">6.0dp</dimen>
+    <dimen name="coui_page_indicator_dot_size_medium">4.5dp</dimen>
+    <dimen name="coui_page_indicator_dot_size_small">2.5dp</dimen>
+    <dimen name="coui_page_indicator_dot_spacing">3.0dp</dimen>
+    <dimen name="coui_page_indicator_dot_stroke_width">1.0dp</dimen>
+    <dimen name="coui_panel_bar_total_width">32.0dp</dimen>
+    <dimen name="coui_panel_drag_view_height">12.0dp</dimen>
+    <dimen name="coui_panel_drag_view_padding_horizontal">17.0dp</dimen>
+    <dimen name="coui_panel_drag_view_padding_vertical">8.0dp</dimen>
+    <dimen name="coui_panel_drag_view_shadow_height">20.0dp</dimen>
+    <dimen name="coui_panel_drag_view_shadow_margin_top">4.0dp</dimen>
+    <dimen name="coui_panel_drag_view_shadow_width">70.0dp</dimen>
+    <dimen name="coui_panel_drag_view_width">36.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_tab_layout_normal_text_view_height">22.0dp</dimen>
+    
+    
+    
+    <dimen name="coui_tab_layout_content_min_width">360.0dp</dimen>
+    <dimen name="coui_tab_layout_large_horizontal_margin">40.0dp</dimen>
+    <dimen name="coui_tab_layout_medium_horizontal_margin">24.0dp</dimen>
+    <dimen name="coui_tab_layout_medium_tab_spacing">24.0dp</dimen>
+    
+    
+    <dimen name="coui_tab_layout_small_horizontal_margin">16.0dp</dimen>
+    <dimen name="coui_tab_layout_small_tab_spacing">20.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_tablayout_default_resize_height">34.0dp</dimen>
+    <dimen name="coui_tablayout_indicator_padding">0.0dp</dimen>
+    
+    <dimen name="coui_action_menu_item_min_width">48.0dp</dimen>
+    <dimen name="coui_action_menu_item_view_margin_end">0.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dimen name="coui_default_tag_textsize">10.0dp</dimen>
+    
+    <dimen name="coui_top_tips_fading_edge_size">26dp</dimen>
+    <dimen name="coui_top_tips_scroll_speed">25dp</dimen>
+    <dimen name="coui_top_tips_scroll_text_interval">80dp</dimen>
+    <dimen name="coui_top_tips_scroll_text_start_location">10dp</dimen>
+    
+    
+    
+    
+    <dimen name="coui_toptips_view_default_text_size">14.0sp</dimen>
+    
+    
+    <dimen name="coui_toptips_view_multi_title_top_margin">10dp</dimen>
+    <dimen name="coui_toptips_view_padding">12dp</dimen>
+    <dimen name="coui_toptips_view_padding_multi_line">16dp</dimen>
+    <dimen name="coui_toptips_view_radius">12dp</dimen>
+    <dimen name="coui_toptips_view_single_line_radius">12dp</dimen>
+    <dimen name="coui_toptips_view_title_end_margin">18dp</dimen>
+    <dimen name="coui_toptips_view_title_min_height">20.0dp</dimen>
+    <dimen name="coui_toptips_view_title_start_margin">8.0dp</dimen>
+    <dimen name="coui_toptips_view_title_top_margin">12.0dp</dimen>
+    
+    
+    
+    <dimen name="dimens_8dp">8.0dp</dimen>
+    
+    
+    
+    
+    
+    <dimen name="tablayout_background_padding">24.0dp</dimen>
+    <dimen name="tablayout_fade_edge_length">58.0dp</dimen>
+    <dimen name="tablayout_large_layout_height">40.0dp</dimen>
+    <dimen name="tablayout_large_tab_max_width">128.0dp</dimen>
+    <dimen name="tablayout_large_text_size">16.0dp</dimen>
+    <dimen name="tablayout_large_min_divider">16.0dp</dimen>
+    <dimen name="tablayout_long_text_view_height">20.0dp</dimen>
+    <dimen name="tablayout_middle_indicator_background_height">1.0dp</dimen>
+    <dimen name="tablayout_middle_text_size">14.0dp</dimen>
+    <dimen name="tablayout_min_margin">20.0dp</dimen>
+    <dimen name="tablayout_normal_text_view_height">22.0dp</dimen>
+    <dimen name="tablayout_selected_indicator_height">2.0dp</dimen>
+    <dimen name="tablayout_small_layout_height">40.0dp</dimen>
+    <dimen name="tablayout_small_min_divider">20.0dp</dimen>
+    <dimen name="tablayout_small_tab_max_width">42.0dp</dimen>
+    <dimen name="tablayout_small_text_size">14.0dp</dimen>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <!-- Leapy added 2026-07-31: Exact decoded OPPO COUI chip dimensions. -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <!-- Leapy end -->
+    <!-- Leapy added 2026-08-01: Decoded OPPO segment-button metrics. -->
+    
+    <dimen name="coui_segment_min_width">52dp</dimen>
+    <dimen name="coui_segment_over_distance">4dp</dimen>
+    <dimen name="coui_segment_padding">4dp</dimen>
+    <dimen name="coui_segment_padding_tiny">2dp</dimen>
+    <dimen name="coui_segment_regular_extra_width">7dp</dimen>
+    <dimen name="coui_segment_shadow_offset">2dp</dimen>
+    <dimen name="coui_segment_shadow_radius">1dp</dimen>
+    <dimen name="coui_segment_small_extra_width">5dp</dimen>
+    <dimen name="coui_segment_switch_distance">5dp</dimen>
+    <!-- Leapy end -->
+</resources>

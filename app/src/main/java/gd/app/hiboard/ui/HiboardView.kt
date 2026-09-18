@@ -18,14 +18,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class HiboardView @JvmOverloads constructor(
-    context: Context,
+    rawContext: Context,
     attrs: AttributeSet? = null,
-) : FrameLayout(context, attrs) {
+) : FrameLayout(couiContext(rawContext), attrs) {
 
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
     private var lastStoreKey: Any? = null
+    private var hintsBound = false
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
         val binder = CardBinder(
@@ -61,7 +62,10 @@ class HiboardView @JvmOverloads constructor(
     ) {
         binding.boardRoot.isVisible = !state.showStore
         binding.storeRoot.isVisible = state.showStore
-        binding.headerHint.text = state.headerHints.getOrElse(state.hintIndex) { context.getString(R.string.header_search_hint) }
+        if (!hintsBound && state.headerHints.isNotEmpty()) {
+            hintsBound = true
+            binding.searchBar.hintAnimationLayout.setHintsAnimation(state.headerHints)
+        }
         binding.editButton.text = if (state.editMode) context.getString(R.string.edit_done) else context.getString(R.string.edit)
         binding.addButton.isVisible = state.editMode
         binding.emptyPinned.isVisible = state.board.subscribed.isEmpty()

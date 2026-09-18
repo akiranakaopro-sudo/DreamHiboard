@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI popup attrs (monolith feature-split) -->
+<resources>
+    <attr name="isNotificationSnackBar" format="boolean" />
+    <attr name="couiSnackBarIcon" format="reference" />
+    <attr name="defaultSnackBarContentText" format="string" />
+    <attr name="couiColorPrimaryTextOnPopup" format="reference|color" />
+    <declare-styleable name="COUISnackBar">
+            <attr name="couiSnackBarIcon" />
+            <attr name="defaultSnackBarContentText" />
+            <attr name="snackBarDisappearTime" />
+        </declare-styleable>
+    <attr name="supportPopupTheme" format="reference" />
+    <attr name="couiPopupCollect" format="color|reference" />
+    <attr name="couiPopupWinFirstHeight" format="dimension" />
+    <attr name="couiPopupWinFirstTextColor" format="color|reference" />
+    <attr name="couiPopupWinFirstTextSize" format="dimension" />
+    <attr name="couiPopupWinFirstWidth" format="dimension" />
+    <attr name="couiPopupWinMinTop" format="integer" />
+    <attr name="couiPopupWinSecondHeight" format="dimension" />
+    <attr name="couiPopupWinSecondMargin" format="dimension" />
+    <attr name="couiPopupWinSecondOffset" format="dimension" />
+    <attr name="couiPopupWinSecondTextSize" format="dimension" />
+    <attr name="couiPopupWinSecondWidth" format="dimension" />
+    <attr name="couiPopupListWindowTextColor" format="color|reference" />
+    <attr name="couiPopupListWindowTextColorDisabled" format="color" />
+    <attr name="couiPopupListWindowTextColorNormal" format="color" />
+    <attr name="couiPopupWindowBackground" format="reference" />
+    <attr name="couiToolTipsArrowDownDrawable" format="reference" />
+    <attr name="couiToolTipsArrowLeftDrawable" format="reference" />
+    <attr name="couiToolTipsArrowOverflowOffset" format="dimension" />
+    <attr name="couiToolTipsArrowRightDrawable" format="reference" />
+    <attr name="couiToolTipsArrowUpDrawable" format="reference" />
+    <attr name="couiToolTipsBackground" format="color|reference" />
+    <attr name="couiToolTipsBackgroundColor" format="color" />
+    <attr name="couiToolTipsContainerLayoutGravity">
+            <flag name="top" value="0x30" />
+            <flag name="bottom" value="0x50" />
+            <flag name="left" value="0x03" />
+            <flag name="right" value="0x05" />
+            <flag name="center_vertical" value="0x10" />
+            <flag name="fill_vertical" value="0x70" />
+            <flag name="center_horizontal" value="0x01" />
+            <flag name="fill_horizontal" value="0x07" />
+            <flag name="center" value="0x11" />
+            <flag name="fill" value="0x77" />
+            <flag name="clip_vertical" value="0x80" />
+            <flag name="clip_horizontal" value="0x08" />
+            <flag name="start" value="0x00800003" />
+            <flag name="end" value="0x00800005" />
+        </attr>
+    <attr name="couiToolTipsContainerLayoutMarginBottom" format="dimension" />
+    <attr name="couiToolTipsContainerLayoutMarginEnd" format="dimension" />
+    <attr name="couiToolTipsContainerLayoutMarginStart" format="dimension" />
+    <attr name="couiToolTipsContainerLayoutMarginTop" format="dimension" />
+    <attr name="couiToolTipsContentTextColor" format="color|reference" />
+    <attr name="couiToolTipsDetailFloatingStyle" format="reference" />
+    <attr name="couiToolTipsIconStyle" format="reference" />
+    <attr name="couiToolTipsImageStyle" format="reference" />
+    <attr name="couiToolTipsMinWidth" format="dimension" />
+    <attr name="couiToolTipsPaddingBottom" format="dimension" />
+    <attr name="couiToolTipsPaddingEnd" format="dimension" />
+    <attr name="couiToolTipsPaddingStart" format="dimension" />
+    <attr name="couiToolTipsPaddingTop" format="dimension" />
+    <attr name="couiToolTipsStyle" format="reference" />
+    <attr name="couiToolTipsViewportOffsetBottom" format="dimension" />
+    <attr name="couiToolTipsViewportOffsetEnd" format="dimension" />
+    <attr name="couiToolTipsViewportOffsetStart" format="dimension" />
+    <attr name="couiToolTipsViewportOffsetTop" format="dimension" />
+    <declare-styleable name="COUIToolTips">
+            <attr name="couiToolTipsArrowDownDrawable" />
+            <attr name="couiToolTipsArrowLeftDrawable" />
+            <attr name="couiToolTipsArrowOverflowOffset" />
+            <attr name="couiToolTipsArrowRightDrawable" />
+            <attr name="couiToolTipsArrowUpDrawable" />
+            <attr name="couiToolTipsBackground" />
+            <attr name="couiToolTipsBackgroundColor" />
+            <attr name="couiToolTipsContainerLayoutGravity" />
+            <attr name="couiToolTipsContainerLayoutMarginBottom" />
+            <attr name="couiToolTipsContainerLayoutMarginEnd" />
+            <attr name="couiToolTipsContainerLayoutMarginStart" />
+            <attr name="couiToolTipsContainerLayoutMarginTop" />
+            <attr name="couiToolTipsContentTextColor" />
+            <attr name="couiToolTipsMinWidth" />
+            <attr name="couiToolTipsPaddingBottom" />
+            <attr name="couiToolTipsPaddingEnd" />
+            <attr name="couiToolTipsPaddingStart" />
+            <attr name="couiToolTipsPaddingTop" />
+            <attr name="couiToolTipsViewportOffsetBottom" />
+            <attr name="couiToolTipsViewportOffsetEnd" />
+            <attr name="couiToolTipsViewportOffsetStart" />
+            <attr name="couiToolTipsViewportOffsetTop" />
+        </declare-styleable>
+</resources>

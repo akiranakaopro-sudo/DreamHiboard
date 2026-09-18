@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="84"
+    android:viewportHeight="84">
+    <path
+        android:fillColor="?attr/couiEditTextDeleteBgColorNormal"
+        android:fillType="evenOdd"
+        android:pathData="M42,18C36.932,18 31.993,19.592 27.893,22.545C23.793,25.499 20.741,29.666 19.175,34.445C17.609,39.225 17.609,44.375 19.175,49.155C20.741,53.934 23.793,58.101 27.893,61.055C31.993,64.008 36.932,65.6 42,65.6C47.068,65.6 52.007,64.008 56.107,61.055C60.207,58.101 63.259,53.934 64.825,49.155C66.391,44.375 66.391,39.225 64.825,34.445C63.259,29.666 60.207,25.499 56.107,22.545C52.007,19.592 47.068,18 42,18Z" />
+    <path
+        android:fillColor="@color/coui_edit_text_delete_icon_color_normal"
+        android:fillType="evenOdd"
+        android:pathData="M42.3,39.5L48.6,33.2C49.4,32.4 50.6,32.4 51.4,33.2C52.2,34 52.2,35.2 51.4,36L45.1,42.3L51.5,48.7C52.3,49.5 52.3,50.7 51.5,51.5C50.7,52.3 49.5,52.3 48.7,51.5L42.3,45.1L36,51.4C35.2,52.2 34,52.2 33.2,51.4C32.4,50.6 32.4,49.4 33.2,48.6L39.5,42.3L33.1,35.9C32.3,35.1 32.3,33.9 33.1,33.1C33.9,32.3 35.1,32.3 35.9,33.1L42.3,39.5Z" />
+</vector>

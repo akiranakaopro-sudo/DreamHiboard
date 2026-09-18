@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:coui="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/pickers"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/coui_number_picker_view_padding_vertical">
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/coui_time_picker_date"
+        android:layout_width="@dimen/coui_time_picker_date_width"
+        android:layout_height="@dimen/coui_time_picker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_time_picker_date_width" />
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/coui_time_picker_minute"
+        android:layout_width="@dimen/coui_number_picker_width_small"
+        android:layout_height="@dimen/coui_time_picker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_small" />
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/coui_time_picker_hour"
+        android:layout_width="@dimen/coui_number_picker_width_small"
+        android:layout_height="@dimen/coui_time_picker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_small" />
+
+    <com.coui.appcompat.picker.COUINumberPicker
+        android:id="@+id/coui_time_picker_ampm"
+        android:layout_width="@dimen/coui_number_picker_width_small"
+        android:layout_height="@dimen/coui_time_picker_height"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:visibility="gone"
+        coui:couiIsDrawBackground="false"
+        coui:couiPickerVisualWidth="@dimen/coui_number_picker_width_small" />
+</LinearLayout>

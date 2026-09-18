@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:coui="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/support_preference_header_preference_margin_top"
+    android:gravity="center_vertical"
+    android:paddingStart="@dimen/support_preference_title_padding_start"
+    android:paddingTop="@dimen/support_preference_header_preference_padding_vertical"
+    android:paddingEnd="@dimen/support_preference_title_padding_end"
+    android:paddingBottom="@dimen/support_preference_header_preference_padding_vertical">
+
+    <com.coui.appcompat.imageview.COUIRoundImageView
+        android:id="@android:id/icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        coui:couiType="round" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@android:id/title"
+            style="@style/COUIPreferenceTitleStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fadingEdge="horizontal" />
+
+        <TextView
+            android:id="@android:id/summary"
+            style="@style/COUIPreferenceDescriptionStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@android:id/title"
+            android:layout_alignStart="@android:id/title" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@android:id/widget_frame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="vertical" />
+</LinearLayout>

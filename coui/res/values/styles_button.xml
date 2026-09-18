@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COUI button styles (monolith feature-split) -->
+<resources>
+    <style name="RtlOverlay.Widget.AppCompatSupport.Toolbar.Button.Navigation" parent="@style/Widget.AppCompat.Toolbar.Button.Navigation">
+            <item name="android:paddingLeft">
+                @dimen/support_abc_action_bar_navigation_padding_start_material
+            </item>
+            <item name="android:minWidth">24.0dp</item>
+        </style>
+    <style name="Widget.AppCompatSupport.Toolbar.Button.Navigation" parent="@style/RtlOverlay.Widget.AppCompatSupport.Toolbar.Button.Navigation" />
+    <style name="Widget.COUI.Toolbar.Button.Navigation" parent="@style/Widget.AppCompatSupport.Toolbar.Button.Navigation">
+            <item name="android:paddingLeft">@dimen/coui_action_bar_navigation_padding_start_material
+            </item>
+            <item name="android:paddingRight">@dimen/coui_action_bar_navigation_padding_end_material
+            </item>
+        </style>
+    <style name="Widget.COUI.Button" parent="@style/Base.Widget.AppCompat.Button">
+            <item name="android:textAppearance">@style/couiTextAppearanceButton</item>
+            <item name="android:textSize">@dimen/coui_btn_text_size</item>
+            <item name="android:textColor">@color/coui_btn_default_text_color</item>
+            <item name="android:ellipsize">end</item>
+            <item name="android:gravity">center</item>
+            <item name="android:scrollbars">none</item>
+            <item name="android:singleLine">true</item>
+            <item name="couiRoundType">smooth</item>
+            <item name="disabledColor">?couiColorDisable</item>
+            <item name="drawableColor">?couiColorContainerTheme</item>
+            <item name="isShowLoadingText">false</item>
+            <item name="needVibrate">false</item>
+        </style>
+    <style name="Widget.COUI.Button.Dark" parent="@style/Widget.COUI.Button">
+            <item name="android:textColor">@color/coui_btn_default_text_color</item>
+        </style>
+    <style name="Widget.COUI.Button.Large" parent="@style/Widget.COUI.Button">
+            <item name="android:textAppearance">@style/couiTextAppearanceButtonL</item>
+            <item name="android:ellipsize">end</item>
+            <item name="android:paddingLeft">12.0dp</item>
+            <item name="android:paddingRight">12.0dp</item>
+            <item name="android:layout_width">wrap_content</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:minWidth">@dimen/coui_btn_large_width_min</item>
+            <item name="android:minHeight">@dimen/coui_btn_large_height_min</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_l</item>
+            <item name="animEnable">@bool/coui_button_anim_enable</item>
+            <item name="brightness">0.8</item>
+            <item name="disabledColor">?couiColorDisable</item>
+            <item name="drawableColor">?couiColorContainerTheme</item>
+            <item name="drawableRadius">-1.0dp</item>
+            <item name="isShowLoadingText">true</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.Borderless" parent="@style/Widget.COUI.Button.Large">
+            <item name="android:textColor">@color/coui_btn_all_secondary_text_color</item>
+            <item name="android:background">@null</item>
+            <item name="animEnable">true</item>
+            <item name="animType">0</item>
+            <item name="brightness">1.0</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainer8</item>
+            <item name="strokeColor">?couiColorDivider</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.ButtonNew" parent="@style/Widget.COUI.Button.Large">
+            <item name="android:textSize">@dimen/coui_btn_text_size</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">44.0dp</item>
+            <item name="android:layout_marginStart">32.0dp</item>
+            <item name="android:layout_marginEnd">32.0dp</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.ButtonNew.HalfColor" parent="@style/Widget.COUI.Button.Large.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_tiny_halfcolor_text_color</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainerThemeHalftone</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.ButtonNew.Secondary" parent="@style/Widget.COUI.Button.Large.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_secondary_text_color</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainer8</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.ButtonNew.Secondary.NoMargin" parent="@style/Widget.COUI.Button.Large.ButtonNew.Secondary">
+            <item name="android:layout_marginStart">0.0dp</item>
+            <item name="android:layout_marginEnd">0.0dp</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.ButtonNew.Translate" parent="@style/Widget.COUI.Button.Large.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_tiny_translate_text_color</item>
+            <item name="disabledColor">@color/coui_button_translate_color</item>
+            <item name="drawableColor">@color/coui_button_translate_color</item>
+            <item name="pressColor">16</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.Light" parent="@style/Widget.COUI.Button.Large">
+            <item name="brightness">0.8</item>
+            <item name="drawableColor">?couiColorSecondary</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.TinyFull" parent="@style/Widget.COUI.Button.Large">
+            <item name="android:textSize">@dimen/coui_btn_text_size_tiny</item>
+            <item name="android:textColor">@color/coui_btn_tiny_default_text_color</item>
+            <item name="android:layout_width">match_parent</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:maxLines">2</item>
+            <item name="android:singleLine">false</item>
+            <item name="android:layout_marginStart">16.0dp</item>
+            <item name="android:layout_marginEnd">16.0dp</item>
+            <item name="couiRoundType">common</item>
+            <item name="disabledColor">@color/coui_button_neutral_color_disable</item>
+            <item name="drawableRadius">@dimen/coui_btn_drawable_radius_large_tiny</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.TinyFull.Dark" parent="@style/Widget.COUI.Button.Large.TinyFull">
+            <item name="disabledColor">@color/coui_button_neutral_color_disable_dark</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.TinyFull.Light" parent="@style/Widget.COUI.Button.Large.TinyFull">
+            <item name="disabledColor">@color/coui_button_neutral_color_disable_light</item>
+        </style>
+    <style name="Widget.COUI.Button.Large.TinyFull.Secondary" parent="@style/Widget.COUI.Button.Large.TinyFull">
+            <item name="android:textColor">@color/coui_btn_borderless_text_color</item>
+            <item name="disabledColor">@color/coui_button_neutral_color_disable</item>
+            <item name="drawableColor">@color/coui_button_neutral_color_light</item>
+        </style>
+    <style name="Widget.COUI.Button.Small" parent="@style/Widget.COUI.Button">
+            <item name="android:textAppearance">@style/couiTextAppearanceButton</item>
+            <item name="android:textSize">@dimen/coui_btn_small_text_size</item>
+            <item name="android:paddingLeft">12.0dp</item>
+            <item name="android:paddingTop">4.0dp</item>
+            <item name="android:paddingRight">12.0dp</item>
+            <item name="android:paddingBottom">4.0dp</item>
+            <item name="android:minWidth">@dimen/coui_btn_small_width_min</item>
+            <item name="android:minHeight">@dimen/coui_btn_small_height_min</item>
+            <item name="animEnable">@bool/coui_button_anim_enable</item>
+            <item name="brightness">0.8</item>
+            <item name="drawableColor">?couiColorContainerTheme</item>
+            <item name="drawableRadius">-1.0dp</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.Borderless" parent="@style/Widget.COUI.Button.Small">
+            <item name="android:textColor">@color/coui_btn_all_secondary_text_color</item>
+            <item name="android:background">@null</item>
+            <item name="animEnable">true</item>
+            <item name="animType">0</item>
+            <item name="brightness">1.0</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainer8</item>
+            <item name="strokeColor">?couiColorDivider</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.ButtonNew" parent="@style/Widget.COUI.Button.Small">
+            <item name="android:layout_width">wrap_content</item>
+            <item name="android:layout_height">wrap_content</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.ButtonNew.HalfColor" parent="@style/Widget.COUI.Button.Small.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_tiny_halfcolor_text_color</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainerThemeHalftone</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.ButtonNew.Secondary" parent="@style/Widget.COUI.Button.Small.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_secondary_text_color</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainer8</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.ButtonNew.Translate" parent="@style/Widget.COUI.Button.Small.ButtonNew">
+            <item name="android:textColor">@color/coui_btn_tiny_translate_text_color</item>
+            <item name="disabledColor">@color/coui_button_translate_color</item>
+            <item name="drawableColor">@color/coui_button_translate_color</item>
+            <item name="pressColor">16</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.Light" parent="@style/Widget.COUI.Button.Small">
+            <item name="android:forceDarkAllowed">false</item>
+            <item name="brightness">0.8</item>
+            <item name="drawableColor">?couiColorSecondary</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.TinySmall" parent="@style/Widget.COUI.Button.Small">
+            <item name="android:textSize">@dimen/coui_btn_small_text_size_tiny</item>
+            <item name="android:textColor">@color/coui_btn_tiny_default_text_color</item>
+            <item name="couiRoundType">common</item>
+            <item name="disabledColor">@color/coui_button_neutral_color_disable</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.TinySmall.HalfColor" parent="@style/Widget.COUI.Button.Small.TinySmall">
+            <item name="android:textColor">@color/coui_btn_tiny_halfcolor_text_color</item>
+            <item name="disabledColor">?couiColorContainer8</item>
+            <item name="drawableColor">?couiColorContainerThemeHalftone</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.TinySmall.Secondary" parent="@style/Widget.COUI.Button.Small.TinySmall">
+            <item name="android:textColor">@color/coui_btn_borderless_text_color</item>
+            <item name="disabledColor">@color/coui_button_neutral_color_disable</item>
+            <item name="drawableColor">@color/coui_button_neutral_color_light</item>
+        </style>
+    <style name="Widget.COUI.Button.Small.TinySmall.Translate" parent="@style/Widget.COUI.Button.Small.TinySmall">
+            <item name="android:textColor">@color/coui_btn_tiny_translate_text_color</item>
+            <item name="disabledColor">@color/coui_button_translate_color</item>
+            <item name="drawableColor">@color/coui_button_translate_color</item>
+            <item name="pressColor">16</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.CheckBox" parent="@style/Widget.AppCompat.CompoundButton.CheckBox">
+            <item name="android:button">?android:listChoiceIndicatorMultiple</item>
+            <item name="android:freezesText">true</item>
+            <item name="android:textAlignment">viewStart</item>
+            <item name="android:paddingStart">@dimen/coui_btn_checkbox_padding_left</item>
+            <item name="android:forceDarkAllowed">false</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.CheckBox.Icon" parent="@style/Widget.COUI.CompoundButton.CheckBox">
+            <item name="android:background">@null</item>
+            <item name="android:button">@drawable/coui_icon_btn_check</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.CheckBox.Shape" parent="@style/Widget.COUI.CompoundButton.CheckBox">
+            <item name="android:button">@drawable/coui_shape_btn_check</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.COUICheckBox" parent="@style/Widget.AppCompat.CompoundButton.CheckBox">
+            <item name="android:background">@null</item>
+            <item name="android:freezesText">true</item>
+            <item name="android:elegantTextHeight">false</item>
+            <item name="couiButton">@drawable/coui_checkbox_state</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.COUICheckBox.Shape" parent="@style/Widget.COUI.CompoundButton.COUICheckBox">
+            <item name="android:forceDarkAllowed">false</item>
+            <item name="couiButton">@drawable/coui_shape_checkbox_state</item>
+        </style>
+    <style name="Widget.COUI.CompoundButton.RadioButton" parent="@style/Widget.AppCompat.CompoundButton.RadioButton">
+            <item name="android:button">?android:listChoiceIndicatorSingle</item>
+        </style>
+    <style name="couiTextButtonL" parent="@style/couiTextAppearance">
+            <item name="android:textSize">16.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_l</item>
+            <item name="fontFamily">sans-serif-medium</item>
+        </style>
+    <style name="couiTextButtonM" parent="@style/couiTextAppearance">
+            <item name="android:textSize">14.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_m</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="couiTextButtonS" parent="@style/couiTextAppearance">
+            <item name="android:textSize">12.0sp</item>
+            <item name="android:lineSpacingMultiplier">@dimen/coui_spacing_multiplier_button_s</item>
+            <!-- Temporarily disabled 2026-07-16: <item name="android:fontFamily">sans-serif-medium</item> -->
+        </style>
+    <style name="Widget.COUI.ChipGroup" parent="@android:style/Widget">
+            <item name="chipSpacingHorizontal">@dimen/coui_chip_group_default_spacing_horizontal</item>
+            <item name="chipSpacingVertical">@dimen/coui_chip_group_default_spacing_vertical</item>
+        </style>
+    <style name="Widget.COUI.Chip" parent="@android:style/Widget">
+            <item name="android:textAppearance">?attr/couiTextBodyXS</item>
+            <item name="android:ellipsize">end</item>
+            <item name="android:gravity">center</item>
+            <item name="android:focusable">true</item>
+            <item name="android:clickable">true</item>
+            <item name="android:layout_width">wrap_content</item>
+            <item name="android:layout_height">wrap_content</item>
+            <item name="android:maxWidth">@dimen/coui_chip_default_max_width</item>
+            <item name="android:minWidth">@dimen/coui_chip_default_min_width</item>
+            <item name="android:minHeight">@dimen/coui_chip_default_min_height</item>
+            <item name="android:maxLines">1</item>
+            <item name="android:singleLine">true</item>
+            <item name="android:includeFontPadding">false</item>
+            <item name="android:checkable">false</item>
+            <item name="android:stateListAnimator">@null</item>
+            <item name="checkedBackgroundColor">?attr/couiColorPrimary</item>
+            <item name="checkedChipIconTint">?attr/couiColorLabelOnColor</item>
+            <item name="checkedDisabledBackgroundColor">?attr/couiColorDisable</item>
+            <item name="checkedDisabledChipIconTint">@color/chip_checked_text_disable_color</item>
+            <item name="checkedDisabledTextColor">@color/chip_checked_text_disable_color</item>
+            <item name="checkedTextColor">?attr/couiColorLabelOnColor</item>
+            <item name="chipCornerRadius">-1dp</item>
+            <item name="chipIconApplyTint">true</item>
+            <item name="chipTextMaxWidth">@dimen/coui_chip_default_max_text_width</item>
+            <item name="uncheckedBackgroundColor">?attr/couiColorContainer8</item>
+            <item name="uncheckedChipIconTint">?attr/couiColorLabelPrimary</item>
+            <item name="uncheckedDisabledBackgroundColor">?attr/couiColorContainer8</item>
+            <item name="uncheckedDisabledChipIconTint">@color/chip_unchecked_text_disable_color</item>
+            <item name="uncheckedDisabledTextColor">@color/chip_unchecked_text_disable_color</item>
+            <item name="uncheckedTextColor">?attr/couiColorLabelPrimary</item>
+        </style>
+    <style name="Widget.COUI.Chip.Choice" parent="@style/Widget.COUI.Chip.Selection" />
+    <style name="Widget.COUI.Chip.Record" parent="@style/Widget.COUI.Chip.Suggestion" />
+    <style name="Widget.COUI.Chip.Selection" parent="@style/Widget.COUI.Chip">
+            <item name="android:textAppearance">?attr/couiTextBodyM</item>
+            <item name="android:minHeight">@dimen/coui_chip_selection_style_height</item>
+            <item name="android:checkable">true</item>
+            <item name="chipEndPadding">@dimen/coui_chip_selection_style_chip_horizontal_padding</item>
+            <item name="chipIconEndPadding">@dimen/coui_chip_selection_style_chip_icon_end_padding</item>
+            <item name="chipIconSize">@dimen/coui_chip_selection_style_chip_icon_size</item>
+            <item name="chipIconStartPadding">@dimen/coui_chip_selection_style_chip_icon_start_padding</item>
+            <item name="chipStartPadding">@dimen/coui_chip_selection_style_chip_horizontal_padding</item>
+        </style>
+    <style name="Widget.COUI.Chip.Suggestion" parent="@style/Widget.COUI.Chip">
+            <item name="android:minHeight">@dimen/coui_chip_suggest_style_height</item>
+            <item name="android:lineSpacingMultiplier">1</item>
+            <item name="chipEndPadding">@dimen/coui_chip_suggest_style_chip_horizontal_padding</item>
+            <item name="chipIconEndPadding">@dimen/coui_chip_suggest_style_chip_icon_end_padding</item>
+            <item name="chipIconSize">@dimen/coui_chip_suggest_style_chip_icon_size</item>
+            <item name="chipIconStartPadding">@dimen/coui_chip_suggest_style_chip_icon_start_padding</item>
+            <item name="chipStartPadding">@dimen/coui_chip_suggest_style_chip_horizontal_padding</item>
+            <item name="closeIcon">@drawable/ic_chip_close</item>
+            <item name="closeIconEndPadding">@dimen/coui_chip_suggest_style_close_icon_end_padding</item>
+            <item name="closeIconSize">@dimen/coui_chip_suggest_style_close_icon_size</item>
+            <item name="closeIconStartPadding">@dimen/coui_chip_suggest_style_close_icon_start_padding</item>
+            <item name="closeIconTouchBoundsSize">@dimen/coui_chip_suggest_style_close_icon_touch_bounds_size</item>
+        </style>
+    <style name="Widget.COUI.Chip.Suggestion.Collapsable"
+            parent="@style/Widget.COUI.Chip.Suggestion">
+            <item name="android:layout_width">@dimen/coui_chip_suggest_style_height</item>
+            <item name="android:layout_height">@dimen/coui_chip_suggest_style_height</item>
+            <item name="android:minWidth">@dimen/coui_chip_suggest_style_height</item>
+            <item name="chipEndPadding">0dp</item>
+            <item name="chipIconEndPadding">6dp</item>
+            <item name="chipIconSize">16dp</item>
+            <item name="chipIconStartPadding">6dp</item>
+            <item name="chipStartPadding">0dp</item>
+            <item name="closeIcon">@null</item>
+            <item name="closeIconEndPadding">0dp</item>
+            <item name="closeIconSize">0dp</item>
+            <item name="closeIconStartPadding">0dp</item>
+            <item name="closeIconTouchBoundsSize">0dp</item>
+        </style>
+    <style name="SegmentButton" parent="@style/Base.Widget.AppCompat.Button">
+            <item name="android:padding">@dimen/coui_segment_padding</item>
+            <item name="android:focusable">false</item>
+            <item name="android:layout_height">40dp</item>
+            <item name="android:stateListAnimator">@null</item>
+        </style>
+</resources>

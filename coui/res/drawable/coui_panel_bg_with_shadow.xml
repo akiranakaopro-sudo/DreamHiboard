@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nine-patch android:src="@drawable/coui_panel_nine_patch_bg_with_shadow" android:tint="?couiPanelLayoutWithShadowTint"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leapy added 2026-07-24: BEGIN decoded OPPO COUI action-menu item override using the merged COUI text appearance. -->
+<com.coui.appcompat.toolbar.COUIActionMenuItemView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:textAppearance="@style/couiTextAppearanceSmallButton"
+    android:textColor="@color/coui_menu_btn_text_color_selector"
+    android:layout_gravity="center"
+    android:focusable="true"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:textDirection="locale"
+    style="@style/COUIMenuItemStyle"/>
+<!-- Leapy end 2026-07-24: decoded OPPO COUI action-menu item override. -->

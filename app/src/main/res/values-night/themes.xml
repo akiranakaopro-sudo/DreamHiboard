@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.Hiboard" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@color/hiboard_background</item>
-        <item name="android:navigationBarColor">@color/hiboard_background</item>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Hiboard" parent="Theme.COUI.Dark.Blue">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowBackground">@color/hiboard_background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="android:windowBackground">?attr/couiColorBackgroundWithCard</item>
     </style>
 </resources>
