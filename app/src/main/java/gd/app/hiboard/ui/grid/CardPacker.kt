@@ -73,21 +73,30 @@ private fun dropTargetIdForFullWidth(
     draggedId: String,
     row: Float,
 ): String? {
-    var best: GridPlacement? = null
-    placements.forEach { place ->
-        if (place.instanceId == draggedId) return@forEach
+    val draggedIndex = placements.indexOfFirst { it.instanceId == draggedId }
+    val hits = mutableListOf<Pair<Int, GridPlacement>>()
+    placements.forEachIndexed { index, place ->
+        if (place.instanceId == draggedId) return@forEachIndexed
         val insetY = place.rows * 0.12f
-        if (row < place.row + insetY) return@forEach
-        if (row >= place.row + place.rows - insetY) return@forEach
-        val current = best
-        if (current == null ||
-            place.column < current.column ||
-            (place.column == current.column && place.row < current.row)
-        ) {
-            best = place
-        }
+        if (row < place.row + insetY) return@forEachIndexed
+        if (row >= place.row + place.rows - insetY) return@forEachIndexed
+        hits += index to place
     }
-    return best?.instanceId
+    if (hits.isEmpty()) return null
+    val targetRow = hits.minBy { (_, place) ->
+        val center = place.row + place.rows / 2f
+        val delta = row - center
+        delta * delta
+    }.second.row
+    val inRow = hits.filter { it.second.row == targetRow }
+    val firstInRow = inRow.minOf { it.first }
+    val movingDown = draggedIndex in 0 until firstInRow
+    val chosen = if (movingDown) {
+        inRow.maxBy { it.second.column }
+    } else {
+        inRow.minBy { it.second.column }
+    }
+    return chosen.second.instanceId
 }
 
 /**

@@ -109,6 +109,26 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun fullWidthCardBelowHalfWidthPairKeepsThePairAbove() {
+        val shortcuts = card("shortcuts", CardSize.FullByTwo)
+        val notes = card("notes", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val origin = listOf(shortcuts, notes, weather)
+        val packed = packCards(origin)
+        assertEquals("weather", dropTargetId(packed, "shortcuts", 2f, 3f, draggedColumns = 4))
+        val preview = previewCardsForDrop(origin, origin, "shortcuts", 2f, 3f)
+        assertEquals(listOf("notes", "weather", "shortcuts"), preview.map { it.catalogId })
+        val next = packCards(preview)
+        assertEquals("notes", next[0].instanceId)
+        assertEquals(0, next[0].column)
+        assertEquals("weather", next[1].instanceId)
+        assertEquals(2, next[1].column)
+        assertEquals(next[0].row, next[1].row)
+        assertEquals("shortcuts", next[2].instanceId)
+        assertEquals(2, next[2].row)
+    }
+
+    @Test
     fun occupiedIndexIgnoresEmptySpace() {
         val placements = packCards(
             listOf(

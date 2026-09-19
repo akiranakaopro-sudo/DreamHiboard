@@ -222,10 +222,11 @@ class PackedCardLayout @JvmOverloads constructor(
         val draggedCard = cards.firstOrNull { it.instanceId == dragged } ?: return
         val stride = (cellWidth(width.coerceAtLeast(1)) + gutterPx).toFloat()
         val column = dragX / stride
-        val sampleY = if (draggedCard.size.rows > 2 && dragY < downY) {
-            minOf(dragY, child.top + child.translationY + stride)
-        } else {
-            dragY
+        val visualTop = child.top + child.translationY
+        val sampleY = when {
+            dragY + slop < downY -> minOf(dragY, visualTop + stride)
+            dragY - slop > downY -> maxOf(dragY, visualTop + child.height - stride)
+            else -> dragY
         }
         val row = sampleY / stride
         val next = previewCardsForDrop(originCards, cards, dragged, column, row, columns)
