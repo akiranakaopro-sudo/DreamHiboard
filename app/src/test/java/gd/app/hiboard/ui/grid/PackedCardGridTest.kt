@@ -195,6 +195,34 @@ class PackedCardGridTest {
         assertEquals(4, packed[2].row)
     }
 
+    @Test
+    fun halfWidthPartnerFollowsWhenMovingOntoFullWidth() {
+        val dock = card("dock", CardSize.FullByTwo)
+        val advice = card("advice", CardSize.FullByTwo)
+        val shortcuts = card("shortcuts", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val origin = listOf(dock, advice, shortcuts, weather)
+        assertEquals("weather", packedRowPartnerId(origin, "shortcuts"))
+        val preview = previewCardsForDrop(origin, origin, "shortcuts", 2f, 3f)
+        assertEquals(listOf("dock", "shortcuts", "weather", "advice"), preview.map { it.catalogId })
+        val packed = packCards(preview)
+        assertEquals("shortcuts", packed[1].instanceId)
+        assertEquals(0, packed[1].column)
+        assertEquals("weather", packed[2].instanceId)
+        assertEquals(2, packed[2].column)
+        assertEquals(packed[1].row, packed[2].row)
+    }
+
+    @Test
+    fun halfWidthPartnerDoesNotFollowWhenSwappingOntoAnotherTile() {
+        val shortcuts = card("shortcuts", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val notes = card("notes", CardSize.TwoByTwo)
+        val origin = listOf(shortcuts, weather, notes)
+        val preview = previewCardsForDrop(origin, origin, "shortcuts", 1f, 3f)
+        assertEquals(listOf("weather", "notes", "shortcuts"), preview.map { it.catalogId })
+    }
+
     private fun card(id: String, size: CardSize) = CardInstance(
         instanceId = id,
         catalogId = id,

@@ -116,6 +116,19 @@ fun previewCardsForDrop(
     val from = current.indexOfFirst { it.instanceId == draggedId }
     val to = current.indexOfFirst { it.instanceId == hitId }
     if (from < 0 || to < 0 || from == to) return current
+    val partnerId = packedRowPartnerId(origin, draggedId, columns)
+    if (partnerId != null && hitId != partnerId) {
+        val hitSpan = current.firstOrNull { it.instanceId == hitId }?.size?.columns ?: 0
+        if (hitSpan >= 4) {
+            return moveWithRowPartner(
+                current,
+                draggedId,
+                hitId,
+                partnerId,
+                partnerIsOnRight(origin, draggedId, partnerId, columns),
+            )
+        }
+    }
     return moveLikeOppo(
         current,
         from,
@@ -123,6 +136,54 @@ fun previewCardsForDrop(
         current[from].size.columns,
         current[to].size.columns,
     )
+}
+
+fun packedRowPartnerId(
+    cards: List<CardInstance>,
+    draggedId: String,
+    columns: Int = 4,
+): String? {
+    val packed = packCards(cards, columns)
+    val dragged = packed.firstOrNull { it.instanceId == draggedId } ?: return null
+    if (dragged.columns >= columns) return null
+    return packed.firstOrNull { other ->
+        other.instanceId != draggedId &&
+            other.row == dragged.row &&
+            other.columns < columns
+    }?.instanceId
+}
+
+fun partnerIsOnRight(
+    cards: List<CardInstance>,
+    draggedId: String,
+    partnerId: String,
+    columns: Int = 4,
+): Boolean {
+    val packed = packCards(cards, columns)
+    val dragged = packed.firstOrNull { it.instanceId == draggedId } ?: return true
+    val partner = packed.firstOrNull { it.instanceId == partnerId } ?: return true
+    return partner.column > dragged.column
+}
+
+fun moveWithRowPartner(
+    cards: List<CardInstance>,
+    draggedId: String,
+    targetId: String,
+    partnerId: String,
+    partnerOnRight: Boolean,
+): List<CardInstance> {
+    val withoutPartner = cards.filter { it.instanceId != partnerId }
+    val from = withoutPartner.indexOfFirst { it.instanceId == draggedId }
+    val to = withoutPartner.indexOfFirst { it.instanceId == targetId }
+    if (from < 0 || to < 0) return cards
+    val moved = moveCardsLikeOppo(withoutPartner, from, to)
+    val dragIndex = moved.indexOfFirst { it.instanceId == draggedId }
+    if (dragIndex < 0) return cards
+    val partner = cards.firstOrNull { it.instanceId == partnerId } ?: return moved
+    val next = moved.toMutableList()
+    val insertAt = if (partnerOnRight) dragIndex + 1 else dragIndex
+    next.add(insertAt.coerceIn(0, next.size), partner)
+    return next
 }
 
 /**

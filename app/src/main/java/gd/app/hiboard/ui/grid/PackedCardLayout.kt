@@ -237,12 +237,9 @@ class PackedCardLayout @JvmOverloads constructor(
             return
         }
         if (restoring) {
-            cards = originCards
-            cardViews.clear()
-            cardViews.addAll(originViews)
+            applyOrder(originCards)
             lastHitId = dragged
         } else {
-            val from = cards.indexOfFirst { it.instanceId == dragged }
             val hitId = dropTargetId(
                 packCards(cards, columns),
                 dragged,
@@ -250,20 +247,20 @@ class PackedCardLayout @JvmOverloads constructor(
                 row,
                 draggedColumns = draggedCard.size.columns,
             ) ?: return
-            val to = cards.indexOfFirst { it.instanceId == hitId }
-            if (from < 0 || to < 0 || from == to) return
-            val fromSpan = cards[from].size.columns
-            val toSpan = cards[to].size.columns
-            cards = next
-            val nextViews = moveLikeOppo(cardViews.toList(), from, to, fromSpan, toSpan)
-            cardViews.clear()
-            cardViews.addAll(nextViews)
+            applyOrder(next)
             lastHitId = hitId
         }
         dragIndex = cards.indexOfFirst { it.instanceId == dragged }
         lastSwapX = dragX
         lastSwapY = dragY
         requestLayout()
+    }
+
+    private fun applyOrder(next: List<CardInstance>) {
+        val byTag = cardViews.associateBy { it.tag as String }
+        cards = next
+        cardViews.clear()
+        cardViews.addAll(next.mapNotNull { byTag[it.instanceId] })
     }
 
     private fun endDrag(commit: Boolean) {
