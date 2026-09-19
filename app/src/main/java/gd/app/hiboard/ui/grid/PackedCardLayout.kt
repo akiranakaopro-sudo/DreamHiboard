@@ -25,7 +25,6 @@ class PackedCardLayout @JvmOverloads constructor(
     var onReorder: ((List<String>) -> Unit)? = null
 
     private val gutterPx = (10 * resources.displayMetrics.density).roundToInt()
-    private val rowHeightPx = (52 * resources.displayMetrics.density).roundToInt()
     private val elevationPx = 12 * resources.displayMetrics.density
     private val scrollEdgePx = (64 * resources.displayMetrics.density).roundToInt()
     private val reflowMs = 250L
@@ -76,32 +75,30 @@ class PackedCardLayout @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val placements = packCards(cards, columns)
-        val cellWidth = cellWidth(width)
+        val cell = cellWidth(width)
         cards.forEach { card ->
             val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
             val child = viewFor(card.instanceId) ?: return@forEach
-            val childWidth = cellWidth * place.columns + gutterPx * (place.columns - 1)
-            val childHeight = rowHeightPx * place.rows + gutterPx * (place.rows - 1)
             child.measure(
-                MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(spanPx(cell, place.columns), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(spanPx(cell, place.rows), MeasureSpec.EXACTLY),
             )
         }
         val maxRow = placements.maxOfOrNull { it.row + it.rows } ?: 0
-        val height = if (maxRow == 0) 0 else rowHeightPx * maxRow + gutterPx * (maxRow - 1)
+        val height = if (maxRow == 0) 0 else spanPx(cell, maxRow)
         setMeasuredDimension(width, height)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val width = r - l
         val placements = packCards(cards, columns)
-        val cellWidth = cellWidth(width)
+        val cell = cellWidth(width)
         val dragged = draggedId
         cards.forEach { card ->
             val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
             val child = viewFor(card.instanceId) ?: return@forEach
-            val x = place.column * (cellWidth + gutterPx)
-            val y = place.row * (rowHeightPx + gutterPx)
+            val x = place.column * (cell + gutterPx)
+            val y = place.row * (cell + gutterPx)
             if (isDragging && card.instanceId != dragged) {
                 layoutReflow(child, x, y)
             } else {
@@ -223,15 +220,14 @@ class PackedCardLayout @JvmOverloads constructor(
         val dragged = draggedId ?: return
         val child = viewFor(dragged) ?: return
         val draggedCard = cards.firstOrNull { it.instanceId == dragged } ?: return
-        val strideX = (cellWidth(width.coerceAtLeast(1)) + gutterPx).toFloat()
-        val strideY = (rowHeightPx + gutterPx).toFloat()
-        val column = dragX / strideX
+        val stride = (cellWidth(width.coerceAtLeast(1)) + gutterPx).toFloat()
+        val column = dragX / stride
         val sampleY = if (draggedCard.size.rows > 2 && dragY < downY) {
-            minOf(dragY, child.top + child.translationY + strideY)
+            minOf(dragY, child.top + child.translationY + stride)
         } else {
             dragY
         }
-        val row = sampleY / strideY
+        val row = sampleY / stride
         val next = previewCardsForDrop(originCards, cards, dragged, column, row, columns)
         if (next.map { it.instanceId } == cards.map { it.instanceId }) return
         val restoring = next.map { it.instanceId } == originCards.map { it.instanceId }
@@ -352,6 +348,9 @@ class PackedCardLayout @JvmOverloads constructor(
         }
         return -1
     }
+
+    private fun spanPx(cell: Int, spans: Int): Int =
+        cell * spans + gutterPx * (spans - 1).coerceAtLeast(0)
 
     private fun cellWidth(width: Int): Int =
         ((width - gutterPx * (columns - 1)) / columns.toFloat()).roundToInt().coerceAtLeast(1)
