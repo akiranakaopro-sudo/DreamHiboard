@@ -40,6 +40,8 @@ class PackedCardLayout @JvmOverloads constructor(
     private var originViews: List<View> = emptyList()
     private var draggedId: String? = null
     private var lastHitId: String? = null
+    private var lastSwapX = 0f
+    private var lastSwapY = 0f
     private var dragIndex: Int = -1
     private var pendingIndex: Int = -1
     private var grabOffsetX = 0f
@@ -187,6 +189,8 @@ class PackedCardLayout @JvmOverloads constructor(
         dragIndex = index
         draggedId = card.instanceId
         lastHitId = null
+        lastSwapX = downX
+        lastSwapY = downY
         originCards = cards
         originViews = cardViews.toList()
         grabOffsetX = downX - child.left
@@ -218,21 +222,51 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun tryMoveToTarget() {
         val dragged = draggedId ?: return
         val child = viewFor(dragged) ?: return
-        val centerX = child.left + child.translationX + child.width / 2f
-        val centerY = child.top + child.translationY + child.height / 2f
-        val hitId = hitOtherId(centerX, centerY) ?: hitOtherId(dragX, dragY) ?: return
-        if (hitId == dragged || hitId == lastHitId) return
-        val from = cards.indexOfFirst { it.instanceId == dragged }
-        val to = cards.indexOfFirst { it.instanceId == hitId }
-        if (from < 0 || to < 0 || from == to) return
-        val fromSpan = cards[from].size.columns
-        val toSpan = cards[to].size.columns
-        cards = moveLikeOppo(cards, from, to, fromSpan, toSpan)
-        val nextViews = moveLikeOppo(cardViews.toList(), from, to, fromSpan, toSpan)
-        cardViews.clear()
-        cardViews.addAll(nextViews)
+        val draggedCard = cards.firstOrNull { it.instanceId == dragged } ?: return
+        val strideX = (cellWidth(width.coerceAtLeast(1)) + gutterPx).toFloat()
+        val strideY = (rowHeightPx + gutterPx).toFloat()
+        val column = dragX / strideX
+        val sampleY = if (draggedCard.size.rows > 2 && dragY < downY) {
+            minOf(dragY, child.top + child.translationY + strideY)
+        } else {
+            dragY
+        }
+        val row = sampleY / strideY
+        val next = previewCardsForDrop(originCards, cards, dragged, column, row, columns)
+        if (next.map { it.instanceId } == cards.map { it.instanceId }) return
+        val restoring = next.map { it.instanceId } == originCards.map { it.instanceId }
+        if (!restoring && lastHitId != null &&
+            hypot(dragX - lastSwapX, dragY - lastSwapY) < swapTravelPx()
+        ) {
+            return
+        }
+        if (restoring) {
+            cards = originCards
+            cardViews.clear()
+            cardViews.addAll(originViews)
+            lastHitId = dragged
+        } else {
+            val from = cards.indexOfFirst { it.instanceId == dragged }
+            val hitId = dropTargetId(
+                packCards(cards, columns),
+                dragged,
+                column,
+                row,
+                draggedColumns = draggedCard.size.columns,
+            ) ?: return
+            val to = cards.indexOfFirst { it.instanceId == hitId }
+            if (from < 0 || to < 0 || from == to) return
+            val fromSpan = cards[from].size.columns
+            val toSpan = cards[to].size.columns
+            cards = next
+            val nextViews = moveLikeOppo(cardViews.toList(), from, to, fromSpan, toSpan)
+            cardViews.clear()
+            cardViews.addAll(nextViews)
+            lastHitId = hitId
+        }
         dragIndex = cards.indexOfFirst { it.instanceId == dragged }
-        lastHitId = hitId
+        lastSwapX = dragX
+        lastSwapY = dragY
         requestLayout()
     }
 
@@ -254,6 +288,8 @@ class PackedCardLayout @JvmOverloads constructor(
         dragIndex = -1
         draggedId = null
         lastHitId = null
+        lastSwapX = 0f
+        lastSwapY = 0f
         pendingIndex = -1
         activePointerId = MotionEvent.INVALID_POINTER_ID
         cards = nextCards
@@ -304,20 +340,8 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun viewFor(instanceId: String): View? =
         cardViews.firstOrNull { it.tag == instanceId }
 
-    private fun hitOtherId(x: Float, y: Float): String? {
-        val dragged = draggedId
-        for (index in cardViews.indices.reversed()) {
-            val child = cardViews[index]
-            val id = child.tag as? String ?: continue
-            if (id == dragged) continue
-            val left = child.left + child.translationX
-            val top = child.top + child.translationY
-            if (x >= left && x < left + child.width && y >= top && y < top + child.height) {
-                return id
-            }
-        }
-        return null
-    }
+    private fun swapTravelPx(): Float =
+        ((cellWidth(width.coerceAtLeast(1)) + gutterPx) * 0.4f).coerceAtLeast(slop * 3f)
 
     private fun hitIndex(x: Float, y: Float): Int {
         for (index in cardViews.indices.reversed()) {
