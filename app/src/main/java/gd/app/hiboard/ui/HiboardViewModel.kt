@@ -113,6 +113,10 @@ class HiboardViewModel(
         _state.update { if (it.editMode) it else it.copy(editMode = true, showStore = false) }
     }
 
+    fun exitEdit() {
+        _state.update { if (!it.editMode && !it.showStore) it else it.copy(editMode = false, showStore = false) }
+    }
+
     fun reorder(area: CardArea, catalogIds: List<String>) {
         _state.update { state ->
             val board = when (area) {

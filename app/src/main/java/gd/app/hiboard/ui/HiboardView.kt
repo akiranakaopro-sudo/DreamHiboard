@@ -44,13 +44,13 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
-            render(viewModel.state.value, viewModel, binder)
+            viewModel.exitEdit()
         }
         binding.recommendedGrid.onDragStarted = { viewModel.enterEdit() }
         binding.recommendedGrid.onReorder = { viewModel.reorder(CardArea.Recommend, it) }
         binding.recommendedGrid.onDragEnded = {
             lastGridKey = null
-            render(viewModel.state.value, viewModel, binder)
+            viewModel.exitEdit()
         }
 
         collectJob?.cancel()
