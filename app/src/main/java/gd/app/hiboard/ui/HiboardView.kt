@@ -29,6 +29,10 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreKey: Any? = null
     private var hintsBound = false
 
+    init {
+        binding.searchBar.setUseResponsivePadding(false)
+    }
+
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
         val binder = CardBinder(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
@@ -79,8 +83,10 @@ class HiboardView @JvmOverloads constructor(
             hintsBound = true
             binding.searchBar.hintAnimationLayout.setHintsAnimation(state.headerHints)
         }
-        binding.editButton.text = if (state.editMode) context.getString(R.string.edit_done) else context.getString(R.string.edit)
-        binding.addButton.isVisible = state.editMode
+        binding.editButton.text = context.getString(R.string.edit_done)
+        binding.editButton.isVisible = state.editMode
+        binding.addButton.text = context.getString(R.string.add_widget_symbol)
+        binding.addButton.isVisible = true
         binding.emptyPinned.isVisible = state.board.subscribed.isEmpty()
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
         val dragging = binding.subscribedGrid.isDragging || binding.recommendedGrid.isDragging

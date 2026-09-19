@@ -33,6 +33,8 @@
                 android:layout_width="0dp"
                 android:layout_height="@dimen/coui_search_bar_height"
                 android:layout_weight="1"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
                 app:couiHideFunctionalButton="true"
                 app:searchHint="@string/header_search_hint" />
 
@@ -42,16 +44,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="@string/edit" />
+                android:text="@string/edit_done"
+                android:visibility="gone" />
 
             <com.coui.appcompat.button.COUIButton
                 android:id="@+id/addButton"
                 style="@style/Widget.COUI.Button.Small.ButtonNew.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/coui_search_bar_normal_background_height"
+                android:layout_height="@dimen/coui_search_bar_normal_background_height"
                 android:layout_marginStart="8dp"
-                android:text="@string/add_cards"
-                android:visibility="gone" />
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:includeFontPadding="false"
+                android:gravity="center"
+                android:contentDescription="@string/add_widget"
+                android:text="@string/add_widget_symbol"
+                android:textSize="20sp"
+                app:drawableRadius="-1dp" />
         </LinearLayout>
 
         <com.coui.appcompat.scrollview.COUIScrollView
