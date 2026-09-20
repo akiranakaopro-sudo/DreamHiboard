@@ -49,22 +49,26 @@ fun dropTargetId(
     draggedId: String,
     column: Float,
     row: Float,
-    insetFraction: Float = 0.22f,
+    insetFraction: Float = 0.12f,
     draggedColumns: Int = 2,
 ): String? {
     if (draggedColumns >= 4) {
         return dropTargetIdForFullWidth(placements, draggedId, row)
     }
-    var bestId: String? = null
-    var bestDist = Float.MAX_VALUE
+    val halfHits = mutableListOf<GridPlacement>()
+    val wideHits = mutableListOf<GridPlacement>()
     placements.forEach { place ->
         if (place.instanceId == draggedId) return@forEach
-        val hit = if (place.columns >= 4) {
-            inWidePlacement(place, column, row)
-        } else {
-            inPlacement(place, column, row, insetFraction)
+        if (place.columns >= 4) {
+            if (inWidePlacement(place, column, row)) wideHits += place
+        } else if (inPlacement(place, column, row, insetFraction)) {
+            halfHits += place
         }
-        if (!hit) return@forEach
+    }
+    val candidates = if (halfHits.isNotEmpty()) halfHits else wideHits
+    var bestId: String? = null
+    var bestDist = Float.MAX_VALUE
+    candidates.forEach { place ->
         val dx = column - (place.column + place.columns / 2f)
         val dy = row - (place.row + place.rows / 2f)
         val dist = dx * dx + dy * dy
@@ -77,9 +81,10 @@ fun dropTargetId(
 }
 
 fun inWidePlacement(place: GridPlacement, column: Float, row: Float): Boolean {
+    val aboveBand = 0.5f
     return column >= place.column &&
         column < place.column + place.columns &&
-        row >= place.row &&
+        row >= place.row - aboveBand &&
         row < place.row + place.rows
 }
 
@@ -129,9 +134,11 @@ fun previewCardsForDrop(
     val originPlace = packCards(origin, columns).firstOrNull { it.instanceId == draggedId }
         ?: return current
     if (inPlacement(originPlace, column, row)) return origin
+    previewSameRowPair(current, draggedId, column, row, columns)?.let { return it }
     val draggedColumns = origin.firstOrNull { it.instanceId == draggedId }?.size?.columns ?: 2
+    val packedCurrent = packCards(current, columns)
     val hitId = dropTargetId(
-        packCards(current, columns),
+        packedCurrent,
         draggedId,
         column,
         row,
@@ -143,7 +150,7 @@ fun previewCardsForDrop(
     if (shouldRestoreBornRow(origin, current, draggedId, originPlace, row, columns)) {
         return origin
     }
-    if (alreadyCrossedHit(origin, draggedId, hitId, from, to)) return current
+    if (alreadyCrossedHit(origin, draggedId, hitId, from, to, packedCurrent, row)) return current
     val partnerId = packedRowPartnerId(origin, draggedId, columns)
     if (partnerId != null && hitId != partnerId) {
         val hitSpan = current.firstOrNull { it.instanceId == hitId }?.size?.columns ?: 0
@@ -167,9 +174,54 @@ fun previewCardsForDrop(
 }
 
 /**
+ * Side-by-side 2x2 tiles swap when the dragged center crosses their shared
+ * edge, with a small hysteresis so they do not flicker. Staying in that row
+ * also keeps For you / the dock from stealing the drop.
+ */
+fun previewSameRowPair(
+    current: List<CardInstance>,
+    draggedId: String,
+    column: Float,
+    row: Float,
+    columns: Int = 4,
+): List<CardInstance>? {
+    val packed = packCards(current, columns)
+    val dragged = packed.firstOrNull { it.instanceId == draggedId } ?: return null
+    if (dragged.columns >= columns) return null
+    val neighbor = packed.firstOrNull { other ->
+        other.instanceId != draggedId &&
+            other.row == dragged.row &&
+            other.columns < columns
+    } ?: return null
+    if (row < dragged.row || row >= dragged.row + dragged.rows) return null
+    val left = if (dragged.column <= neighbor.column) dragged else neighbor
+    val right = if (dragged.column <= neighbor.column) neighbor else dragged
+    val seam = right.column.toFloat()
+    val hysteresis = 0.16f
+    val from = current.indexOfFirst { it.instanceId == draggedId }
+    val to = current.indexOfFirst { it.instanceId == neighbor.instanceId }
+    if (from < 0 || to < 0) return current
+    val draggingLeft = dragged.instanceId == left.instanceId
+    val shouldSwap = if (draggingLeft) {
+        column > seam + hysteresis
+    } else {
+        column < seam - hysteresis
+    }
+    if (!shouldSwap) return current
+    return moveLikeOppo(
+        current,
+        from,
+        to,
+        current[from].size.columns,
+        current[to].size.columns,
+    )
+}
+
+/**
  * Hovering a 4-span we already passed must not walk back over it.
- * Return to the born row to restore that card; reversing on the same
- * hover is what made For you bounce against a 2x2.
+ * For you is 4 rows tall, so its upper half is still the same hover and
+ * reversing there makes it bounce. A 2-row dock is short enough that the
+ * top half is a real "put this above" target.
  */
 fun alreadyCrossedHit(
     origin: List<CardInstance>,
@@ -177,11 +229,25 @@ fun alreadyCrossedHit(
     hitId: String,
     from: Int,
     to: Int,
+    packedCurrent: List<GridPlacement> = emptyList(),
+    row: Float = 0f,
 ): Boolean {
     val originFrom = origin.indexOfFirst { it.instanceId == draggedId }
     val originHit = origin.indexOfFirst { it.instanceId == hitId }
     if (originFrom < 0 || originHit < 0) return false
-    if (originFrom < originHit && from > to) return true
+    val hit = packedCurrent.firstOrNull { it.instanceId == hitId }
+    val hitCenter = hit?.let { it.row + it.rows / 2f }
+    if (originFrom < originHit && from > to) {
+        if (hit != null &&
+            hit.columns >= 4 &&
+            hit.rows <= 2 &&
+            hitCenter != null &&
+            row < hitCenter
+        ) {
+            return false
+        }
+        return true
+    }
     if (originFrom > originHit && from < to) return true
     return false
 }

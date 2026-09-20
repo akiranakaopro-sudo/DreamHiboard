@@ -178,6 +178,24 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun sideBySideTilesSwapWhenCenterCrossesTheSeam() {
+        val shortcuts = card("favorite", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val origin = listOf(shortcuts, weather)
+        val hold = previewCardsForDrop(origin, origin, "favorite", 2.05f, 1f)
+        assertEquals(listOf("favorite", "weather"), hold.map { it.catalogId })
+        val swapped = previewCardsForDrop(origin, origin, "favorite", 2.25f, 1f)
+        assertEquals(listOf("weather", "favorite"), swapped.map { it.catalogId })
+        val packed = packCards(swapped)
+        assertEquals("weather", packed[0].instanceId)
+        assertEquals(0, packed[0].column)
+        assertEquals("favorite", packed[1].instanceId)
+        assertEquals(2, packed[1].column)
+        val back = previewCardsForDrop(origin, swapped, "favorite", 1.7f, 1f)
+        assertEquals(listOf("favorite", "weather"), back.map { it.catalogId })
+    }
+
+    @Test
     fun sameSpanTilesBubbleSwapLikeItemTouchHelper() {
         val weather = card("weather", CardSize.TwoByTwo)
         val notes = card("notes", CardSize.TwoByTwo)
@@ -232,10 +250,33 @@ class PackedCardGridTest {
         val lower = forYou.row + forYou.rows * 0.75f
         val still = previewCardsForDrop(origin, below, "shortcuts", 2f, lower)
         assertEquals(below.map { it.catalogId }, still.map { it.catalogId })
+        val upper = forYou.row + forYou.rows * 0.45f
+        val heldUpper = previewCardsForDrop(origin, below, "shortcuts", 2f, upper)
+        assertEquals(below.map { it.catalogId }, heldUpper.map { it.catalogId })
         val originPlace = packCards(origin).first { it.instanceId == "shortcuts" }
         val bornRow = originPlace.row + originPlace.rows / 2f
         val restored = previewCardsForDrop(origin, below, "shortcuts", 2f, bornRow)
         assertEquals(origin.map { it.catalogId }, restored.map { it.catalogId })
+    }
+
+    @Test
+    fun halfWidthBelowFullWidthCanMoveToItsTop() {
+        val small = card("favorite", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val big = card("shortcuts", CardSize.FullByTwo)
+        val origin = listOf(small, weather, big)
+        val below = previewCardsForDrop(origin, origin, "favorite", 2f, 3f)
+        assertEquals(listOf("shortcuts", "favorite", "weather"), below.map { it.catalogId })
+        val packed = packCards(below)
+        val bigPlace = packed.first { it.instanceId == "shortcuts" }
+        val lower = bigPlace.row + bigPlace.rows * 0.9f
+        val stillBelow = previewCardsForDrop(origin, below, "favorite", 2f, lower)
+        assertEquals(below.map { it.catalogId }, stillBelow.map { it.catalogId })
+        val top = bigPlace.row + bigPlace.rows * 0.2f
+        val above = previewCardsForDrop(origin, below, "favorite", 2f, top)
+        assertEquals(origin.map { it.catalogId }, above.map { it.catalogId })
+        val overTop = previewCardsForDrop(origin, below, "favorite", 2f, bigPlace.row - 0.4f)
+        assertEquals(origin.map { it.catalogId }, overTop.map { it.catalogId })
     }
 
     @Test
@@ -305,6 +346,32 @@ class PackedCardGridTest {
         assertEquals(0, next[2].column)
         assertEquals("advice", next[3].instanceId)
         assertEquals(4, next[3].row)
+    }
+
+    @Test
+    fun sideBySidePairSwapsInsteadOfJumpingOntoTheDock() {
+        val infoflow = card("infoflow", CardSize.FourByFour)
+        val small = card("favorite", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val dock = card("shortcuts", CardSize.FullByTwo)
+        val origin = listOf(infoflow, small, weather, dock)
+        val packed = packCards(origin)
+        assertEquals(4, packed[1].row)
+        assertEquals(4, packed[2].row)
+        assertEquals(6, packed[3].row)
+        val preview = previewCardsForDrop(origin, origin, "favorite", 3.1f, 5.3f)
+        assertEquals(
+            listOf("infoflow", "weather", "favorite", "shortcuts"),
+            preview.map { it.catalogId },
+        )
+        val next = packCards(preview)
+        assertEquals("weather", next[1].instanceId)
+        assertEquals(0, next[1].column)
+        assertEquals("favorite", next[2].instanceId)
+        assertEquals(2, next[2].column)
+        assertEquals(next[1].row, next[2].row)
+        assertEquals("shortcuts", next[3].instanceId)
+        assertEquals(6, next[3].row)
     }
 
     @Test

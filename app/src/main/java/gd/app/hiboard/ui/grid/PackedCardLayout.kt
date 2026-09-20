@@ -316,7 +316,8 @@ class PackedCardLayout @JvmOverloads constructor(
                 row,
                 draggedColumns = draggedCard.size.columns,
             ) ?: return
-            if (hitId == lastHitId) return
+            val hitPlace = packCards(cards, columns).firstOrNull { it.instanceId == hitId }
+            if (hitId == lastHitId && (hitPlace == null || hitPlace.rows >= 4)) return
             applyOrder(next)
             lastHitId = hitId
         }
@@ -481,7 +482,7 @@ class PackedCardLayout @JvmOverloads constructor(
         cardViews.firstOrNull { it.tag == instanceId }
 
     private fun swapTravelPx(): Float =
-        ((cellWidth(width.coerceAtLeast(1)) + gutterPx) * 0.4f).coerceAtLeast(slop * 3f)
+        ((cellWidth(width.coerceAtLeast(1)) + gutterPx) * 0.22f).coerceAtLeast(slop * 2f)
 
     private fun hitIndex(x: Float, y: Float): Int {
         for (index in cardViews.indices.reversed()) {
