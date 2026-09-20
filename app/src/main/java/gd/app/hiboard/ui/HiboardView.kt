@@ -64,7 +64,6 @@ class HiboardView @JvmOverloads constructor(
         binding.searchBar.setOnClickListener {
             launchIntent(this, viewModel.openQuickSearch())
         }
-        binding.subscribedGrid.onDragStarted = { viewModel.enterEdit() }
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
