@@ -36,14 +36,6 @@
                 android:layout_marginTop="4dp"
                 android:textColor="?attr/couiColorLabelSecondary"
                 android:textSize="13sp" />
-
-            <TextView
-                android:id="@+id/storeGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="?attr/couiColorLabelTheme"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <com.coui.appcompat.button.COUIButton

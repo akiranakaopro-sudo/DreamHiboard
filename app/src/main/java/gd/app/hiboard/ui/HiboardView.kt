@@ -50,12 +50,6 @@ class HiboardView @JvmOverloads constructor(
             lastGridKey = null
             viewModel.exitEdit()
         }
-        binding.recommendedGrid.onDragStarted = { viewModel.enterEdit() }
-        binding.recommendedGrid.onReorder = { viewModel.reorder(CardArea.Recommend, it) }
-        binding.recommendedGrid.onDragEnded = {
-            lastGridKey = null
-            viewModel.exitEdit()
-        }
 
         collectJob?.cancel()
         collectJob = lifecycleOwner.lifecycleScope.launch {
@@ -89,15 +83,12 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.isVisible = true
         binding.emptyPinned.isVisible = state.board.subscribed.isEmpty()
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
-        val dragging = binding.subscribedGrid.isDragging || binding.recommendedGrid.isDragging
+        val dragging = binding.subscribedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
-            }
-            binding.recommendedGrid.setCards(state.board.recommended) { card ->
-                binder.create(binding.recommendedGrid, card, state, recommend = true)
             }
         }
         val storeKey = state.board.subscribed.map { it.catalogId } to state.showStore
@@ -127,7 +118,6 @@ class HiboardView @JvmOverloads constructor(
         val row = inflater.inflate(R.layout.item_store_card, parent, false)
         row.findViewById<TextView>(R.id.storeName).text = entry.name
         row.findViewById<TextView>(R.id.storeDesc).text = entry.description
-        row.findViewById<TextView>(R.id.storeGroup).text = entry.groupTitle
         val action = row.findViewById<TextView>(R.id.storeAction)
         action.text = if (added) context.getString(R.string.unsubscribe) else context.getString(R.string.subscribe)
         action.setOnClickListener {
