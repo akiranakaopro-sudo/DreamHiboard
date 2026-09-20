@@ -465,6 +465,48 @@ class PackedCardGridTest {
         assertEquals(listOf("weather", "notes", "shortcuts"), preview.map { it.catalogId })
     }
 
+    @Test
+    fun addedTwoByTwoFillsTheEmptySeatBesideAHalfCard() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val advice = card("advice", CardSize.FullByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val next = insertFillingEmptyTwoByTwo(listOf(notes, advice), weather)
+        assertEquals(listOf("notes", "weather", "advice"), next.map { it.catalogId })
+        val packed = packCards(next)
+        assertEquals(0, packed[0].column)
+        assertEquals(2, packed[1].column)
+        assertEquals(0, packed[1].row)
+        assertEquals(2, packed[2].row)
+        assertTrue(emptyAddSlots(packed).isEmpty())
+    }
+
+    @Test
+    fun addedTwoByTwoFillsTheFirstEmptySeatWhenSeveralExist() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val advice = card("advice", CardSize.FullByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val extra = card("extra", CardSize.TwoByTwo)
+        val next = insertFillingEmptyTwoByTwo(listOf(notes, advice, extra), weather)
+        assertEquals(listOf("notes", "weather", "advice", "extra"), next.map { it.catalogId })
+    }
+
+    @Test
+    fun addedFullWidthDoesNotJumpIntoATwoByTwoHole() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val advice = card("advice", CardSize.FullByTwo)
+        val next = insertFillingEmptyTwoByTwo(listOf(notes), advice)
+        assertEquals(listOf("notes", "advice"), next.map { it.catalogId })
+    }
+
+    @Test
+    fun addedTwoByTwoAppendsWhenThereIsNoEmptySeat() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val extra = card("extra", CardSize.TwoByTwo)
+        val next = insertFillingEmptyTwoByTwo(listOf(notes, weather), extra)
+        assertEquals(listOf("notes", "weather", "extra"), next.map { it.catalogId })
+    }
+
     private fun card(id: String, size: CardSize) = CardInstance(
         instanceId = id,
         catalogId = id,

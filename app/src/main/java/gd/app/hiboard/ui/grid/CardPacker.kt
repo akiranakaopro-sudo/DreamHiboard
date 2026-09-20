@@ -475,3 +475,33 @@ fun emptyAddSlots(placements: List<GridPlacement>, columns: Int = 4): List<GridP
     }
     return slots
 }
+
+/** Drop a new 2x2 into the first leftover half-row instead of appending past it. */
+fun insertFillingEmptyTwoByTwo(
+    cards: List<CardInstance>,
+    incoming: CardInstance,
+    columns: Int = 4,
+): List<CardInstance> {
+    if (incoming.size.columns != 2 || incoming.size.rows != 2) return cards + incoming
+    val packed = packCards(cards, columns)
+    val slot = emptyAddSlots(packed, columns).firstOrNull() ?: return cards + incoming
+    val left = packed.firstOrNull { place ->
+        place.row == slot.row && place.column + place.columns == slot.column
+    }
+    if (left != null) {
+        val index = cards.indexOfFirst { it.instanceId == left.instanceId }
+        if (index >= 0) {
+            return cards.toMutableList().apply { add(index + 1, incoming) }
+        }
+    }
+    val right = packed.firstOrNull { place ->
+        place.row == slot.row && place.column == slot.column + slot.columns
+    }
+    if (right != null) {
+        val index = cards.indexOfFirst { it.instanceId == right.instanceId }
+        if (index >= 0) {
+            return cards.toMutableList().apply { add(index, incoming) }
+        }
+    }
+    return cards + incoming
+}

@@ -8,6 +8,8 @@ import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.ui.grid.insertFillingEmptyTwoByTwo
+import gd.app.hiboard.ui.grid.pinLockedCards
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -39,7 +41,14 @@ class BoardRepository(context: Context) {
                 DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
             }
             if (catalogId !in current) {
-                prefs[KEY_SUBSCRIBED] = (current + catalogId).joinToString(",")
+                val incoming = instantiate(listOf(catalogId), CardArea.Subscribe).singleOrNull()
+                val next = if (incoming != null) {
+                    pinLockedCards(insertFillingEmptyTwoByTwo(instantiate(current, CardArea.Subscribe), incoming))
+                        .map { it.catalogId }
+                } else {
+                    current + catalogId
+                }
+                prefs[KEY_SUBSCRIBED] = next.joinToString(",")
             }
             val recommended = prefs[KEY_RECOMMENDED].toIdList().ifEmpty {
                 DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
