@@ -21,10 +21,10 @@ class BoardRepository(context: Context) {
         val subscribedRaw = prefs[KEY_SUBSCRIBED]
         val recommendedRaw = prefs[KEY_RECOMMENDED]
         val subscribedIds = DefaultCatalog.pinLocked(
-            subscribedRaw?.split(',')?.filter { it.isNotBlank() }
+            subscribedRaw?.split(',')?.filter { it.isNotBlank() && DefaultCatalog.byId(it) != null }
                 ?: DefaultCatalog.entries.filter { it.defaultSubscribed && !it.locked }.map { it.id },
         )
-        val recommendedIds = recommendedRaw?.split(',')?.filter { it.isNotBlank() }
+        val recommendedIds = recommendedRaw?.split(',')?.filter { it.isNotBlank() && DefaultCatalog.byId(it) != null }
             ?: DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
         BoardSnapshot(
             subscribed = instantiate(subscribedIds, CardArea.Subscribe),

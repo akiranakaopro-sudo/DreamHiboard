@@ -12,4 +12,10 @@
     <color name="hiboard_chip">@color/coui_color_container4</color>
     <color name="hiboard_badge">@color/coui_color_label_primary</color>
     <color name="hiboard_on_badge">@color/coui_color_label_on_color</color>
+    <color name="hiboard_notes_card">#F3E2B8</color>
+    <color name="hiboard_notes_add">#FFF6E4</color>
+    <color name="hiboard_notes_accent">#E39B32</color>
+    <color name="hiboard_notes_fold">#F0C56A</color>
+    <color name="hiboard_notes_title">#3A3126</color>
+    <color name="hiboard_notes_muted">#9A8B74</color>
 </resources>

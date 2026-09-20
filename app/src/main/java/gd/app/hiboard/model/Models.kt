@@ -23,10 +23,8 @@ enum class CardArea {
 
 enum class CardEngineId {
     Advice,
-    Shortcuts,
     Weather,
     Notes,
-    Favorite,
     InfoFlow,
     RecentApps,
 }
@@ -90,11 +88,11 @@ data class InfoFlowItem(
 data class CardContent(
     val adviceGreeting: String = "",
     val adviceItems: List<AdviceItem> = emptyList(),
-    val shortcuts: List<ShortcutApp> = emptyList(),
     val weatherTempC: Int = 22,
     val weatherSummary: String = "",
     val notesPreview: String = "",
-    val favorites: List<ShortcutApp> = emptyList(),
+    val notesSnippet: String = "",
+    val notesWhen: String = "",
     val infoFlow: List<InfoFlowItem> = emptyList(),
     val recentApps: List<ShortcutApp> = emptyList(),
 )

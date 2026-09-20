@@ -141,6 +141,8 @@ class HiboardViewModel(
 
     fun openNotes() = engines.openNotes()
 
+    fun createNote() = engines.createNote()
+
     fun openQuickSearch() = engines.openQuickSearch()
 
     fun openApp(app: ShortcutApp): Intent? {

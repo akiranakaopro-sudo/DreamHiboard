@@ -11,10 +11,9 @@
     <string name="unsubscribe">Remove</string>
     <string name="subscribe">Add</string>
     <string name="empty_pinned">Pin cards from the store to build your minus-one screen.</string>
-    <string name="shortcuts_label">Shortcuts</string>
     <string name="weather_label">Weather</string>
-    <string name="notes_label">Notes</string>
-    <string name="notes_hint">Opens DreamNote if installed</string>
+    <string name="notes_label">All notes</string>
+    <string name="notes_add">Add note</string>
     <string name="infoflow_label">For you</string>
     <string name="recent_apps_label">Recent apps</string>
     <string name="store_close">Close</string>

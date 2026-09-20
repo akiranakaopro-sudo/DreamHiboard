@@ -35,6 +35,22 @@
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.CREATE_NOTE" />
+        </intent>
+        <intent>
+            <action android:name="action.nearme.note.textnote" />
+        </intent>
+        <intent>
+            <action android:name="com.android.intent.action.NEW_EDIT_NOTE" />
+        </intent>
+        <intent>
+            <action android:name="gd.app.note.VIEW_NOTE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="notes" />
+        </intent>
         <package android:name="com.android.settings" />
         <package android:name="gd.app.note" />
         <package android:name="gd.app.calendar" />

@@ -2,7 +2,8 @@ package gd.app.hiboard.engine
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.net.Uri
+import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
 import gd.app.hiboard.model.AdviceItem
 import gd.app.hiboard.model.CardAction
@@ -19,9 +20,9 @@ fun interface CardEngine {
 class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
     private val recents = RecentAppsRepository(appContext)
+    private val notes = NotesRepository(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Advice to CardEngine { AdviceContent.current() },
-        CardEngineId.Shortcuts to CardEngine { CardContent(shortcuts = launcherApps(appContext, 5)) },
         CardEngineId.Weather to CardEngine {
             CardContent(
                 weatherTempC = 18 + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) % 8,
@@ -29,9 +30,13 @@ class CardEngineRegistry(context: Context) {
             )
         },
         CardEngineId.Notes to CardEngine {
-            CardContent(notesPreview = "Tap to write")
+            val latest = notes.latest()
+            CardContent(
+                notesPreview = latest.title,
+                notesSnippet = latest.snippet,
+                notesWhen = formatNotesWhen(latest.updatedAt),
+            )
         },
-        CardEngineId.Favorite to CardEngine { CardContent(favorites = launcherApps(appContext, 3)) },
         CardEngineId.InfoFlow to CardEngine {
             CardContent(
                 infoFlow = listOf(
@@ -50,11 +55,22 @@ class CardEngineRegistry(context: Context) {
     }
 
     fun openNotes(): Intent? {
-        val launch = appContext.packageManager.getLaunchIntentForPackage("gd.app.note")
-        return launch ?: Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "")
-        }
+        val latest = notes.latest()
+        if (latest.id > 0L) return editNoteIntent(latest.id)
+        return createNote()
+    }
+
+    fun createNote(): Intent {
+        return Intent(Intent.ACTION_CREATE_NOTE)
+            .setClassName(NOTE_PACKAGE, "$NOTE_PACKAGE.MainActivity")
+            .addCategory(Intent.CATEGORY_DEFAULT)
+    }
+
+    private fun editNoteIntent(noteId: Long): Intent {
+        return Intent("gd.app.note.VIEW_NOTE")
+            .setClassName(NOTE_PACKAGE, "$NOTE_PACKAGE.widget.WidgetNoteActivity")
+            .setData(Uri.parse("notes://note/$noteId"))
+            .putExtra("id", noteId)
     }
 
     fun openQuickSearch(): Intent? {
@@ -88,32 +104,14 @@ class CardEngineRegistry(context: Context) {
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
         adviceGreeting = b.adviceGreeting.ifBlank { a.adviceGreeting },
         adviceItems = b.adviceItems.ifEmpty { a.adviceItems },
-        shortcuts = b.shortcuts.ifEmpty { a.shortcuts },
         weatherTempC = if (b.weatherSummary.isNotBlank()) b.weatherTempC else a.weatherTempC,
         weatherSummary = b.weatherSummary.ifBlank { a.weatherSummary },
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
-        favorites = b.favorites.ifEmpty { a.favorites },
+        notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
+        notesWhen = b.notesWhen.ifBlank { a.notesWhen },
         infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
         recentApps = b.recentApps.ifEmpty { a.recentApps },
     )
-
-    private fun launcherApps(context: Context, limit: Int): List<ShortcutApp> {
-        val pm = context.packageManager
-        val query = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return pm.queryIntentActivities(query, PackageManager.MATCH_DEFAULT_ONLY)
-            .asSequence()
-            .map {
-                ShortcutApp(
-                    label = it.loadLabel(pm).toString(),
-                    packageName = it.activityInfo.packageName,
-                    activityName = it.activityInfo.name,
-                )
-            }
-            .filterNot { it.packageName == context.packageName }
-            .distinctBy { it.packageName }
-            .take(limit)
-            .toList()
-    }
 }
 
 private object AdviceContent {

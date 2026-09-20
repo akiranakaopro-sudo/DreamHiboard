@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path
+        android:fillColor="@color/hiboard_notes_accent"
+        android:pathData="M3,1.5h7.2L14.5,6V14.2C14.5,14.9 13.9,15.5 13.2,15.5H3C2.3,15.5 1.7,14.9 1.7,14.2V2.8C1.7,2.1 2.3,1.5 3,1.5Z" />
+    <path
+        android:fillColor="@color/hiboard_notes_fold"
+        android:pathData="M10.2,1.5V5.2C10.2,5.8 10.7,6.3 11.3,6.3H14.5L10.2,1.5Z" />
+</vector>

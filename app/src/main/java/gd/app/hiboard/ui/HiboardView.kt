@@ -47,6 +47,7 @@ class HiboardView @JvmOverloads constructor(
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
         val binder = CardBinder(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
+            onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,

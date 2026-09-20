@@ -19,6 +19,7 @@ import gd.app.hiboard.model.ShortcutApp
 
 class CardBinder(
     private val onOpenNotes: () -> Unit,
+    private val onCreateNote: () -> Unit,
     private val onOpenApp: (ShortcutApp) -> Unit,
     private val onRemove: (String) -> Unit,
     private val onAdd: (String) -> Unit,
@@ -30,10 +31,8 @@ class CardBinder(
         val badge = root.findViewById<TextView>(R.id.cardBadge)
         when (card.engine) {
             CardEngineId.Advice -> bindAdvice(inflater, body, state)
-            CardEngineId.Shortcuts -> bindShortcuts(inflater, body, state.content.shortcuts)
             CardEngineId.Weather -> bindWeather(inflater, body, state)
-            CardEngineId.Notes -> bindNotes(inflater, body, state)
-            CardEngineId.Favorite -> bindShortcuts(inflater, body, state.content.favorites)
+            CardEngineId.Notes -> bindNotes(inflater, root, body, state)
             CardEngineId.InfoFlow -> bindInfoFlow(inflater, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
         }
@@ -77,28 +76,20 @@ class CardBinder(
             state.content.weatherSummary.ifBlank { "Local sample" }
     }
 
-    private fun bindNotes(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
-        val view = inflater.inflate(R.layout.card_notes, body, true)
-        view.findViewById<TextView>(R.id.notesPreview).text = state.content.notesPreview
-        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
-    }
-
-    private fun bindShortcuts(
+    private fun bindNotes(
         inflater: LayoutInflater,
+        root: View,
         body: LinearLayout,
-        apps: List<ShortcutApp>,
+        state: HiboardUiState,
     ) {
-        val view = inflater.inflate(R.layout.card_shortcuts, body, true)
-        val row = view.findViewById<LinearLayout>(R.id.shortcutRow)
-        row.removeAllViews()
-        apps.take(5).forEach { app ->
-            val item = inflater.inflate(R.layout.item_shortcut, row, false)
-            item.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            item.findViewById<TextView>(R.id.shortcutGlyph).text = app.label.take(1)
-            item.findViewById<TextView>(R.id.shortcutLabel).text = app.label
-            item.setOnClickListener { onOpenApp(app) }
-            row.addView(item)
-        }
+        (root as? COUICardView)?.setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+        val view = inflater.inflate(R.layout.card_notes, body, true)
+        view.findViewById<TextView>(R.id.notesTitle).text = state.content.notesPreview
+        view.findViewById<TextView>(R.id.notesSnippet).text = state.content.notesSnippet
+        view.findViewById<TextView>(R.id.notesWhen).text = state.content.notesWhen
+        view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
+        root.setOnClickListener { onOpenNotes() }
     }
 
     private fun bindInfoFlow(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
