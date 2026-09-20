@@ -15,21 +15,16 @@ import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class HiboardUiState(
     val board: BoardSnapshot = BoardSnapshot(emptyList(), emptyList()),
     val catalog: List<CardCatalogEntry> = DefaultCatalog.entries,
     val content: CardContent = CardContent(),
-    val headerHints: List<String> = listOf("Global search"),
-    val hintIndex: Int = 0,
     val editMode: Boolean = false,
     val showStore: Boolean = false,
     val screenVisible: Boolean = true,
@@ -43,8 +38,6 @@ class HiboardViewModel(
 
     private val _state = MutableStateFlow(HiboardUiState())
     val state: StateFlow<HiboardUiState> = _state.asStateFlow()
-
-    private var hintJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -67,7 +60,6 @@ class HiboardViewModel(
                         content = engines.compose(CardAction.Visible),
                     )
                 }
-                startHints()
             }
             HostEvent.Exit, HostEvent.Pause -> {
                 _state.update {
@@ -76,11 +68,9 @@ class HiboardViewModel(
                         content = engines.compose(CardAction.Hidden),
                     )
                 }
-                hintJob?.cancel()
             }
             HostEvent.Destroy -> {
                 engines.compose(CardAction.Destroy)
-                hintJob?.cancel()
             }
         }
     }
@@ -156,19 +146,6 @@ class HiboardViewModel(
         val ordered = catalogIds.mapNotNull(byId::get)
         val rest = cards.filter { it.catalogId !in catalogIds.toSet() }
         return (ordered + rest).mapIndexed { index, card -> card.copy(order = index) }
-    }
-
-    private fun startHints() {
-        hintJob?.cancel()
-        hintJob = viewModelScope.launch {
-            while (isActive) {
-                delay(3_200)
-                _state.update {
-                    val next = (it.hintIndex + 1) % it.headerHints.size.coerceAtLeast(1)
-                    it.copy(hintIndex = next)
-                }
-            }
-        }
     }
 
     companion object {

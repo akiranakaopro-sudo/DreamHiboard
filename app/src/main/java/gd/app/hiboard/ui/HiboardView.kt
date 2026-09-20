@@ -27,10 +27,10 @@ class HiboardView @JvmOverloads constructor(
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
     private var lastStoreKey: Any? = null
-    private var hintsBound = false
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
+        binding.searchBar.searchEditText.hint = context.getString(R.string.header_search_hint)
     }
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
@@ -83,10 +83,6 @@ class HiboardView @JvmOverloads constructor(
     ) {
         binding.boardRoot.isVisible = !state.showStore
         binding.storeRoot.isVisible = state.showStore
-        if (!hintsBound && state.headerHints.isNotEmpty()) {
-            hintsBound = true
-            binding.searchBar.hintAnimationLayout.setHintsAnimation(state.headerHints)
-        }
         binding.editButton.text = context.getString(R.string.edit_done)
         binding.editButton.isVisible = state.editMode
         binding.addButton.text = context.getString(R.string.add_widget_symbol)
