@@ -28,11 +28,7 @@ data class HiboardUiState(
     val board: BoardSnapshot = BoardSnapshot(emptyList(), emptyList()),
     val catalog: List<CardCatalogEntry> = DefaultCatalog.entries,
     val content: CardContent = CardContent(),
-    val headerHints: List<String> = listOf(
-        "Search cards",
-        "Weather this week",
-        "Add a shortcut",
-    ),
+    val headerHints: List<String> = listOf("Global search"),
     val hintIndex: Int = 0,
     val editMode: Boolean = false,
     val showStore: Boolean = false,
@@ -150,6 +146,8 @@ class HiboardViewModel(
     }
 
     fun openNotes() = engines.openNotes()
+
+    fun openQuickSearch() = engines.openQuickSearch()
 
     fun openApp(app: ShortcutApp) = engines.openApp(app)
 

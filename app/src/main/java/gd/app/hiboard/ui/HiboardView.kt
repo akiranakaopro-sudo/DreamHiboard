@@ -44,6 +44,16 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.setOnClickListener { viewModel.openStore() }
         binding.emptyAddButton.setOnClickListener { viewModel.openStore() }
         binding.storeClose.setOnClickListener { viewModel.closeStore() }
+        binding.searchBar.setInputMethodAnimationEnabled(false)
+        binding.searchBar.searchEditText.apply {
+            isFocusable = false
+            isFocusableInTouchMode = false
+            isCursorVisible = false
+            keyListener = null
+        }
+        binding.searchBar.setOnClickListener {
+            launchIntent(this, viewModel.openQuickSearch())
+        }
         binding.subscribedGrid.onDragStarted = { viewModel.enterEdit() }
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
         binding.subscribedGrid.onDragEnded = {

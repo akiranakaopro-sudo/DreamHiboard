@@ -54,6 +54,10 @@ class CardEngineRegistry(context: Context) {
         }
     }
 
+    fun openQuickSearch(): Intent? {
+        return appContext.packageManager.getLaunchIntentForPackage("gd.app.quicksearch")
+    }
+
     fun openApp(app: ShortcutApp): Intent? {
         val pm = appContext.packageManager
         if (app.activityName != null) {

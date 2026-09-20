@@ -8,6 +8,7 @@
         </intent>
         <package android:name="gd.app.note" />
         <package android:name="gd.app.calendar" />
+        <package android:name="gd.app.quicksearch" />
     </queries>
 
     <application
