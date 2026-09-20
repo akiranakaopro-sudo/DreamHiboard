@@ -131,10 +131,14 @@ class HiboardView @JvmOverloads constructor(
         }
         popup.setOnDismissListener { if (cardMenu === popup) cardMenu = null }
         cardMenu = popup
-        anchor.post {
-            if (cardMenu === popup && anchor.isAttachedToWindow) {
-                popup.show(anchor)
-            }
+        fun present() {
+            if (cardMenu !== popup || !anchor.isAttachedToWindow || anchor.windowToken == null) return
+            popup.show(anchor)
+        }
+        if (anchor.windowToken != null) {
+            present()
+        } else {
+            anchor.post { present() }
         }
     }
 
