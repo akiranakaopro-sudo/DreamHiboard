@@ -24,4 +24,6 @@
     <string name="flashlight_on">On</string>
     <string name="flashlight_off">Off</string>
     <string name="flashlight_unavailable">No flash</string>
+    <string name="storage_label">Storage</string>
+    <string name="storage_cleanup">Clean up</string>
 </resources>

@@ -64,6 +64,21 @@
         <package android:name="gd.app.note" />
         <package android:name="gd.app.calendar" />
         <package android:name="gd.app.quicksearch" />
+        <package android:name="gd.app.systemmanager" />
+        <package android:name="gd.app.phonemanager" />
+        <package android:name="com.coloros.phonemanager" />
+        <package android:name="com.oplus.phonemanager" />
+        <package android:name="com.oplus.safecenter" />
+        <package android:name="com.coloros.safecenter" />
+        <intent>
+            <action android:name="oplus.intent.action.CLEAR_MAIN_ACTIVITY" />
+        </intent>
+        <intent>
+            <action android:name="oplus.intent.action.PHONE_MANAGER_MAIN_ACTIVITY" />
+        </intent>
+        <intent>
+            <action android:name="oppo.intent.action.SAFE_CENTER_MAIN" />
+        </intent>
     </queries>
 
     <application

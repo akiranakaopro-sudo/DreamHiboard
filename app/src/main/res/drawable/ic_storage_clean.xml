@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path
+        android:fillColor="@color/hiboard_storage_title"
+        android:pathData="M12.2,1.6L13.4,2.8 9.3,6.9C10.1,8 10.2,9.4 9.5,10.5L10.7,11.7 9.9,12.5 8.7,11.3C7.6,11.9 6.3,11.9 5.2,11.3L2.8,13.7C2.4,14.1 1.8,14 1.6,13.5 1.4,13 1.6,12.5 2,12.1L4.4,9.7C3.8,8.6 3.9,7.2 4.6,6.2L3.4,5 4.2,4.2 5.4,5.4C6.5,4.7 7.9,4.8 9,5.6L12.2,1.6Z" />
+</vector>

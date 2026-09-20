@@ -150,6 +150,8 @@ class HiboardViewModel(
 
     fun toggleFlashlight() = engines.toggleFlashlight()
 
+    fun openSystemManager() = engines.openSystemManager()
+
     fun openQuickSearch() = engines.openQuickSearch()
 
     fun openApp(app: ShortcutApp): Intent? {

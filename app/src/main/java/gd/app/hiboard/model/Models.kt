@@ -28,6 +28,7 @@ enum class CardEngineId {
     InfoFlow,
     RecentApps,
     Flashlight,
+    Storage,
 }
 
 enum class CardAction {
@@ -96,6 +97,8 @@ data class CardContent(
     val notesWhen: String = "",
     val flashlightOn: Boolean = false,
     val flashlightAvailable: Boolean = false,
+    val storageUsedBytes: Long = 0L,
+    val storageTotalBytes: Long = 0L,
     val infoFlow: List<InfoFlowItem> = emptyList(),
     val recentApps: List<ShortcutApp> = emptyList(),
 )

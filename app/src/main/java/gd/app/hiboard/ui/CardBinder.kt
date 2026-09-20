@@ -13,6 +13,7 @@ import com.coui.appcompat.cardview.COUICardView
 import com.coui.appcompat.R as CouiR
 import gd.app.hiboard.R
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
+import gd.app.hiboard.engine.formatStorageUsage
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
@@ -21,6 +22,7 @@ class CardBinder(
     private val onOpenNotes: () -> Unit,
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
+    private val onOpenStorage: () -> Unit,
     private val onOpenApp: (ShortcutApp) -> Unit,
     private val onRemove: (String) -> Unit,
     private val onAdd: (String) -> Unit,
@@ -37,6 +39,7 @@ class CardBinder(
             CardEngineId.InfoFlow -> bindInfoFlow(inflater, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
+            CardEngineId.Storage -> bindStorage(inflater, root, body, state)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -176,6 +179,27 @@ class CardBinder(
         val toggle = View.OnClickListener { onToggleFlashlight() }
         view.findViewById<View>(R.id.flashlightRoot).setOnClickListener(toggle)
         root.setOnClickListener(toggle)
+    }
+
+    private fun bindStorage(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        (root as? COUICardView)?.setCardBackgroundColor(
+            body.context.getColor(R.color.hiboard_storage_card),
+        )
+        val view = inflater.inflate(R.layout.card_storage, body, true)
+        val total = state.content.storageTotalBytes
+        val used = state.content.storageUsedBytes
+        view.findViewById<StorageUsageBar>(R.id.storageBar).progress =
+            if (total <= 0L) 0f else (used.toDouble() / total).toFloat().coerceIn(0f, 1f)
+        view.findViewById<TextView>(R.id.storageUsage).text = formatStorageUsage(used, total)
+        val open = View.OnClickListener { onOpenStorage() }
+        view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
+        view.findViewById<View>(R.id.storageCleanup).setOnClickListener(open)
+        root.setOnClickListener(open)
     }
 }
 

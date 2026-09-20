@@ -60,6 +60,7 @@ class HiboardView @JvmOverloads constructor(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
+            onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,

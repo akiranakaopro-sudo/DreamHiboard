@@ -22,6 +22,7 @@ class CardEngineRegistry(context: Context) {
     private val recents = RecentAppsRepository(appContext)
     private val notes = NotesRepository(appContext)
     private val flashlight = FlashlightController(appContext)
+    private val storage = StorageReader(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Advice to CardEngine { AdviceContent.current() },
         CardEngineId.Weather to CardEngine {
@@ -51,6 +52,13 @@ class CardEngineRegistry(context: Context) {
             CardContent(
                 flashlightOn = flashlight.on.value,
                 flashlightAvailable = flashlight.available,
+            )
+        },
+        CardEngineId.Storage to CardEngine {
+            val status = storage.status()
+            CardContent(
+                storageUsedBytes = status.usedBytes,
+                storageTotalBytes = status.totalBytes,
             )
         },
     )
@@ -112,6 +120,8 @@ class CardEngineRegistry(context: Context) {
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
 
+    fun openSystemManager(): Intent? = storage.openSystemManager()
+
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
         adviceGreeting = b.adviceGreeting.ifBlank { a.adviceGreeting },
         adviceItems = b.adviceItems.ifEmpty { a.adviceItems },
@@ -122,6 +132,8 @@ class CardEngineRegistry(context: Context) {
         notesWhen = b.notesWhen.ifBlank { a.notesWhen },
         flashlightOn = b.flashlightOn || a.flashlightOn,
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
+        storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,
+        storageTotalBytes = if (b.storageTotalBytes > 0L) b.storageTotalBytes else a.storageTotalBytes,
         infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
         recentApps = b.recentApps.ifEmpty { a.recentApps },
     )

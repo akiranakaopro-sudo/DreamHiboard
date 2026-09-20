@@ -52,6 +52,16 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "storage",
+            groupId = GROUP_TOOLS,
+            groupTitle = "Tools",
+            name = "Storage",
+            description = "RAM used and free. Tap to open System Manager.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Storage,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
             id = "flashlight",
             groupId = GROUP_TOOLS,
             groupTitle = "Tools",
