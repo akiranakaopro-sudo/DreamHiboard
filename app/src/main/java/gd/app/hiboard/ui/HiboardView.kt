@@ -33,7 +33,7 @@ class HiboardView @JvmOverloads constructor(
         binding.searchBar.setUseResponsivePadding(false)
         val chrome = context.getColor(R.color.hiboard_chrome)
         binding.searchBar.searchEditText.hint = context.getString(R.string.header_search_hint)
-        binding.searchBar.searchEditText.setHintTextColor(chrome)
+        binding.searchBar.searchEditText.setHintTextColor(context.getColor(R.color.hiboard_chrome_hint))
         binding.searchBar.searchEditText.setTextColor(chrome)
         binding.searchBar.setSearchViewIcon(context.getDrawable(R.drawable.ic_search_chrome))
         binding.searchBar.setSearchBackgroundColor(

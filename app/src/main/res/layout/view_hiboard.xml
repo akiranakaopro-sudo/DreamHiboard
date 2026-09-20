@@ -38,7 +38,7 @@
                 app:couiHideFunctionalButton="true"
                 app:couiSearchIcon="@drawable/ic_search_chrome"
                 app:inputTextColor="@color/hiboard_chrome"
-                app:normalHintColor="@color/hiboard_chrome"
+                app:normalHintColor="@color/hiboard_chrome_hint"
                 app:searchHint="@string/header_search_hint" />
 
             <com.coui.appcompat.button.COUIButton

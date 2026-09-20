@@ -2,6 +2,7 @@
 <resources>
     <color name="hiboard_background">#8397CC</color>
     <color name="hiboard_chrome">#FFFFFFFF</color>
+    <color name="hiboard_chrome_hint">#C8D1E9</color>
     <color name="hiboard_chrome_fill">#95A6D4</color>
     <color name="hiboard_card">@color/coui_color_card_background</color>
     <color name="hiboard_text">@color/coui_color_label_primary</color>
