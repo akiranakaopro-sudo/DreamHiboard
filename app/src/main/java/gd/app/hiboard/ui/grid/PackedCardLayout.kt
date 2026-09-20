@@ -1,12 +1,17 @@
 package gd.app.hiboard.ui.grid
 
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.view.animation.PathInterpolator
 import android.widget.ScrollView
 import com.coui.appcompat.pressfeedback.COUIPressFeedbackHelper
@@ -28,9 +33,14 @@ class PackedCardLayout @JvmOverloads constructor(
     private val gutterPx = (10 * resources.displayMetrics.density).roundToInt()
     private val elevationPx = 12 * resources.displayMetrics.density
     private val scrollEdgePx = (64 * resources.displayMetrics.density).roundToInt()
+    private val cornerPx = 16 * resources.displayMetrics.density
+    private val outlineInsetPx = 2 * resources.displayMetrics.density
     private val reflowMs = 250L
+    private val outlineInMs = 900L
+    private val outlineOutMs = 400L
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
     private val reflowInterpolator = PathInterpolator(0.33f, 0f, 0.1f, 1f)
+    private val outlineInterpolator = DecelerateInterpolator(2.5f)
     private var cards: List<CardInstance> = emptyList()
     private val cardViews = mutableListOf<View>()
 
@@ -52,12 +62,26 @@ class PackedCardLayout @JvmOverloads constructor(
     private var downY = 0f
     private var activePointerId = MotionEvent.INVALID_POINTER_ID
     private var pressHelper: COUIPressFeedbackHelper? = null
+    private var outlineHost: View? = null
+    private var outlineAlpha = 0f
+    private var outlineAnimator: ValueAnimator? = null
+    private val outlineRect = RectF()
+    private val outlineFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0x26FFFFFF
+    }
+    private val outlineStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = outlineInsetPx
+        color = 0x59FFFFFF
+    }
 
     private val longPressRunnable = Runnable { beginDrag() }
 
     init {
         clipChildren = false
         clipToPadding = false
+        setWillNotDraw(false)
     }
 
     fun setCards(cards: List<CardInstance>, factory: (CardInstance) -> View) {
@@ -108,6 +132,11 @@ class PackedCardLayout @JvmOverloads constructor(
             }
         }
         if (isDragging) followPointer()
+    }
+
+    override fun dispatchDraw(canvas: Canvas) {
+        drawSeatOutline(canvas)
+        super.dispatchDraw(canvas)
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -183,6 +212,7 @@ class PackedCardLayout @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         removeCallbacks(longPressRunnable)
         endPressFeedback(restore = false)
+        outlineAnimator?.cancel()
         if (isDragging) endDrag(commit = false)
         super.onDetachedFromWindow()
     }
@@ -234,10 +264,14 @@ class PackedCardLayout @JvmOverloads constructor(
         child.isPressed = false
         child.cancelPendingInputEvents()
         child.bringToFront()
+        outlineHost = child
+        captureSeatRect(child)
+        animateOutline(show = true)
         parent.requestDisallowInterceptTouchEvent(true)
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         onDragStarted?.invoke()
         followPointer()
+        invalidate()
     }
 
     private fun onDrag(x: Float, y: Float, rawY: Float) {
@@ -329,11 +363,52 @@ class PackedCardLayout @JvmOverloads constructor(
         dragged?.scaleY = 1f
         dragged?.translationZ = 0f
         dragged?.alpha = 1f
+        animateOutline(show = false)
         requestLayout()
         if (changed) {
             onReorder?.invoke(nextCards.map { it.catalogId })
         }
         onDragEnded?.invoke()
+    }
+
+    private fun animateOutline(show: Boolean) {
+        outlineAnimator?.cancel()
+        val start = outlineAlpha
+        val end = if (show) 1f else 0f
+        if (start == end) {
+            if (!show) outlineHost = null
+            return
+        }
+        outlineAnimator = ValueAnimator.ofFloat(start, end).apply {
+            duration = if (show) outlineInMs else outlineOutMs
+            interpolator = outlineInterpolator
+            addUpdateListener { animator ->
+                outlineAlpha = animator.animatedValue as Float
+                if (!show && outlineAlpha <= 0f) outlineHost = null
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    private fun captureSeatRect(host: View) {
+        val inset = outlineInsetPx
+        outlineRect.set(
+            host.left + inset,
+            host.top + inset,
+            host.right - inset,
+            host.bottom - inset,
+        )
+    }
+
+    private fun drawSeatOutline(canvas: Canvas) {
+        if (outlineAlpha <= 0f || outlineRect.isEmpty) return
+        val host = outlineHost
+        if (host != null && isDragging) captureSeatRect(host)
+        outlineFill.alpha = (0x26 * outlineAlpha).roundToInt().coerceIn(0, 255)
+        outlineStroke.alpha = (0x59 * outlineAlpha).roundToInt().coerceIn(0, 255)
+        canvas.drawRoundRect(outlineRect, cornerPx, cornerPx, outlineFill)
+        canvas.drawRoundRect(outlineRect, cornerPx, cornerPx, outlineStroke)
     }
 
     private fun layoutReflow(child: View, x: Int, y: Int) {
