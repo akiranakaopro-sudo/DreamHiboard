@@ -94,11 +94,11 @@ class HiboardViewModel(
     }
 
     fun openStore() {
-        _state.update { it.copy(showStore = true, editMode = true) }
+        _state.update { it.copy(showStore = true) }
     }
 
     fun closeStore() {
-        _state.update { it.copy(showStore = false) }
+        _state.update { it.copy(showStore = false, editMode = false) }
     }
 
     fun subscribe(catalogId: String) {
