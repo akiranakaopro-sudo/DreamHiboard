@@ -7,10 +7,11 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.MediaStore
-import android.provider.Settings
 import android.provider.Telephony
 import android.telecom.TelecomManager
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
+import gd.app.hiboard.engine.SETTINGS_ACTIVITY
+import gd.app.hiboard.engine.SETTINGS_PACKAGE
 import gd.app.hiboard.engine.recentPackageOrder
 import gd.app.hiboard.model.ShortcutApp
 
@@ -65,11 +66,11 @@ class RecentAppsRepository(context: Context) {
             .filter { it.isNotBlank() }
 
     private fun defaultApps(): List<ShortcutApp> = listOfNotNull(
-        resolve(dialerIntent(), "Dialer"),
+        resolve(dialerIntent(), "Phone"),
         resolve(contactsIntent(), "Contacts"),
         resolve(messagesIntent(), "Messages"),
         resolve(cameraIntent(), "Camera"),
-        resolve(settingsIntent(), "Settings"),
+        settingsApp(),
     ).distinctBy { it.packageName }.take(RECENT_APP_LIMIT)
 
     private fun lastUsedLauncherPackage(): String? {
@@ -115,27 +116,23 @@ class RecentAppsRepository(context: Context) {
         val info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo
             ?: return null
         if (info.packageName == appContext.packageName) return null
-        val launch = pm.getLaunchIntentForPackage(info.packageName)
-        val activity = launch?.resolveActivityInfo(pm, 0) ?: info
         return ShortcutApp(
-            label = activity.loadLabel(pm)?.toString()?.ifBlank { fallbackLabel } ?: fallbackLabel,
-            packageName = activity.packageName,
-            activityName = activity.name,
+            label = info.loadLabel(pm)?.toString()?.ifBlank { fallbackLabel } ?: fallbackLabel,
+            packageName = info.packageName,
+            activityName = info.name,
         )
     }
 
     private fun dialerIntent(): Intent {
-        val pm = appContext.packageManager
         val dialer = appContext.getSystemService(TelecomManager::class.java)?.defaultDialerPackage
-        if (!dialer.isNullOrBlank() && pm.getLaunchIntentForPackage(dialer) != null) {
-            return Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(dialer)
-        }
-        listOf("com.android.dialer", "com.google.android.dialer", "com.coloros.dialer").forEach { pkg ->
-            if (pm.getLaunchIntentForPackage(pkg) != null) {
-                return Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg)
+        val dial = Intent(Intent.ACTION_DIAL, Uri.parse("tel:"))
+        if (!dialer.isNullOrBlank()) {
+            val scoped = Intent(dial).setPackage(dialer)
+            if (appContext.packageManager.resolveActivity(scoped, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                return scoped
             }
         }
-        return Intent(Intent.ACTION_DIAL, Uri.parse("tel:"))
+        return dial
     }
 
     private fun contactsIntent(): Intent =
@@ -156,10 +153,23 @@ class RecentAppsRepository(context: Context) {
             .takeIf { appContext.packageManager.resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null }
             ?: Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
-    private fun settingsIntent(): Intent {
-        val launch = appContext.packageManager.getLaunchIntentForPackage("com.android.settings")
-        if (launch != null) return launch
-        return Intent(Settings.ACTION_SETTINGS)
+    private fun settingsApp(): ShortcutApp {
+        val pm = appContext.packageManager
+        val query = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
+            .setPackage(SETTINGS_PACKAGE)
+        val launchers = pm.queryIntentActivities(query, PackageManager.MATCH_ALL)
+        val settings = launchers.firstOrNull { resolve ->
+            resolve.activityInfo.name == SETTINGS_ACTIVITY
+        } ?: launchers.firstOrNull { resolve ->
+            resolve.loadLabel(pm).toString().equals("Settings", ignoreCase = true)
+        }
+        val info = settings?.activityInfo
+        return ShortcutApp(
+            label = info?.loadLabel(pm)?.toString()?.ifBlank { "Settings" } ?: "Settings",
+            packageName = SETTINGS_PACKAGE,
+            activityName = info?.name ?: SETTINGS_ACTIVITY,
+        )
     }
 
     private companion object {

@@ -35,6 +35,7 @@
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <package android:name="com.android.settings" />
         <package android:name="gd.app.note" />
         <package android:name="gd.app.calendar" />
         <package android:name="gd.app.quicksearch" />

@@ -16,6 +16,7 @@ import gd.app.hiboard.R
 import gd.app.hiboard.databinding.ViewHiboardBinding
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
+import gd.app.hiboard.model.CardEngineId
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -99,6 +100,8 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.isVisible = true
         binding.emptyPinned.isVisible = state.board.subscribed.none { it.canEdit }
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
+        binding.recentAppsHeader.isVisible =
+            !state.showStore && state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
         if (!dragging && gridKey != lastGridKey) {

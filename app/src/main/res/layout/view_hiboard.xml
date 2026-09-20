@@ -122,6 +122,17 @@
                     </LinearLayout>
                 </com.coui.appcompat.cardview.COUICardView>
 
+                <TextView
+                    android:id="@+id/recentAppsHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:includeFontPadding="false"
+                    android:text="@string/recent_apps_label"
+                    android:textColor="@color/hiboard_chrome"
+                    android:textSize="15sp" />
+
                 <gd.app.hiboard.ui.grid.PackedCardLayout
                     android:id="@+id/subscribedGrid"
                     android:layout_width="match_parent"

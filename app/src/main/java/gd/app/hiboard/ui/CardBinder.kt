@@ -1,5 +1,6 @@
 package gd.app.hiboard.ui
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.view.LayoutInflater
@@ -119,27 +120,39 @@ class CardBinder(
         state: HiboardUiState,
     ) {
         val pad = (8 * body.resources.displayMetrics.density).toInt()
-        (root as? COUICardView)?.setContentPadding(pad, pad, pad, pad)
+        val fill = body.context.getColor(R.color.hiboard_chrome_fill)
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(fill)
+            setContentPadding(pad, pad, pad, pad)
+        }
         val view = inflater.inflate(R.layout.card_recent_apps, body, true)
         val row = view.findViewById<LinearLayout>(R.id.recentRow)
         row.removeAllViews()
         val pm = body.context.packageManager
+        val labelColor = body.context.getColor(R.color.hiboard_chrome)
         state.content.recentApps.take(RECENT_APP_LIMIT).forEach { app ->
             val item = inflater.inflate(R.layout.item_recent_app, row, false)
             item.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             val iconView = item.findViewById<ImageView>(R.id.recentIcon)
-            iconView.setImageDrawable(
-                try {
-                    pm.getApplicationIcon(app.packageName)
-                } catch (_: PackageManager.NameNotFoundException) {
-                    null
-                },
-            )
-            item.findViewById<TextView>(R.id.recentLabel).text = app.label
+            iconView.setImageDrawable(recentIcon(pm, app))
+            item.findViewById<TextView>(R.id.recentLabel).apply {
+                text = app.label
+                setTextColor(labelColor)
+            }
             item.setOnClickListener { onOpenApp(app) }
             row.addView(item)
         }
     }
+}
+
+private fun recentIcon(pm: PackageManager, app: ShortcutApp) = try {
+    if (app.activityName != null) {
+        pm.getActivityIcon(ComponentName(app.packageName, app.activityName))
+    } else {
+        pm.getApplicationIcon(app.packageName)
+    }
+} catch (_: PackageManager.NameNotFoundException) {
+    null
 }
 
 fun launchIntent(view: View, intent: Intent?) {

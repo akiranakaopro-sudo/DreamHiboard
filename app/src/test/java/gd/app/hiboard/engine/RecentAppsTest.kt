@@ -20,5 +20,13 @@ class RecentAppsTest {
             listOf("chrome", "camera", "dialer", "contacts", "messages"),
             recentPackageOrder(defaults, listOf("camera", "chrome"), lastOpened = "chrome"),
         )
+        assertEquals(
+            listOf("messages", "phone", "camera", "settings", "browser"),
+            recentPackageOrder(
+                defaults,
+                listOf("phone", "messages", "camera", "settings", "browser"),
+                lastOpened = "messages",
+            ),
+        )
     }
 }

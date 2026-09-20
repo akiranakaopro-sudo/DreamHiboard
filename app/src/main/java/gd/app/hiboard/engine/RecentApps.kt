@@ -1,6 +1,8 @@
 package gd.app.hiboard.engine
 
 const val RECENT_APP_LIMIT = 5
+const val SETTINGS_PACKAGE = "com.android.settings"
+const val SETTINGS_ACTIVITY = "com.android.settings.Settings"
 
 fun recentPackageOrder(
     defaults: List<String>,

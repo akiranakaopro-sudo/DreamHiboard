@@ -63,14 +63,22 @@ class CardEngineRegistry(context: Context) {
 
     fun openApp(app: ShortcutApp): Intent? {
         recents.remember(app.packageName)
-        val pm = appContext.packageManager
-        if (app.activityName != null) {
-            return Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(
-                app.packageName,
-                app.activityName,
-            )
+        if (app.packageName == SETTINGS_PACKAGE) {
+            return systemSettingsLaunch()
         }
-        return pm.getLaunchIntentForPackage(app.packageName)
+        if (app.activityName != null) {
+            return Intent(Intent.ACTION_MAIN).setClassName(app.packageName, app.activityName)
+        }
+        return appContext.packageManager.getLaunchIntentForPackage(app.packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        }
+    }
+
+    private fun systemSettingsLaunch(): Intent {
+        return Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
+            .setClassName(SETTINGS_PACKAGE, SETTINGS_ACTIVITY)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
     }
 
     fun refreshRecents() {
