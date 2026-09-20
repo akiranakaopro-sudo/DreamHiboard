@@ -17,6 +17,33 @@ class PackedCardGridTest {
         assertEquals(0, packed[0].column)
         assertEquals(2, packed[1].column)
         assertEquals(0, packed[1].row)
+        assertTrue(emptyAddSlots(packed).isEmpty())
+    }
+
+    @Test
+    fun trailingTwoByTwoGetsASquareAddSlotOnTheRight() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val slots = emptyAddSlots(packCards(listOf(notes)))
+        assertEquals(1, slots.size)
+        assertEquals(2, slots[0].column)
+        assertEquals(0, slots[0].row)
+        assertEquals(2, slots[0].columns)
+        assertEquals(2, slots[0].rows)
+    }
+
+    @Test
+    fun twoByTwoThenFullWidthGetsAnAddSlotBesideTheHalfCard() {
+        val notes = card("notes", CardSize.TwoByTwo)
+        val dock = card("dock", CardSize.FullByTwo)
+        val slots = emptyAddSlots(packCards(listOf(notes, dock)))
+        assertEquals(1, slots.size)
+        assertEquals(2, slots[0].column)
+        assertEquals(0, slots[0].row)
+    }
+
+    @Test
+    fun emptyBoardHasNoAddSlot() {
+        assertTrue(emptyAddSlots(emptyList()).isEmpty())
     }
 
     @Test

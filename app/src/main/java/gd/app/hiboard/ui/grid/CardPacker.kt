@@ -434,3 +434,28 @@ fun packCards(cards: List<CardInstance>, columns: Int = 4): List<GridPlacement> 
         placed
     }
 }
+
+fun emptyAddSlots(placements: List<GridPlacement>, columns: Int = 4): List<GridPlacement> {
+    if (placements.isEmpty()) return emptyList()
+    val slots = mutableListOf<GridPlacement>()
+    placements.groupBy { it.row }.forEach { (row, inRow) ->
+        val occupied = BooleanArray(columns)
+        var rowHeight = 0
+        inRow.forEach { place ->
+            rowHeight = max(rowHeight, place.rows)
+            val end = (place.column + place.columns).coerceAtMost(columns)
+            for (col in place.column until end) occupied[col] = true
+        }
+        if (rowHeight < 2) return@forEach
+        var col = 0
+        while (col <= columns - 2) {
+            if (!occupied[col] && !occupied[col + 1]) {
+                slots += GridPlacement("add-slot-$row-$col", col, row, 2, 2)
+                col += 2
+            } else {
+                col += 1
+            }
+        }
+    }
+    return slots
+}

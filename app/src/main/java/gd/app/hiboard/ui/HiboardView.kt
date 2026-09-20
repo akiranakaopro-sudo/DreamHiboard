@@ -65,6 +65,7 @@ class HiboardView @JvmOverloads constructor(
             launchIntent(this, viewModel.openQuickSearch())
         }
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
+        binding.subscribedGrid.onAddSlotClick = { viewModel.openStore() }
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
             viewModel.exitEdit()

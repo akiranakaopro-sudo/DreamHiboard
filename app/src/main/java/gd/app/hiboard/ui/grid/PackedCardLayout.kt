@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -15,8 +16,10 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.PathInterpolator
 import android.widget.ScrollView
 import com.coui.appcompat.pressfeedback.COUIPressFeedbackHelper
+import gd.app.hiboard.R
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
+import gd.app.hiboard.model.GridPlacement
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -30,6 +33,7 @@ class PackedCardLayout @JvmOverloads constructor(
     var onDragStarted: (() -> Unit)? = null
     var onDragEnded: (() -> Unit)? = null
     var onReorder: ((List<String>) -> Unit)? = null
+    var onAddSlotClick: (() -> Unit)? = null
 
     private val gutterPx = (10 * resources.displayMetrics.density).roundToInt()
     private val elevationPx = 12 * resources.displayMetrics.density
@@ -44,6 +48,8 @@ class PackedCardLayout @JvmOverloads constructor(
     private val outlineInterpolator = DecelerateInterpolator(2.5f)
     private var cards: List<CardInstance> = emptyList()
     private val cardViews = mutableListOf<View>()
+    private val addSlotViews = mutableListOf<View>()
+    private var addSlots: List<GridPlacement> = emptyList()
 
     var isDragging: Boolean = false
         private set
@@ -92,12 +98,14 @@ class PackedCardLayout @JvmOverloads constructor(
         this.cards = cards
         removeAllViews()
         cardViews.clear()
+        addSlotViews.clear()
         cards.forEach { card ->
             val child = factory(card)
             child.tag = card.instanceId
             cardViews.add(child)
             addView(child)
         }
+        syncAddSlots()
         requestLayout()
     }
 
@@ -108,6 +116,14 @@ class PackedCardLayout @JvmOverloads constructor(
         cards.forEach { card ->
             val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
             val child = viewFor(card.instanceId) ?: return@forEach
+            child.measure(
+                MeasureSpec.makeMeasureSpec(spanPx(cell, place.columns), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(spanPx(cell, place.rows), MeasureSpec.EXACTLY),
+            )
+        }
+        addSlots.forEachIndexed { index, place ->
+            val child = addSlotViews.getOrNull(index) ?: return@forEachIndexed
+            if (child.visibility == View.GONE) return@forEachIndexed
             child.measure(
                 MeasureSpec.makeMeasureSpec(spanPx(cell, place.columns), MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(spanPx(cell, place.rows), MeasureSpec.EXACTLY),
@@ -133,6 +149,13 @@ class PackedCardLayout @JvmOverloads constructor(
             } else {
                 child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
             }
+        }
+        addSlots.forEachIndexed { index, place ->
+            val child = addSlotViews.getOrNull(index) ?: return@forEachIndexed
+            if (child.visibility == View.GONE) return@forEachIndexed
+            val x = place.column * (cell + gutterPx)
+            val y = place.row * (cell + gutterPx)
+            child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
         }
         if (isDragging) {
             followPointer()
@@ -251,6 +274,7 @@ class PackedCardLayout @JvmOverloads constructor(
         val card = cards.getOrNull(index) ?: return
         if (card.canDrag != true) return
         isDragging = true
+        addSlotViews.forEach { it.visibility = View.GONE }
         dragIndex = index
         draggedId = card.instanceId
         lastHitId = null
@@ -369,6 +393,7 @@ class PackedCardLayout @JvmOverloads constructor(
         dragged?.alpha = 1f
         seatAnimator?.cancel()
         animateOutline(show = false)
+        syncAddSlots()
         requestLayout()
         if (changed) {
             onReorder?.invoke(nextCards.map { it.catalogId })
@@ -480,6 +505,30 @@ class PackedCardLayout @JvmOverloads constructor(
 
     private fun viewFor(instanceId: String): View? =
         cardViews.firstOrNull { it.tag == instanceId }
+
+    private fun syncAddSlots() {
+        addSlots = if (isDragging || cards.isEmpty()) {
+            emptyList()
+        } else {
+            emptyAddSlots(packCards(cards, columns), columns)
+        }
+        while (addSlotViews.size > addSlots.size) {
+            removeView(addSlotViews.removeAt(addSlotViews.lastIndex))
+        }
+        while (addSlotViews.size < addSlots.size) {
+            addSlotViews.add(inflateAddSlot())
+        }
+        addSlotViews.forEach { child ->
+            child.visibility = if (isDragging) View.GONE else View.VISIBLE
+        }
+    }
+
+    private fun inflateAddSlot(): View {
+        val child = LayoutInflater.from(context).inflate(R.layout.item_add_slot, this, false)
+        child.setOnClickListener { onAddSlotClick?.invoke() }
+        addView(child)
+        return child
+    }
 
     private fun swapTravelPx(): Float =
         ((cellWidth(width.coerceAtLeast(1)) + gutterPx) * 0.22f).coerceAtLeast(slop * 2f)
