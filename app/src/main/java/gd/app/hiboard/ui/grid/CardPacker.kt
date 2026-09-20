@@ -40,6 +40,9 @@ fun inPlacement(
  * Stable drop target for inner drag. Half-width tiles keep a seam dead zone.
  * A full-width card's center sits on that seam, so span-4 picks the leftmost
  * tile in the row instead — otherwise For you can never sit above Notes|Shortcuts.
+ *
+ * Half-width onto full-width uses the whole tile: the 22% inset was meant for
+ * side-by-side 2-span seams, and it hid Advice from Notes dragged up the left.
  */
 fun dropTargetId(
     placements: List<GridPlacement>,
@@ -56,7 +59,12 @@ fun dropTargetId(
     var bestDist = Float.MAX_VALUE
     placements.forEach { place ->
         if (place.instanceId == draggedId) return@forEach
-        if (!inPlacement(place, column, row, insetFraction)) return@forEach
+        val hit = if (place.columns >= 4) {
+            inWidePlacement(place, column, row)
+        } else {
+            inPlacement(place, column, row, insetFraction)
+        }
+        if (!hit) return@forEach
         val dx = column - (place.column + place.columns / 2f)
         val dy = row - (place.row + place.rows / 2f)
         val dist = dx * dx + dy * dy
@@ -66,6 +74,13 @@ fun dropTargetId(
         }
     }
     return bestId
+}
+
+fun inWidePlacement(place: GridPlacement, column: Float, row: Float): Boolean {
+    return column >= place.column &&
+        column < place.column + place.columns &&
+        row >= place.row &&
+        row < place.row + place.rows
 }
 
 private fun dropTargetIdForFullWidth(

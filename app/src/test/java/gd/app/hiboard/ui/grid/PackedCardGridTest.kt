@@ -234,6 +234,34 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun halfWidthCardAboveFullWidthInsertsAboveIt() {
+        val favorite = card("favorite", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val advice = card("advice", CardSize.FullByTwo)
+        val notes = card("notes", CardSize.TwoByTwo)
+        val dock = card("dock", CardSize.FullByTwo)
+        val origin = listOf(favorite, weather, advice, notes, dock)
+        val packed = packCards(origin)
+        assertEquals(0, packed[0].row)
+        assertEquals(0, packed[1].row)
+        assertEquals(2, packed[2].row)
+        assertEquals(4, packed[3].row)
+        assertEquals("advice", dropTargetId(packed, "notes", 0.5f, 3.9f))
+        assertEquals("advice", dropTargetId(packed, "notes", 1f, 2.1f))
+        val preview = previewCardsForDrop(origin, origin, "notes", 0.5f, 3.9f)
+        assertEquals(
+            listOf("favorite", "weather", "notes", "advice", "dock"),
+            preview.map { it.catalogId },
+        )
+        val next = packCards(preview)
+        assertEquals("notes", next[2].instanceId)
+        assertEquals(2, next[2].row)
+        assertEquals(0, next[2].column)
+        assertEquals("advice", next[3].instanceId)
+        assertEquals(4, next[3].row)
+    }
+
+    @Test
     fun halfWidthPartnerDoesNotFollowWhenSwappingOntoAnotherTile() {
         val shortcuts = card("shortcuts", CardSize.TwoByTwo)
         val weather = card("weather", CardSize.TwoByTwo)

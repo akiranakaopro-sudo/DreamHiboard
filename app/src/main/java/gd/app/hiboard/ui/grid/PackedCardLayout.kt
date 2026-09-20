@@ -224,8 +224,8 @@ class PackedCardLayout @JvmOverloads constructor(
         val column = dragX / stride
         val visualTop = child.top + child.translationY
         val sampleY = when {
-            dragY + slop < downY -> minOf(dragY, visualTop + stride)
-            dragY - slop > downY -> maxOf(dragY, visualTop + child.height - stride)
+            dragY + slop < downY -> minOf(dragY, visualTop)
+            dragY - slop > downY -> maxOf(dragY, visualTop + child.height)
             else -> dragY
         }
         val row = sampleY / stride
