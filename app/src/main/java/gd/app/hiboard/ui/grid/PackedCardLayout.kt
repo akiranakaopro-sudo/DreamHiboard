@@ -34,6 +34,7 @@ class PackedCardLayout @JvmOverloads constructor(
     var onDragEnded: (() -> Unit)? = null
     var onReorder: ((List<String>) -> Unit)? = null
     var onAddSlotClick: (() -> Unit)? = null
+    var onCardLongPress: ((CardInstance, View) -> Unit)? = null
 
     private val gutterPx = (10 * resources.displayMetrics.density).roundToInt()
     private val elevationPx = 12 * resources.displayMetrics.density
@@ -86,7 +87,7 @@ class PackedCardLayout @JvmOverloads constructor(
         color = 0x59FFFFFF
     }
 
-    private val longPressRunnable = Runnable { armDrag() }
+    private val longPressRunnable = Runnable { armLongPress() }
 
     init {
         clipChildren = false
@@ -199,11 +200,9 @@ class PackedCardLayout @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
-                if (!isDragging) {
-                    dragArmed = false
-                    parent.requestDisallowInterceptTouchEvent(false)
-                    endPressFeedback(restore = true)
-                }
+                if (isDragging || dragArmed) return true
+                parent.requestDisallowInterceptTouchEvent(false)
+                endPressFeedback(restore = true)
                 activePointerId = MotionEvent.INVALID_POINTER_ID
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -234,7 +233,20 @@ class PackedCardLayout @JvmOverloads constructor(
                     endDrag(commit = true)
                     return true
                 }
-                dragArmed = false
+                if (dragArmed) {
+                    val index = pendingIndex
+                    val card = cards.getOrNull(index)
+                    val child = cardViews.getOrNull(index)
+                    dragArmed = false
+                    pendingIndex = -1
+                    parent.requestDisallowInterceptTouchEvent(false)
+                    endPressFeedback(restore = true)
+                    if (card != null && child != null && card.canEdit) {
+                        onCardLongPress?.invoke(card, child)
+                    }
+                    return true
+                }
+                pendingIndex = -1
                 parent.requestDisallowInterceptTouchEvent(false)
                 endPressFeedback(restore = true)
             }
@@ -245,6 +257,7 @@ class PackedCardLayout @JvmOverloads constructor(
                     return true
                 }
                 dragArmed = false
+                pendingIndex = -1
                 parent.requestDisallowInterceptTouchEvent(false)
                 endPressFeedback(restore = true)
             }
@@ -283,7 +296,7 @@ class PackedCardLayout @JvmOverloads constructor(
         }
     }
 
-    private fun armDrag() {
+    private fun armLongPress() {
         val index = pendingIndex
         val card = cards.getOrNull(index) ?: return
         if (card.canDrag != true || isDragging) return

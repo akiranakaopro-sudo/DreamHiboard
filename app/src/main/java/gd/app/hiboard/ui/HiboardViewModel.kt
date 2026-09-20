@@ -47,6 +47,11 @@ class HiboardViewModel(
             }
         }
         onHostEvent(HostEvent.Create)
+        viewModelScope.launch {
+            engines.flashlightOn.collect {
+                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
     }
 
     fun onHostEvent(event: HostEvent) {
@@ -142,6 +147,8 @@ class HiboardViewModel(
     fun openNotes() = engines.openNotes()
 
     fun createNote() = engines.createNote()
+
+    fun toggleFlashlight() = engines.toggleFlashlight()
 
     fun openQuickSearch() = engines.openQuickSearch()
 

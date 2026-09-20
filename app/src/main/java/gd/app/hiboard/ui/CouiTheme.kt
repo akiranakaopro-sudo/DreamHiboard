@@ -23,3 +23,9 @@ internal fun Context.couiColor(@AttrRes attr: Int): Int {
     if (!theme.resolveAttribute(attr, value, true)) return 0
     return if (value.resourceId != 0) getColor(value.resourceId) else value.data
 }
+
+tailrec fun Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
+}

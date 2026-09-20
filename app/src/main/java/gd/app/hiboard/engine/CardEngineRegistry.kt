@@ -21,6 +21,7 @@ class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
     private val recents = RecentAppsRepository(appContext)
     private val notes = NotesRepository(appContext)
+    private val flashlight = FlashlightController(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Advice to CardEngine { AdviceContent.current() },
         CardEngineId.Weather to CardEngine {
@@ -46,6 +47,12 @@ class CardEngineRegistry(context: Context) {
             )
         },
         CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
+        CardEngineId.Flashlight to CardEngine {
+            CardContent(
+                flashlightOn = flashlight.on.value,
+                flashlightAvailable = flashlight.available,
+            )
+        },
     )
 
     fun compose(action: CardAction): CardContent {
@@ -101,6 +108,10 @@ class CardEngineRegistry(context: Context) {
         recents.syncFromUsage()
     }
 
+    val flashlightOn = flashlight.on
+
+    fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
+
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
         adviceGreeting = b.adviceGreeting.ifBlank { a.adviceGreeting },
         adviceItems = b.adviceItems.ifEmpty { a.adviceItems },
@@ -109,6 +120,8 @@ class CardEngineRegistry(context: Context) {
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
         notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
         notesWhen = b.notesWhen.ifBlank { a.notesWhen },
+        flashlightOn = b.flashlightOn || a.flashlightOn,
+        flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
         recentApps = b.recentApps.ifEmpty { a.recentApps },
     )

@@ -17,4 +17,11 @@
     <string name="infoflow_label">For you</string>
     <string name="recent_apps_label">Recent apps</string>
     <string name="store_close">Close</string>
+    <string name="remove_widget">Remove widget</string>
+    <string name="widget_details">Widget details</string>
+    <string name="widget_details_size">Size %1$d × %2$d</string>
+    <string name="flashlight_label">Flashlight</string>
+    <string name="flashlight_on">On</string>
+    <string name="flashlight_off">Off</string>
+    <string name="flashlight_unavailable">No flash</string>
 </resources>

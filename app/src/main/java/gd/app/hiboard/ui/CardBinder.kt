@@ -20,6 +20,7 @@ import gd.app.hiboard.model.ShortcutApp
 class CardBinder(
     private val onOpenNotes: () -> Unit,
     private val onCreateNote: () -> Unit,
+    private val onToggleFlashlight: () -> Unit,
     private val onOpenApp: (ShortcutApp) -> Unit,
     private val onRemove: (String) -> Unit,
     private val onAdd: (String) -> Unit,
@@ -35,6 +36,7 @@ class CardBinder(
             CardEngineId.Notes -> bindNotes(inflater, root, body, state)
             CardEngineId.InfoFlow -> bindInfoFlow(inflater, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
+            CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -133,6 +135,47 @@ class CardBinder(
             item.setOnClickListener { onOpenApp(app) }
             row.addView(item)
         }
+    }
+
+    private fun bindFlashlight(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val on = state.content.flashlightOn
+        val available = state.content.flashlightAvailable
+        val cardColor = body.context.getColor(
+            if (on) R.color.hiboard_flashlight_on else R.color.hiboard_flashlight_off,
+        )
+        val labelColor = body.context.getColor(
+            if (on) R.color.hiboard_flashlight_label_on else R.color.hiboard_flashlight_label_off,
+        )
+        val iconColor = body.context.getColor(
+            if (on) R.color.hiboard_flashlight_icon_on else R.color.hiboard_flashlight_icon_off,
+        )
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(cardColor)
+            val pad = (8 * body.resources.displayMetrics.density).toInt()
+            setContentPadding(pad, pad, pad, pad)
+        }
+        val view = inflater.inflate(R.layout.card_flashlight, body, true)
+        view.findViewById<TextView>(R.id.flashlightLabel).setTextColor(labelColor)
+        view.findViewById<ImageView>(R.id.flashlightGlow).visibility =
+            if (on) View.VISIBLE else View.INVISIBLE
+        view.findViewById<ImageView>(R.id.flashlightIcon).imageTintList =
+            android.content.res.ColorStateList.valueOf(iconColor)
+        view.findViewById<TextView>(R.id.flashlightState).apply {
+            setTextColor(labelColor)
+            text = when {
+                !available -> context.getString(R.string.flashlight_unavailable)
+                on -> context.getString(R.string.flashlight_on)
+                else -> context.getString(R.string.flashlight_off)
+            }
+        }
+        val toggle = View.OnClickListener { onToggleFlashlight() }
+        view.findViewById<View>(R.id.flashlightRoot).setOnClickListener(toggle)
+        root.setOnClickListener(toggle)
     }
 }
 

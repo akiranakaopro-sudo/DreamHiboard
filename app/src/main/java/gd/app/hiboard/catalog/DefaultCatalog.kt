@@ -52,6 +52,16 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "flashlight",
+            groupId = GROUP_TOOLS,
+            groupTitle = "Tools",
+            name = "Flashlight",
+            description = "Tap to turn the torch on or off. Uses the rear camera flash.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Flashlight,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
             id = "infoflow",
             groupId = GROUP_FEED,
             groupTitle = "Discover",
