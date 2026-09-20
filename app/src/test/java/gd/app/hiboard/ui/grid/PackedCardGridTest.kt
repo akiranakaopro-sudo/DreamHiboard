@@ -93,7 +93,12 @@ class PackedCardGridTest {
         assertEquals(0, packed[1].column)
         assertEquals(2, packed[2].column)
         assertEquals("notes", dropTargetId(packed, "infoflow", 2f, 3f, draggedColumns = 4))
-        val preview = previewCardsForDrop(origin, origin, "infoflow", 2f, 3f)
+        val first = previewCardsForDrop(origin, origin, "infoflow", 2f, 3f)
+        assertEquals(
+            listOf("dock", "notes", "shortcuts", "infoflow", "advice"),
+            first.map { it.catalogId },
+        )
+        val preview = previewCardsForDrop(origin, first, "infoflow", 2f, 3f)
         assertEquals(
             listOf("dock", "infoflow", "notes", "shortcuts", "advice"),
             preview.map { it.catalogId },
@@ -257,6 +262,37 @@ class PackedCardGridTest {
         val bornRow = originPlace.row + originPlace.rows / 2f
         val restored = previewCardsForDrop(origin, below, "shortcuts", 2f, bornRow)
         assertEquals(origin.map { it.catalogId }, restored.map { it.catalogId })
+    }
+
+    @Test
+    fun draggingPastTwoRowsThenBackUpReversesOneRowAtATime() {
+        val a = card("a", CardSize.FullByTwo)
+        val b = card("b", CardSize.FullByTwo)
+        val c = card("c", CardSize.FullByTwo)
+        val origin = listOf(a, b, c)
+        val first = previewCardsForDrop(origin, origin, "a", 2f, 5f)
+        assertEquals(listOf("b", "a", "c"), first.map { it.catalogId })
+        val second = previewCardsForDrop(origin, first, "a", 2f, 5f)
+        assertEquals(listOf("b", "c", "a"), second.map { it.catalogId })
+        val packed = packCards(second)
+        val cPlace = packed.first { it.instanceId == "c" }
+        val back = previewCardsForDrop(
+            origin,
+            second,
+            "a",
+            2f,
+            cPlace.row + cPlace.rows * 0.2f,
+        )
+        assertEquals(listOf("b", "a", "c"), back.map { it.catalogId })
+        val bPlace = packCards(back).first { it.instanceId == "b" }
+        val home = previewCardsForDrop(
+            origin,
+            back,
+            "a",
+            2f,
+            bPlace.row + bPlace.rows * 0.2f,
+        )
+        assertEquals(listOf("a", "b", "c"), home.map { it.catalogId })
     }
 
     @Test

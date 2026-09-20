@@ -144,21 +144,22 @@ fun previewCardsForDrop(
         row,
         draggedColumns = draggedColumns,
     ) ?: return current
+    val targetId = adjacentRowTargetId(packedCurrent, draggedId, hitId)
     val from = current.indexOfFirst { it.instanceId == draggedId }
-    val to = current.indexOfFirst { it.instanceId == hitId }
+    val to = current.indexOfFirst { it.instanceId == targetId }
     if (from < 0 || to < 0 || from == to) return current
     if (shouldRestoreBornRow(origin, current, draggedId, originPlace, row, columns)) {
         return origin
     }
-    if (alreadyCrossedHit(origin, draggedId, hitId, from, to, packedCurrent, row)) return current
+    if (alreadyCrossedHit(origin, draggedId, targetId, from, to, packedCurrent, row)) return current
     val partnerId = packedRowPartnerId(origin, draggedId, columns)
-    if (partnerId != null && hitId != partnerId) {
-        val hitSpan = current.firstOrNull { it.instanceId == hitId }?.size?.columns ?: 0
+    if (partnerId != null && targetId != partnerId) {
+        val hitSpan = current.firstOrNull { it.instanceId == targetId }?.size?.columns ?: 0
         if (hitSpan >= 4) {
             return moveWithRowPartner(
                 current,
                 draggedId,
-                hitId,
+                targetId,
                 partnerId,
                 partnerIsOnRight(origin, draggedId, partnerId, columns),
             )
@@ -218,10 +219,9 @@ fun previewSameRowPair(
 }
 
 /**
- * Hovering a 4-span we already passed must not walk back over it.
- * For you is 4 rows tall, so its upper half is still the same hover and
- * reversing there makes it bounce. A 2-row dock is short enough that the
- * top half is a real "put this above" target.
+ * Hovering a 4-span we already passed must not walk back over it while
+ * the pointer is still on the far half. For you stays put so it does
+ * not bounce; a 2-row dock can reverse from its top half.
  */
 fun alreadyCrossedHit(
     origin: List<CardInstance>,
@@ -238,18 +238,53 @@ fun alreadyCrossedHit(
     val hit = packedCurrent.firstOrNull { it.instanceId == hitId }
     val hitCenter = hit?.let { it.row + it.rows / 2f }
     if (originFrom < originHit && from > to) {
-        if (hit != null &&
-            hit.columns >= 4 &&
-            hit.rows <= 2 &&
-            hitCenter != null &&
-            row < hitCenter
-        ) {
-            return false
-        }
-        return true
+        if (hit == null || hitCenter == null) return true
+        val dead = (hit.rows * 0.12f).coerceAtLeast(0.15f)
+        if (row >= hitCenter - dead) return true
+        if (hit.columns >= 4 && hit.rows >= 4) return true
+        return false
     }
-    if (originFrom > originHit && from < to) return true
+    if (originFrom > originHit && from < to) {
+        if (hit == null || hitCenter == null) return true
+        val dead = (hit.rows * 0.12f).coerceAtLeast(0.15f)
+        if (row < hitCenter + dead) return true
+        if (hit.columns >= 4 && hit.rows >= 4) return true
+        return false
+    }
     return false
+}
+
+/**
+ * A drop two rows away must walk through the next row first. Jumping
+ * over that row is what snapped a widget to the top of the second card
+ * when the drag reversed.
+ */
+fun adjacentRowTargetId(
+    packed: List<GridPlacement>,
+    draggedId: String,
+    hitId: String,
+): String {
+    val dragged = packed.firstOrNull { it.instanceId == draggedId } ?: return hitId
+    val hit = packed.firstOrNull { it.instanceId == hitId } ?: return hitId
+    val draggedTop = dragged.row
+    val draggedBottom = dragged.row + dragged.rows
+    val hitTop = hit.row
+    val hitBottom = hit.row + hit.rows
+    if (hitTop < draggedBottom && hitBottom > draggedTop) return hitId
+    if (hitTop == draggedBottom || hitBottom == draggedTop) return hitId
+    val others = packed.filter { it.instanceId != draggedId }
+    if (hitTop >= draggedBottom) {
+        val nextRow = others.filter { it.row >= draggedBottom }.minOfOrNull { it.row } ?: return hitId
+        val inRow = others.filter { it.row == nextRow }
+        return inRow.maxBy { it.column }.instanceId
+    }
+    if (hitBottom <= draggedTop) {
+        val prevBottom = others.filter { it.row + it.rows <= draggedTop }
+            .maxOfOrNull { it.row + it.rows } ?: return hitId
+        val inRow = others.filter { it.row + it.rows == prevBottom }
+        return inRow.minBy { it.column }.instanceId
+    }
+    return hitId
 }
 
 fun inOriginRow(place: GridPlacement, row: Float, insetFraction: Float = 0.22f): Boolean {
