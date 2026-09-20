@@ -438,6 +438,24 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun lockedRecentAppsStayAtTheTopAndCannotBeADropTarget() {
+        val recent = card("recent", CardSize.FullByOne).copy(canDrag = false, canEdit = false)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val notes = card("notes", CardSize.TwoByTwo)
+        val pinned = pinLockedCards(listOf(weather, notes, recent))
+        assertEquals(listOf("recent", "weather", "notes"), pinned.map { it.catalogId })
+        val packed = packCards(pinned)
+        assertEquals(0, packed[0].row)
+        assertEquals(4, packed[0].columns)
+        assertEquals(1, packed[0].rows)
+        assertTrue(packed[0].locked)
+        assertEquals(1, packed[1].row)
+        assertEquals(null, dropTargetId(packed, "notes", 1f, 0.4f, draggedColumns = 2))
+        val preview = previewCardsForDrop(pinned, pinned, "weather", 1f, 0.2f)
+        assertEquals("recent", preview.first().catalogId)
+    }
+
+    @Test
     fun halfWidthPartnerDoesNotFollowWhenSwappingOntoAnotherTile() {
         val shortcuts = card("shortcuts", CardSize.TwoByTwo)
         val weather = card("weather", CardSize.TwoByTwo)

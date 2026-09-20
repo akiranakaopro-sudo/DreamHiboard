@@ -1,13 +1,17 @@
 package gd.app.hiboard.ui
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.coui.appcompat.cardview.COUICardView
 import com.coui.appcompat.R as CouiR
 import gd.app.hiboard.R
+import gd.app.hiboard.engine.RECENT_APP_LIMIT
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
@@ -30,6 +34,7 @@ class CardBinder(
             CardEngineId.Notes -> bindNotes(inflater, body, state)
             CardEngineId.Favorite -> bindShortcuts(inflater, body, state.content.favorites)
             CardEngineId.InfoFlow -> bindInfoFlow(inflater, body, state)
+            CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -104,6 +109,35 @@ class CardBinder(
             row.findViewById<TextView>(R.id.infoTitle).text = item.title
             row.findViewById<TextView>(R.id.infoSource).text = item.source
             list.addView(row)
+        }
+    }
+
+    private fun bindRecentApps(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val pad = (8 * body.resources.displayMetrics.density).toInt()
+        (root as? COUICardView)?.setContentPadding(pad, pad, pad, pad)
+        val view = inflater.inflate(R.layout.card_recent_apps, body, true)
+        val row = view.findViewById<LinearLayout>(R.id.recentRow)
+        row.removeAllViews()
+        val pm = body.context.packageManager
+        state.content.recentApps.take(RECENT_APP_LIMIT).forEach { app ->
+            val item = inflater.inflate(R.layout.item_recent_app, row, false)
+            item.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            val iconView = item.findViewById<ImageView>(R.id.recentIcon)
+            iconView.setImageDrawable(
+                try {
+                    pm.getApplicationIcon(app.packageName)
+                } catch (_: PackageManager.NameNotFoundException) {
+                    null
+                },
+            )
+            item.findViewById<TextView>(R.id.recentLabel).text = app.label
+            item.setOnClickListener { onOpenApp(app) }
+            row.addView(item)
         }
     }
 }

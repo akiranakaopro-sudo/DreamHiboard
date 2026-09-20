@@ -16,5 +16,6 @@
     <string name="notes_label">Notes</string>
     <string name="notes_hint">Opens DreamNote if installed</string>
     <string name="infoflow_label">For you</string>
+    <string name="recent_apps_label">Recent apps</string>
     <string name="store_close">Close</string>
 </resources>

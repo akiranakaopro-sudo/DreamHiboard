@@ -3,6 +3,7 @@ package gd.app.hiboard.engine
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import gd.app.hiboard.data.RecentAppsRepository
 import gd.app.hiboard.model.AdviceItem
 import gd.app.hiboard.model.CardAction
 import gd.app.hiboard.model.CardContent
@@ -17,6 +18,7 @@ fun interface CardEngine {
 
 class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
+    private val recents = RecentAppsRepository(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Advice to CardEngine { AdviceContent.current() },
         CardEngineId.Shortcuts to CardEngine { CardContent(shortcuts = launcherApps(appContext, 5)) },
@@ -38,6 +40,7 @@ class CardEngineRegistry(context: Context) {
                 ),
             )
         },
+        CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
     )
 
     fun compose(action: CardAction): CardContent {
@@ -59,6 +62,7 @@ class CardEngineRegistry(context: Context) {
     }
 
     fun openApp(app: ShortcutApp): Intent? {
+        recents.remember(app.packageName)
         val pm = appContext.packageManager
         if (app.activityName != null) {
             return Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(
@@ -67,6 +71,10 @@ class CardEngineRegistry(context: Context) {
             )
         }
         return pm.getLaunchIntentForPackage(app.packageName)
+    }
+
+    fun refreshRecents() {
+        recents.syncFromUsage()
     }
 
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
@@ -78,6 +86,7 @@ class CardEngineRegistry(context: Context) {
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
         favorites = b.favorites.ifEmpty { a.favorites },
         infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
+        recentApps = b.recentApps.ifEmpty { a.recentApps },
     )
 
     private fun launcherApps(context: Context, limit: Int): List<ShortcutApp> {

@@ -20,17 +20,20 @@ class BoardRepository(context: Context) {
     val snapshot: Flow<BoardSnapshot> = dataStore.data.map { prefs ->
         val subscribedRaw = prefs[KEY_SUBSCRIBED]
         val recommendedRaw = prefs[KEY_RECOMMENDED]
-        val subscribedIds = subscribedRaw?.split(',')?.filter { it.isNotBlank() }
-            ?: DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
+        val subscribedIds = DefaultCatalog.pinLocked(
+            subscribedRaw?.split(',')?.filter { it.isNotBlank() }
+                ?: DefaultCatalog.entries.filter { it.defaultSubscribed && !it.locked }.map { it.id },
+        )
         val recommendedIds = recommendedRaw?.split(',')?.filter { it.isNotBlank() }
             ?: DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
         BoardSnapshot(
             subscribed = instantiate(subscribedIds, CardArea.Subscribe),
-            recommended = instantiate(recommendedIds, CardArea.Recommend),
+            recommended = instantiate(recommendedIds.filter { it !in DefaultCatalog.lockedIds() }, CardArea.Recommend),
         )
     }
 
     suspend fun subscribe(catalogId: String) {
+        if (DefaultCatalog.byId(catalogId)?.locked == true) return
         dataStore.edit { prefs ->
             val current = prefs[KEY_SUBSCRIBED].toIdList().ifEmpty {
                 DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
@@ -46,6 +49,7 @@ class BoardRepository(context: Context) {
     }
 
     suspend fun unsubscribe(catalogId: String) {
+        if (DefaultCatalog.byId(catalogId)?.locked == true) return
         dataStore.edit { prefs ->
             val current = prefs[KEY_SUBSCRIBED].toIdList().ifEmpty {
                 DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
@@ -71,7 +75,12 @@ class BoardRepository(context: Context) {
             val current = prefs[key].toIdList().ifEmpty { defaults }
             val incoming = catalogIds.filter { it in current.toSet() }
             val rest = current.filter { it !in incoming.toSet() }
-            prefs[key] = (incoming + rest).joinToString(",")
+            val next = incoming + rest
+            prefs[key] = if (area == CardArea.Subscribe) {
+                DefaultCatalog.pinLocked(next).joinToString(",")
+            } else {
+                next.filter { it !in DefaultCatalog.lockedIds() }.joinToString(",")
+            }
         }
     }
 
@@ -90,6 +99,8 @@ class BoardRepository(context: Context) {
                 size = entry.size,
                 area = area,
                 engine = entry.engine,
+                canDrag = !entry.locked,
+                canEdit = !entry.locked,
                 order = index,
             )
         }

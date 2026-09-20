@@ -11,6 +11,17 @@ object DefaultCatalog {
 
     val entries: List<CardCatalogEntry> = listOf(
         CardCatalogEntry(
+            id = "recent",
+            groupId = GROUP_TOOLS,
+            groupTitle = "Tools",
+            name = "Recent apps",
+            description = "Last opened app first, then Dialer, Contacts, Messages, Camera, and Settings.",
+            size = CardSize.FullByOne,
+            engine = CardEngineId.RecentApps,
+            defaultSubscribed = true,
+            locked = true,
+        ),
+        CardCatalogEntry(
             id = "advice",
             groupId = GROUP_GLANCE,
             groupTitle = "Glance",
@@ -73,4 +84,11 @@ object DefaultCatalog {
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }
+
+    fun lockedIds(): List<String> = entries.filter { it.locked }.map { it.id }
+
+    fun pinLocked(ids: List<String>): List<String> {
+        val locked = lockedIds()
+        return locked + ids.filter { it !in locked }
+    }
 }

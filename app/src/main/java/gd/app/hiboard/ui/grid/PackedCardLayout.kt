@@ -182,8 +182,9 @@ class PackedCardLayout @JvmOverloads constructor(
                 pendingIndex = hitIndex(x, y)
                 removeCallbacks(longPressRunnable)
                 if (pendingIndex >= 0) {
-                    cardViews.getOrNull(pendingIndex)?.let { startPressFeedback(it) }
-                    if (cards.getOrNull(pendingIndex)?.canDrag == true) {
+                    val card = cards.getOrNull(pendingIndex)
+                    if (card?.canDrag == true) {
+                        cardViews.getOrNull(pendingIndex)?.let { startPressFeedback(it) }
                         postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
                     }
                 }
@@ -374,9 +375,9 @@ class PackedCardLayout @JvmOverloads constructor(
 
     private fun applyOrder(next: List<CardInstance>) {
         val byTag = cardViews.associateBy { it.tag as String }
-        cards = next
+        cards = pinLockedCards(next)
         cardViews.clear()
-        cardViews.addAll(next.mapNotNull { byTag[it.instanceId] })
+        cardViews.addAll(cards.mapNotNull { byTag[it.instanceId] })
     }
 
     private fun endDrag(commit: Boolean) {

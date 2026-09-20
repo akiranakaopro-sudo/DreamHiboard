@@ -97,7 +97,7 @@ class HiboardView @JvmOverloads constructor(
         binding.editButton.isVisible = state.editMode
         binding.addButton.text = context.getString(R.string.add_widget_symbol)
         binding.addButton.isVisible = true
-        binding.emptyPinned.isVisible = state.board.subscribed.isEmpty()
+        binding.emptyPinned.isVisible = state.board.subscribed.none { it.canEdit }
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
         val dragging = binding.subscribedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
@@ -119,7 +119,7 @@ class HiboardView @JvmOverloads constructor(
         list.removeAllViews()
         val pinned = state.board.subscribed.map { it.catalogId }.toSet()
         val inflater = LayoutInflater.from(context)
-        state.catalog.forEach { entry ->
+        state.catalog.filter { !it.locked }.forEach { entry ->
             list.addView(storeRow(inflater, list, entry, entry.id in pinned, viewModel))
         }
     }

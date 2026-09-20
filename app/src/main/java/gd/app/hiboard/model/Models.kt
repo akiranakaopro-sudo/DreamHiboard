@@ -12,6 +12,7 @@ enum class CardSize(val columns: Int, val rows: Int) {
     TwoByTwo(2, 2),
     TwoByFour(2, 4),
     FourByFour(4, 4),
+    FullByOne(4, 1),
     FullByTwo(4, 2),
 }
 
@@ -27,6 +28,7 @@ enum class CardEngineId {
     Notes,
     Favorite,
     InfoFlow,
+    RecentApps,
 }
 
 enum class CardAction {
@@ -48,6 +50,7 @@ data class CardCatalogEntry(
     val engine: CardEngineId,
     val defaultSubscribed: Boolean,
     val resizable: Boolean = false,
+    val locked: Boolean = false,
 )
 
 /** Placed instance — ColorOS `CardInfo`. */
@@ -93,6 +96,7 @@ data class CardContent(
     val notesPreview: String = "",
     val favorites: List<ShortcutApp> = emptyList(),
     val infoFlow: List<InfoFlowItem> = emptyList(),
+    val recentApps: List<ShortcutApp> = emptyList(),
 )
 
 data class GridPlacement(
@@ -101,4 +105,5 @@ data class GridPlacement(
     val row: Int,
     val columns: Int,
     val rows: Int,
+    val locked: Boolean = false,
 )

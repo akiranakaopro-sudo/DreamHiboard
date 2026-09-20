@@ -58,7 +58,7 @@ fun dropTargetId(
     val halfHits = mutableListOf<GridPlacement>()
     val wideHits = mutableListOf<GridPlacement>()
     placements.forEach { place ->
-        if (place.instanceId == draggedId) return@forEach
+        if (place.instanceId == draggedId || place.locked) return@forEach
         if (place.columns >= 4) {
             if (inWidePlacement(place, column, row)) wideHits += place
         } else if (inPlacement(place, column, row, insetFraction)) {
@@ -96,7 +96,7 @@ private fun dropTargetIdForFullWidth(
     val draggedIndex = placements.indexOfFirst { it.instanceId == draggedId }
     val hits = mutableListOf<Pair<Int, GridPlacement>>()
     placements.forEachIndexed { index, place ->
-        if (place.instanceId == draggedId) return@forEachIndexed
+        if (place.instanceId == draggedId || place.locked) return@forEachIndexed
         val insetY = place.rows * 0.12f
         if (row < place.row + insetY) return@forEachIndexed
         if (row >= place.row + place.rows - insetY) return@forEachIndexed
@@ -131,10 +131,13 @@ fun previewCardsForDrop(
     row: Float,
     columns: Int = 4,
 ): List<CardInstance> {
+    if (origin.firstOrNull { it.instanceId == draggedId }?.canDrag == false) {
+        return pinLockedCards(current)
+    }
     val originPlace = packCards(origin, columns).firstOrNull { it.instanceId == draggedId }
-        ?: return current
-    if (inPlacement(originPlace, column, row)) return origin
-    previewSameRowPair(current, draggedId, column, row, columns)?.let { return it }
+        ?: return pinLockedCards(current)
+    if (inPlacement(originPlace, column, row)) return pinLockedCards(origin)
+    previewSameRowPair(current, draggedId, column, row, columns)?.let { return pinLockedCards(it) }
     val draggedColumns = origin.firstOrNull { it.instanceId == draggedId }?.size?.columns ?: 2
     val packedCurrent = packCards(current, columns)
     val hitId = dropTargetId(
@@ -143,34 +146,40 @@ fun previewCardsForDrop(
         column,
         row,
         draggedColumns = draggedColumns,
-    ) ?: return current
+    ) ?: return pinLockedCards(current)
     val targetId = adjacentRowTargetId(packedCurrent, draggedId, hitId)
     val from = current.indexOfFirst { it.instanceId == draggedId }
     val to = current.indexOfFirst { it.instanceId == targetId }
-    if (from < 0 || to < 0 || from == to) return current
+    if (from < 0 || to < 0 || from == to) return pinLockedCards(current)
     if (shouldRestoreBornRow(origin, current, draggedId, originPlace, row, columns)) {
-        return origin
+        return pinLockedCards(origin)
     }
-    if (alreadyCrossedHit(origin, draggedId, targetId, from, to, packedCurrent, row)) return current
+    if (alreadyCrossedHit(origin, draggedId, targetId, from, to, packedCurrent, row)) {
+        return pinLockedCards(current)
+    }
     val partnerId = packedRowPartnerId(origin, draggedId, columns)
     if (partnerId != null && targetId != partnerId) {
         val hitSpan = current.firstOrNull { it.instanceId == targetId }?.size?.columns ?: 0
         if (hitSpan >= 4) {
-            return moveWithRowPartner(
-                current,
-                draggedId,
-                targetId,
-                partnerId,
-                partnerIsOnRight(origin, draggedId, partnerId, columns),
+            return pinLockedCards(
+                moveWithRowPartner(
+                    current,
+                    draggedId,
+                    targetId,
+                    partnerId,
+                    partnerIsOnRight(origin, draggedId, partnerId, columns),
+                ),
             )
         }
     }
-    return moveLikeOppo(
-        current,
-        from,
-        to,
-        current[from].size.columns,
-        current[to].size.columns,
+    return pinLockedCards(
+        moveLikeOppo(
+            current,
+            from,
+            to,
+            current[from].size.columns,
+            current[to].size.columns,
+        ),
     )
 }
 
@@ -407,7 +416,14 @@ fun <T> moveLikeOppo(
 
 fun moveCardsLikeOppo(cards: List<CardInstance>, from: Int, to: Int): List<CardInstance> {
     if (from !in cards.indices || to !in cards.indices) return cards
-    return moveLikeOppo(cards, from, to, cards[from].size.columns, cards[to].size.columns)
+    return pinLockedCards(moveLikeOppo(cards, from, to, cards[from].size.columns, cards[to].size.columns))
+}
+
+/** Locked tiles (Recent apps) always occupy the first rows. */
+fun pinLockedCards(cards: List<CardInstance>): List<CardInstance> {
+    val locked = cards.filter { !it.canDrag }
+    if (locked.isEmpty()) return cards
+    return locked + cards.filter { it.canDrag }
 }
 
 /** Sequential 4-column wrap, same as ColorOS `CardGridLayoutManager`. */
@@ -423,7 +439,7 @@ fun packCards(cards: List<CardInstance>, columns: Int = 4): List<GridPlacement> 
             row += rowHeight
             rowHeight = 0
         }
-        val placed = GridPlacement(card.instanceId, column, row, width, height)
+        val placed = GridPlacement(card.instanceId, column, row, width, height, locked = !card.canDrag)
         column += width
         rowHeight = max(rowHeight, height)
         if (column >= columns) {

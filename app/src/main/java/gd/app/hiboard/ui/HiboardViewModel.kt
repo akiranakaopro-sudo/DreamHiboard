@@ -1,5 +1,6 @@
 package gd.app.hiboard.ui
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -51,9 +52,11 @@ class HiboardViewModel(
     fun onHostEvent(event: HostEvent) {
         when (event) {
             HostEvent.Create -> {
+                engines.refreshRecents()
                 _state.update { it.copy(content = engines.compose(CardAction.Create)) }
             }
             HostEvent.Enter, HostEvent.Resume -> {
+                engines.refreshRecents()
                 _state.update {
                     it.copy(
                         screenVisible = true,
@@ -104,10 +107,11 @@ class HiboardViewModel(
     }
 
     fun reorder(area: CardArea, catalogIds: List<String>) {
+        val pinned = DefaultCatalog.pinLocked(catalogIds)
         _state.update { state ->
             val board = when (area) {
                 CardArea.Subscribe -> state.board.copy(
-                    subscribed = sortByCatalog(state.board.subscribed, catalogIds),
+                    subscribed = sortByCatalog(state.board.subscribed, pinned),
                 )
                 CardArea.Recommend -> state.board.copy(
                     recommended = sortByCatalog(state.board.recommended, catalogIds),
@@ -139,7 +143,11 @@ class HiboardViewModel(
 
     fun openQuickSearch() = engines.openQuickSearch()
 
-    fun openApp(app: ShortcutApp) = engines.openApp(app)
+    fun openApp(app: ShortcutApp): Intent? {
+        val intent = engines.openApp(app)
+        _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+        return intent
+    }
 
     private fun sortByCatalog(cards: List<CardInstance>, catalogIds: List<String>): List<CardInstance> {
         val byId = cards.associateBy { it.catalogId }
