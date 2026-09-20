@@ -1,6 +1,7 @@
 package gd.app.hiboard.ui
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +31,16 @@ class HiboardView @JvmOverloads constructor(
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
+        val chrome = context.getColor(R.color.hiboard_chrome)
         binding.searchBar.searchEditText.hint = context.getString(R.string.header_search_hint)
+        binding.searchBar.searchEditText.setHintTextColor(chrome)
+        binding.searchBar.searchEditText.setTextColor(chrome)
+        binding.searchBar.setSearchViewIcon(context.getDrawable(R.drawable.ic_search_chrome))
+        binding.searchBar.setSearchBackgroundColor(
+            ColorStateList.valueOf(context.getColor(R.color.hiboard_chrome_fill)),
+        )
+        binding.addButton.setTextColor(chrome)
+        binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
     }
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {

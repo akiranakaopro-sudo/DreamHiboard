@@ -36,6 +36,9 @@
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
                 app:couiHideFunctionalButton="true"
+                app:couiSearchIcon="@drawable/ic_search_chrome"
+                app:inputTextColor="@color/hiboard_chrome"
+                app:normalHintColor="@color/hiboard_chrome"
                 app:searchHint="@string/header_search_hint" />
 
             <com.coui.appcompat.button.COUIButton
@@ -60,7 +63,9 @@
                 android:gravity="center"
                 android:contentDescription="@string/add_widget"
                 android:text="@string/add_widget_symbol"
+                android:textColor="@color/hiboard_chrome"
                 android:textSize="20sp"
+                app:drawableColor="@color/hiboard_chrome_fill"
                 app:drawableRadius="-1dp" />
         </LinearLayout>
 

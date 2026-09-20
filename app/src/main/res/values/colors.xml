@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="hiboard_background">@color/coui_color_background_with_card</color>
+    <color name="hiboard_background">#8397CC</color>
+    <color name="hiboard_chrome">#FFFFFFFF</color>
+    <color name="hiboard_chrome_fill">#95A6D4</color>
     <color name="hiboard_card">@color/coui_color_card_background</color>
     <color name="hiboard_text">@color/coui_color_label_primary</color>
     <color name="hiboard_muted">@color/coui_color_label_secondary</color>

@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="hiboard_background">@color/coui_color_background_with_card_dark</color>
-    <color name="hiboard_card">@color/coui_color_card_background_dark</color>
-    <color name="hiboard_text">@color/coui_color_label_primary_dark</color>
-    <color name="hiboard_muted">@color/coui_color_label_secondary_dark</color>
-    <color name="hiboard_primary">@color/coui_color_primary_blue_dark</color>
-    <color name="hiboard_primary_soft">@color/coui_color_container_theme_halftone_blue_dark</color>
-    <color name="hiboard_chip">@color/coui_color_container4_dark</color>
-    <color name="hiboard_badge">@color/coui_color_label_primary_dark</color>
-    <color name="hiboard_on_badge">@color/coui_color_label_on_color_dark</color>
+    <color name="hiboard_background">#8397CC</color>
+    <color name="hiboard_chrome">#FFFFFFFF</color>
+    <color name="hiboard_chrome_fill">#95A6D4</color>
+    <color name="hiboard_card">@color/coui_color_card_background</color>
+    <color name="hiboard_text">@color/coui_color_label_primary</color>
+    <color name="hiboard_muted">@color/coui_color_label_secondary</color>
+    <color name="hiboard_primary">@color/coui_color_primary_blue</color>
+    <color name="hiboard_primary_soft">@color/coui_color_container_theme_halftone_blue</color>
+    <color name="hiboard_chip">@color/coui_color_container4</color>
+    <color name="hiboard_badge">@color/coui_color_label_primary</color>
+    <color name="hiboard_on_badge">@color/coui_color_label_on_color</color>
 </resources>

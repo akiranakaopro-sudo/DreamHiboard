@@ -8,9 +8,10 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
-        <item name="android:windowBackground">?attr/couiColorBackgroundWithCard</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="couiColorBackgroundWithCard">@color/hiboard_background</item>
+        <item name="android:windowBackground">@color/hiboard_background</item>
     </style>
 
     <style name="Theme.Hiboard.Translucent" parent="Theme.Hiboard">
