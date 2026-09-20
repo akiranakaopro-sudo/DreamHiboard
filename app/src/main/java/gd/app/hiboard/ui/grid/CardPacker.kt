@@ -140,6 +140,10 @@ fun previewCardsForDrop(
     val from = current.indexOfFirst { it.instanceId == draggedId }
     val to = current.indexOfFirst { it.instanceId == hitId }
     if (from < 0 || to < 0 || from == to) return current
+    if (shouldRestoreBornRow(origin, current, draggedId, originPlace, row, columns)) {
+        return origin
+    }
+    if (alreadyCrossedHit(origin, draggedId, hitId, from, to)) return current
     val partnerId = packedRowPartnerId(origin, draggedId, columns)
     if (partnerId != null && hitId != partnerId) {
         val hitSpan = current.firstOrNull { it.instanceId == hitId }?.size?.columns ?: 0
@@ -160,6 +164,53 @@ fun previewCardsForDrop(
         current[from].size.columns,
         current[to].size.columns,
     )
+}
+
+/**
+ * Hovering a 4-span we already passed must not walk back over it.
+ * Return to the born row to restore that card; reversing on the same
+ * hover is what made For you bounce against a 2x2.
+ */
+fun alreadyCrossedHit(
+    origin: List<CardInstance>,
+    draggedId: String,
+    hitId: String,
+    from: Int,
+    to: Int,
+): Boolean {
+    val originFrom = origin.indexOfFirst { it.instanceId == draggedId }
+    val originHit = origin.indexOfFirst { it.instanceId == hitId }
+    if (originFrom < 0 || originHit < 0) return false
+    if (originFrom < originHit && from > to) return true
+    if (originFrom > originHit && from < to) return true
+    return false
+}
+
+fun inOriginRow(place: GridPlacement, row: Float, insetFraction: Float = 0.22f): Boolean {
+    val insetY = place.rows * insetFraction
+    return row >= place.row + insetY &&
+        row < place.row + place.rows - insetY
+}
+
+fun shouldRestoreBornRow(
+    origin: List<CardInstance>,
+    current: List<CardInstance>,
+    draggedId: String,
+    originPlace: GridPlacement,
+    row: Float,
+    columns: Int = 4,
+): Boolean {
+    if (current.map { it.instanceId } == origin.map { it.instanceId }) return false
+    if (!inOriginRow(originPlace, row)) return false
+    val fullWidthOnBornRow = packCards(current, columns).any { place ->
+        place.columns >= 4 &&
+            originPlace.row < place.row + place.rows &&
+            originPlace.row + originPlace.rows > place.row
+    }
+    if (!fullWidthOnBornRow && packedRowPartnerId(origin, draggedId, columns) != null) {
+        return false
+    }
+    return true
 }
 
 fun packedRowPartnerId(

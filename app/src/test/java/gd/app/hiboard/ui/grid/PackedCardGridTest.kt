@@ -216,6 +216,52 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun hoveringFullWidthAfterInsertBelowDoesNotBounceIt() {
+        val advice = card("advice", CardSize.FullByTwo)
+        val notes = card("notes", CardSize.TwoByTwo)
+        val shortcuts = card("shortcuts", CardSize.TwoByTwo)
+        val infoflow = card("infoflow", CardSize.FourByFour)
+        val origin = listOf(advice, notes, shortcuts, infoflow)
+        val below = previewCardsForDrop(origin, origin, "shortcuts", 2f, 6f)
+        assertEquals(
+            listOf("advice", "infoflow", "notes", "shortcuts"),
+            below.map { it.catalogId },
+        )
+        val packed = packCards(below)
+        val forYou = packed.first { it.instanceId == "infoflow" }
+        val lower = forYou.row + forYou.rows * 0.75f
+        val still = previewCardsForDrop(origin, below, "shortcuts", 2f, lower)
+        assertEquals(below.map { it.catalogId }, still.map { it.catalogId })
+        val originPlace = packCards(origin).first { it.instanceId == "shortcuts" }
+        val bornRow = originPlace.row + originPlace.rows / 2f
+        val restored = previewCardsForDrop(origin, below, "shortcuts", 2f, bornRow)
+        assertEquals(origin.map { it.catalogId }, restored.map { it.catalogId })
+    }
+
+    @Test
+    fun hoveringFullWidthAfterInsertAboveDoesNotBounceIt() {
+        val advice = card("advice", CardSize.FullByTwo)
+        val infoflow = card("infoflow", CardSize.FourByFour)
+        val shortcuts = card("shortcuts", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.TwoByTwo)
+        val origin = listOf(advice, infoflow, shortcuts, weather)
+        val above = previewCardsForDrop(origin, origin, "weather", 3f, 3f)
+        assertEquals(
+            listOf("advice", "shortcuts", "weather", "infoflow"),
+            above.map { it.catalogId },
+        )
+        val packed = packCards(above)
+        val forYou = packed.first { it.instanceId == "infoflow" }
+        val mid = forYou.row + forYou.rows / 2f
+        val still = previewCardsForDrop(origin, above, "weather", 3f, mid)
+        assertEquals(above.map { it.catalogId }, still.map { it.catalogId })
+        val originPlace = packCards(origin).first { it.instanceId == "weather" }
+        val bornRow = originPlace.row + originPlace.rows / 2f
+        val restored = previewCardsForDrop(origin, above, "weather", 3f, bornRow)
+        assertEquals(origin.map { it.catalogId }, restored.map { it.catalogId })
+    }
+
+    @Test
     fun halfWidthPartnerFollowsWhenMovingOntoFullWidth() {
         val dock = card("dock", CardSize.FullByTwo)
         val advice = card("advice", CardSize.FullByTwo)

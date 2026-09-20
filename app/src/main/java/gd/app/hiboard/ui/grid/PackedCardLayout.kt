@@ -316,6 +316,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 row,
                 draggedColumns = draggedCard.size.columns,
             ) ?: return
+            if (hitId == lastHitId) return
             applyOrder(next)
             lastHitId = hitId
         }
