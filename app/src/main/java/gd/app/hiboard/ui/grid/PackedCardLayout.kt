@@ -17,6 +17,7 @@ import android.widget.ScrollView
 import com.coui.appcompat.pressfeedback.COUIPressFeedbackHelper
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 
@@ -62,10 +63,12 @@ class PackedCardLayout @JvmOverloads constructor(
     private var downY = 0f
     private var activePointerId = MotionEvent.INVALID_POINTER_ID
     private var pressHelper: COUIPressFeedbackHelper? = null
-    private var outlineHost: View? = null
     private var outlineAlpha = 0f
     private var outlineAnimator: ValueAnimator? = null
+    private var seatAnimator: ValueAnimator? = null
     private val outlineRect = RectF()
+    private val seatFrom = RectF()
+    private val seatTo = RectF()
     private val outlineFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = 0x26FFFFFF
@@ -131,7 +134,10 @@ class PackedCardLayout @JvmOverloads constructor(
                 child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
             }
         }
-        if (isDragging) followPointer()
+        if (isDragging) {
+            followPointer()
+            syncSeatOutline(animate = true)
+        }
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -213,6 +219,7 @@ class PackedCardLayout @JvmOverloads constructor(
         removeCallbacks(longPressRunnable)
         endPressFeedback(restore = false)
         outlineAnimator?.cancel()
+        seatAnimator?.cancel()
         if (isDragging) endDrag(commit = false)
         super.onDetachedFromWindow()
     }
@@ -264,8 +271,7 @@ class PackedCardLayout @JvmOverloads constructor(
         child.isPressed = false
         child.cancelPendingInputEvents()
         child.bringToFront()
-        outlineHost = child
-        captureSeatRect(child)
+        syncSeatOutline(animate = false)
         animateOutline(show = true)
         parent.requestDisallowInterceptTouchEvent(true)
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -294,7 +300,7 @@ class PackedCardLayout @JvmOverloads constructor(
         val next = previewCardsForDrop(originCards, cards, dragged, column, row, columns)
         if (next.map { it.instanceId } == cards.map { it.instanceId }) return
         val restoring = next.map { it.instanceId } == originCards.map { it.instanceId }
-        if (!restoring && lastHitId != null &&
+        if (lastHitId != null &&
             hypot(dragX - lastSwapX, dragY - lastSwapY) < swapTravelPx()
         ) {
             return
@@ -359,6 +365,7 @@ class PackedCardLayout @JvmOverloads constructor(
         dragged?.scaleY = 1f
         dragged?.translationZ = 0f
         dragged?.alpha = 1f
+        seatAnimator?.cancel()
         animateOutline(show = false)
         requestLayout()
         if (changed) {
@@ -371,36 +378,71 @@ class PackedCardLayout @JvmOverloads constructor(
         outlineAnimator?.cancel()
         val start = outlineAlpha
         val end = if (show) 1f else 0f
-        if (start == end) {
-            if (!show) outlineHost = null
-            return
-        }
+        if (start == end) return
         outlineAnimator = ValueAnimator.ofFloat(start, end).apply {
             duration = if (show) outlineInMs else outlineOutMs
             interpolator = outlineInterpolator
             addUpdateListener { animator ->
                 outlineAlpha = animator.animatedValue as Float
-                if (!show && outlineAlpha <= 0f) outlineHost = null
                 invalidate()
             }
             start()
         }
     }
 
-    private fun captureSeatRect(host: View) {
+    private fun syncSeatOutline(animate: Boolean) {
+        val target = seatRectForDragged() ?: return
+        if (sameSeat(outlineRect, target) && sameSeat(seatTo, target)) return
+        if (sameSeat(seatTo, target) && seatAnimator?.isRunning == true) return
+        if (!animate || outlineRect.isEmpty) {
+            seatAnimator?.cancel()
+            outlineRect.set(target)
+            seatTo.set(target)
+            invalidate()
+            return
+        }
+        seatAnimator?.cancel()
+        seatFrom.set(outlineRect)
+        seatTo.set(target)
+        seatAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = reflowMs
+            interpolator = reflowInterpolator
+            addUpdateListener { animator ->
+                val t = animator.animatedValue as Float
+                outlineRect.set(
+                    seatFrom.left + (seatTo.left - seatFrom.left) * t,
+                    seatFrom.top + (seatTo.top - seatFrom.top) * t,
+                    seatFrom.right + (seatTo.right - seatFrom.right) * t,
+                    seatFrom.bottom + (seatTo.bottom - seatFrom.bottom) * t,
+                )
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    private fun seatRectForDragged(): RectF? {
+        val dragged = draggedId ?: return null
+        val place = packCards(cards, columns).firstOrNull { it.instanceId == dragged } ?: return null
+        val cell = cellWidth(width.coerceAtLeast(1))
+        val x = place.column * (cell + gutterPx)
+        val y = place.row * (cell + gutterPx)
+        val w = spanPx(cell, place.columns)
+        val h = spanPx(cell, place.rows)
         val inset = outlineInsetPx
-        outlineRect.set(
-            host.left + inset,
-            host.top + inset,
-            host.right - inset,
-            host.bottom - inset,
-        )
+        return RectF(x + inset, y + inset, x + w - inset, y + h - inset)
+    }
+
+    private fun sameSeat(a: RectF, b: RectF): Boolean {
+        val epsilon = 0.5f
+        return abs(a.left - b.left) < epsilon &&
+            abs(a.top - b.top) < epsilon &&
+            abs(a.right - b.right) < epsilon &&
+            abs(a.bottom - b.bottom) < epsilon
     }
 
     private fun drawSeatOutline(canvas: Canvas) {
         if (outlineAlpha <= 0f || outlineRect.isEmpty) return
-        val host = outlineHost
-        if (host != null && isDragging) captureSeatRect(host)
         outlineFill.alpha = (0x26 * outlineAlpha).roundToInt().coerceIn(0, 255)
         outlineStroke.alpha = (0x59 * outlineAlpha).roundToInt().coerceIn(0, 255)
         canvas.drawRoundRect(outlineRect, cornerPx, cornerPx, outlineFill)
