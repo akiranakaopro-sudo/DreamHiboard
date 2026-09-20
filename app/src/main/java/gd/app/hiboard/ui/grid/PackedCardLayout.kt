@@ -9,6 +9,7 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.ScrollView
+import com.coui.appcompat.pressfeedback.COUIPressFeedbackHelper
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
 import kotlin.math.hypot
@@ -50,6 +51,7 @@ class PackedCardLayout @JvmOverloads constructor(
     private var downX = 0f
     private var downY = 0f
     private var activePointerId = MotionEvent.INVALID_POINTER_ID
+    private var pressHelper: COUIPressFeedbackHelper? = null
 
     private val longPressRunnable = Runnable { beginDrag() }
 
@@ -119,19 +121,24 @@ class PackedCardLayout @JvmOverloads constructor(
                 dragY = y
                 pendingIndex = hitIndex(x, y)
                 removeCallbacks(longPressRunnable)
-                if (pendingIndex >= 0 && cards.getOrNull(pendingIndex)?.canDrag == true) {
-                    postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+                if (pendingIndex >= 0) {
+                    cardViews.getOrNull(pendingIndex)?.let { startPressFeedback(it) }
+                    if (cards.getOrNull(pendingIndex)?.canDrag == true) {
+                        postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+                    }
                 }
             }
             MotionEvent.ACTION_MOVE -> {
                 val (x, y) = localPoint(event)
                 if (!isDragging && hypot(x - downX, y - downY) > slop) {
                     removeCallbacks(longPressRunnable)
+                    endPressFeedback(restore = true)
                 }
                 if (isDragging) return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
+                if (!isDragging) endPressFeedback(restore = true)
                 activePointerId = MotionEvent.INVALID_POINTER_ID
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -159,6 +166,7 @@ class PackedCardLayout @JvmOverloads constructor(
                     endDrag(commit = true)
                     return true
                 }
+                endPressFeedback(restore = true)
             }
             MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
@@ -166,6 +174,7 @@ class PackedCardLayout @JvmOverloads constructor(
                     endDrag(commit = false)
                     return true
                 }
+                endPressFeedback(restore = true)
             }
         }
         return isDragging || pendingIndex >= 0
@@ -173,8 +182,30 @@ class PackedCardLayout @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         removeCallbacks(longPressRunnable)
+        endPressFeedback(restore = false)
         if (isDragging) endDrag(commit = false)
         super.onDetachedFromWindow()
+    }
+
+    private fun startPressFeedback(child: View) {
+        if (isDragging) return
+        val helper = pressHelper ?: COUIPressFeedbackHelper(child).also { pressHelper = it }
+        helper.setTargetView(child)
+        helper.setScaleEnable(true)
+        child.animate().cancel()
+        helper.executeFeedbackAnimator(true)
+        helper.springAnimation?.spring?.setBounce(0.2f)
+    }
+
+    private fun endPressFeedback(restore: Boolean) {
+        val helper = pressHelper ?: return
+        if (restore) {
+            helper.executeFeedbackAnimator(false)
+        } else {
+            helper.springAnimation?.cancel()
+            helper.setScaleEnable(false)
+            helper.setTargetView(null)
+        }
     }
 
     private fun beginDrag() {
@@ -194,6 +225,7 @@ class PackedCardLayout @JvmOverloads constructor(
         grabOffsetY = downY - child.top
         dragX = downX
         dragY = downY
+        endPressFeedback(restore = false)
         val scale = if (card.size == CardSize.TwoByTwo) 0.92f else 0.96f
         child.animate().cancel()
         child.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
