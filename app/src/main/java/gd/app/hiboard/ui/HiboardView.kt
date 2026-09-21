@@ -226,7 +226,8 @@ class HiboardView @JvmOverloads constructor(
         binding.editButton.isVisible = state.editMode
         binding.addButton.text = context.getString(R.string.add_widget_symbol)
         binding.addButton.isVisible = true
-        binding.emptyPinned.isVisible = state.board.subscribed.none { it.canEdit }
+        binding.emptyPinned.isVisible =
+            state.boardReady && state.board.subscribed.none { it.canEdit }
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
         binding.recentAppsHeader.isVisible =
             !state.showStore && state.board.subscribed.any { it.engine == CardEngineId.RecentApps }

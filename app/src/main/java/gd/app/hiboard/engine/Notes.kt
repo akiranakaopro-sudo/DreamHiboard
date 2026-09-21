@@ -10,7 +10,29 @@ data class NotesPreview(
     val title: String = "",
     val snippet: String = "",
     val updatedAt: Long = 0L,
-)
+) {
+    val hasText: Boolean
+        get() = title.isNotBlank() || snippet.isNotBlank()
+}
+
+fun pickDisplayNote(notes: List<NotesPreview>): NotesPreview {
+    val ordered = notes.sortedByDescending { it.updatedAt }
+    return ordered.firstOrNull { it.hasText } ?: ordered.firstOrNull() ?: NotesPreview()
+}
+
+fun noteHeadlineAndBody(title: String, content: String): Pair<String, String> {
+    val lines = content.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
+    val headline = title.trim().ifBlank { lines.firstOrNull().orEmpty() }
+    val body = when {
+        title.trim().isNotBlank() -> {
+            val rest = if (lines.firstOrNull() == headline) lines.drop(1) else lines
+            rest.joinToString("\n")
+        }
+        lines.size > 1 -> lines.drop(1).joinToString("\n")
+        else -> ""
+    }
+    return headline to body
+}
 
 fun formatNotesWhen(updatedAt: Long, now: Long = System.currentTimeMillis()): String {
     if (updatedAt <= 0L) return ""

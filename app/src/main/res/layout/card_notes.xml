@@ -65,8 +65,8 @@
         android:layout_marginTop="4dp"
         android:layout_weight="1"
         android:ellipsize="end"
+        android:gravity="top"
         android:includeFontPadding="false"
-        android:maxLines="2"
         android:textColor="@color/hiboard_notes_muted"
         android:textSize="13sp" />
 

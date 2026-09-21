@@ -32,6 +32,7 @@ data class HiboardUiState(
     val showStore: Boolean = false,
     val screenVisible: Boolean = true,
     val pendingDeeplinkCard: String? = null,
+    val boardReady: Boolean = false,
 )
 
 class HiboardViewModel(
@@ -45,12 +46,17 @@ class HiboardViewModel(
     init {
         viewModelScope.launch {
             repository.snapshot.collect { board ->
-                _state.update { it.copy(board = board) }
+                _state.update { it.copy(board = board, boardReady = true) }
             }
         }
         onHostEvent(HostEvent.Create)
         viewModelScope.launch {
             engines.flashlightOn.collect {
+                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
+        viewModelScope.launch {
+            engines.notesRevisions.collect {
                 _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
             }
         }

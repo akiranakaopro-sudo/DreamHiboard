@@ -116,6 +116,7 @@ class CardEngineRegistry(context: Context) {
 
     val flashlightOn = flashlight.on
     val recorderStatus = recorder.status
+    val notesRevisions = notes.revisions
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
 
