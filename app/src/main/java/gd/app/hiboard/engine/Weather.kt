@@ -45,7 +45,7 @@ enum class WeatherCondition {
 
 data class WeatherDay(
     val label: String = "",
-    val condition: WeatherCondition = WeatherCondition.Rain,
+    val condition: WeatherCondition = WeatherCondition.Sunny,
     val lowC: Int = 0,
     val highC: Int = 0,
 )
@@ -59,14 +59,14 @@ data class WeatherSnapshot(
     companion object {
         val DEFAULT = WeatherSnapshot(
             location = "Vientiane",
-            condition = WeatherCondition.Rain,
+            condition = WeatherCondition.Sunny,
             temperatureC = 26,
             days = listOf(
-                WeatherDay(condition = WeatherCondition.Rain, lowC = 24, highC = 34),
-                WeatherDay(condition = WeatherCondition.Rain, lowC = 24, highC = 34),
+                WeatherDay(condition = WeatherCondition.Sunny, lowC = 24, highC = 34),
+                WeatherDay(condition = WeatherCondition.Cloudy, lowC = 24, highC = 34),
                 WeatherDay(condition = WeatherCondition.Cloudy, lowC = 25, highC = 35),
                 WeatherDay(condition = WeatherCondition.Cloudy, lowC = 25, highC = 35),
-                WeatherDay(condition = WeatherCondition.Rain, lowC = 25, highC = 34),
+                WeatherDay(condition = WeatherCondition.Cloudy, lowC = 25, highC = 34),
             ),
         )
     }

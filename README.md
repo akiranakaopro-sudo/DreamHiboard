@@ -9,13 +9,13 @@ Until you sync, the card shows this sample (same layout as ColorOS All-weather):
 | Field | Default |
 | --- | --- |
 | Location | `Vientiane` |
-| Condition | `rain` |
+| Condition | `sunny` |
 | Temperature | `26°C` |
-| Today | Rain, 24° / 34° |
-| Tomorrow | Rain, 24° / 34° |
+| Today | Sunny, 24° / 34° |
+| Tomorrow | Cloudy, 24° / 34° |
 | Day +2 | Cloudy, 25° / 35° |
 | Day +3 | Cloudy, 25° / 35° |
-| Day +4 | Rain, 25° / 34° |
+| Day +4 | Cloudy, 25° / 34° |
 
 Day titles are filled at bind time from the device clock (`Today`, `Tomorrow`, then `Wed` / `Thu` / …). Override them in JSON if you want fixed labels.
 
@@ -67,7 +67,7 @@ Unknown values fall back to **rain**.
 | --- | --- | --- |
 | `get` | — | `ok`, `location`, `condition`, `temperature_c`, `json` |
 | `set` | JSON in `arg`, or extras / `json` | same as `get` for the stored snapshot |
-| `reset` | — | restores the default Vientiane rain sample |
+| `reset` | — | restores the default Vientiane sunny sample |
 
 ```bash
 # Read

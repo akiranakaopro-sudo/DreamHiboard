@@ -10,9 +10,11 @@ class WeatherTest {
     fun defaultSnapshotMatchesOppoSample() {
         val snapshot = WeatherSnapshot.DEFAULT
         assertEquals("Vientiane", snapshot.location)
-        assertEquals(WeatherCondition.Rain, snapshot.condition)
+        assertEquals(WeatherCondition.Sunny, snapshot.condition)
         assertEquals(26, snapshot.temperatureC)
         assertEquals(5, snapshot.days.size)
+        assertEquals(WeatherCondition.Sunny, snapshot.days[0].condition)
+        assertEquals(WeatherCondition.Cloudy, snapshot.days[1].condition)
         assertEquals(24, snapshot.days[0].lowC)
         assertEquals(34, snapshot.days[0].highC)
     }
