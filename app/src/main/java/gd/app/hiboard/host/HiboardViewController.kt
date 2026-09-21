@@ -69,4 +69,6 @@ class HiboardViewController(
         store.clear()
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
     }
+
+    fun onBackPressed(): Boolean = hostView?.onBackPressed() == true
 }

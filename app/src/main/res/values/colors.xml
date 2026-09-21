@@ -40,4 +40,7 @@
     <color name="hiboard_recorder_wave">#C8C8CD</color>
     <color name="hiboard_recorder_tick">#E32E27</color>
     <color name="hiboard_recorder_flag">#3478F6</color>
+    <color name="hiboard_store_bg">#FFF3F4F6</color>
+    <color name="hiboard_store_title">#FF1C1C1E</color>
+    <color name="hiboard_store_close">#FF0076FF</color>
 </resources>

@@ -33,6 +33,10 @@ data class HiboardUiState(
     val screenVisible: Boolean = true,
     val pendingDeeplinkCard: String? = null,
     val boardReady: Boolean = false,
+    val storeQuery: String = "",
+    val storeGroupId: String? = null,
+    val storeDetailId: String? = null,
+    val storeSearchOpen: Boolean = false,
 )
 
 class HiboardViewModel(
@@ -111,11 +115,74 @@ class HiboardViewModel(
     }
 
     fun openStore() {
-        _state.update { it.copy(showStore = true) }
+        _state.update {
+            it.copy(
+                showStore = true,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+            )
+        }
     }
 
     fun closeStore() {
-        _state.update { it.copy(showStore = false, editMode = false) }
+        _state.update {
+            it.copy(
+                showStore = false,
+                editMode = false,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+            )
+        }
+    }
+
+    fun setStoreQuery(query: String) {
+        _state.update { if (it.storeQuery == query) it else it.copy(storeQuery = query) }
+    }
+
+    fun setStoreGroup(groupId: String?) {
+        _state.update { it.copy(storeGroupId = groupId, storeDetailId = null) }
+    }
+
+    fun openStoreDetail(catalogId: String) {
+        _state.update { it.copy(storeDetailId = catalogId, storeSearchOpen = false) }
+    }
+
+    fun closeStoreDetail() {
+        _state.update { it.copy(storeDetailId = null) }
+    }
+
+    fun setStoreSearchOpen(open: Boolean) {
+        _state.update {
+            it.copy(
+                storeSearchOpen = open,
+                storeQuery = if (open) it.storeQuery else "",
+                storeDetailId = null,
+            )
+        }
+    }
+
+    fun handleStoreBack(): Boolean {
+        val state = _state.value
+        if (!state.showStore) return false
+        if (state.storeDetailId != null) {
+            closeStoreDetail()
+            return true
+        }
+        if (state.storeSearchOpen) {
+            setStoreSearchOpen(false)
+            return true
+        }
+        closeStore()
+        return true
+    }
+
+    fun pinFromStore(catalogId: String) {
+        subscribe(catalogId)
+        closeStore()
     }
 
     fun subscribe(catalogId: String) {
@@ -160,6 +227,10 @@ class HiboardViewModel(
                 pendingDeeplinkCard = cardId,
                 editMode = edit,
                 showStore = store,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
             )
         }
         if (cardId != null && DefaultCatalog.byId(cardId) != null) {
