@@ -155,6 +155,8 @@
             android:id="@+id/storeListPane"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
             android:orientation="vertical">
 
             <FrameLayout
@@ -273,13 +275,10 @@
             android:id="@+id/storeDetailPane"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_store_sheet"
             android:clickable="true"
             android:clipChildren="false"
-            android:clipToOutline="true"
             android:focusable="true"
             android:orientation="vertical"
-            android:outlineProvider="background"
             android:visibility="gone">
 
             <LinearLayout

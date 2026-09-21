@@ -1,6 +1,7 @@
 package gd.app.hiboard.ui
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -64,6 +65,8 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
+    private var storeDetailOpen = false
+    private var storePeekAnimator: ValueAnimator? = null
     private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
@@ -264,10 +267,21 @@ class HiboardView @JvmOverloads constructor(
         binder: CardBinder,
     ) {
         animateStoreSheet(state.showStore)
+        val storeKey = listOf(
+            state.board.subscribed.map { it.catalogId },
+            state.showStore,
+            state.storeQuery,
+            state.storeGroupId,
+            state.storeDetailId,
+            state.storeSearchOpen,
+        )
+        if (state.showStore && storeKey != lastStoreKey) {
+            lastStoreKey = storeKey
+            bindStore(state, viewModel)
+        }
+        if (!state.showStore) lastStoreKey = null
         if (state.showStore) {
-            binding.storeListPane.isVisible = state.storeDetailId == null
-            binding.storeDetailPane.isVisible = state.storeDetailId != null
-            syncStoreDetailChrome(detail = state.storeDetailId != null)
+            animateStoreDetail(state.storeDetailId != null)
             binding.storeClose.isVisible = !state.storeSearchOpen
             binding.storeTitle.isVisible = !state.storeSearchOpen
             binding.storeSearch.isVisible = !state.storeSearchOpen
@@ -315,19 +329,6 @@ class HiboardView @JvmOverloads constructor(
                 viewModel.consumeReveal()
             }
         }
-        val storeKey = listOf(
-            state.board.subscribed.map { it.catalogId },
-            state.showStore,
-            state.storeQuery,
-            state.storeGroupId,
-            state.storeDetailId,
-            state.storeSearchOpen,
-        )
-        if (state.showStore && storeKey != lastStoreKey) {
-            lastStoreKey = storeKey
-            bindStore(state, viewModel)
-        }
-        if (!state.showStore) lastStoreKey = null
     }
 
     private fun animateStoreSheet(show: Boolean) {
@@ -335,12 +336,15 @@ class HiboardView @JvmOverloads constructor(
         if (show == storeSheetOpen) return
         storeSheetOpen = show
         sheet.animate().cancel()
+        storePeekAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
             ?: height.takeIf { it > 0 }?.toFloat()
             ?: resources.displayMetrics.heightPixels.toFloat()
         val ease = COUIEaseInterpolator()
         setStoreNavBarContrast(show)
         if (show) {
+            storeDetailOpen = false
+            resetStorePanes(showDetail = false)
             if (sheet.translationY == 0f) sheet.translationY = distance
             sheet.isVisible = true
             fun slideUp() {
@@ -361,6 +365,8 @@ class HiboardView @JvmOverloads constructor(
                 .setInterpolator(ease)
                 .withEndAction {
                     if (storeSheetOpen) return@withEndAction
+                    storeDetailOpen = false
+                    resetStorePanes(showDetail = false)
                     sheet.isVisible = false
                     sheet.translationY = 0f
                 }
@@ -591,22 +597,107 @@ class HiboardView @JvmOverloads constructor(
         fillStoreDetailPreview(entry)
     }
 
-    private fun syncStoreDetailChrome(detail: Boolean) {
-        val density = resources.displayMetrics.density
-        if (detail) {
-            binding.storeRoot.background = null
-            binding.storeRoot.clipToOutline = false
-            val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
-            binding.storeDetailPane.updateLayoutParams<FrameLayout.LayoutParams> {
-                topMargin = peek + (20 * density).toInt()
-            }
-        } else {
-            binding.storeRoot.setBackgroundResource(R.drawable.bg_store_sheet)
-            binding.storeRoot.clipToOutline = true
-            binding.storeDetailPane.updateLayoutParams<FrameLayout.LayoutParams> {
-                topMargin = 0
-            }
+    private fun animateStoreDetail(showDetail: Boolean) {
+        if (showDetail == storeDetailOpen) return
+        if (!storeSheetOpen) {
+            storeDetailOpen = false
+            resetStorePanes(showDetail = false)
+            return
         }
+        storeDetailOpen = showDetail
+        val list = binding.storeListPane
+        val detail = binding.storeDetailPane
+        list.animate().cancel()
+        detail.animate().cancel()
+        val ease = COUIEaseInterpolator()
+        if (showDetail) {
+            detail.alpha = 0f
+            list.alpha = 1f
+        } else {
+            list.alpha = 0f
+            detail.alpha = 1f
+        }
+        list.isVisible = true
+        detail.isVisible = true
+        if (showDetail) {
+            list.animate()
+                .alpha(0f)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (!storeDetailOpen) return@withEndAction
+                    list.isVisible = false
+                    list.alpha = 1f
+                }
+                .start()
+            detail.animate()
+                .alpha(1f)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .start()
+        } else {
+            list.animate()
+                .alpha(1f)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .start()
+            detail.animate()
+                .alpha(0f)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (storeDetailOpen) return@withEndAction
+                    detail.isVisible = false
+                    detail.alpha = 1f
+                }
+                .start()
+        }
+        animateStorePeek(showDetail)
+    }
+
+    private fun animateStorePeek(detail: Boolean) {
+        val sheet = binding.storeRoot
+        val target = if (detail) storeDetailPeekMargin() else 0
+        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin ?: 0
+        storePeekAnimator?.cancel()
+        if (from == target) {
+            applyStorePeekMargin(target)
+            return
+        }
+        storePeekAnimator = ValueAnimator.ofInt(from, target).apply {
+            duration = STORE_SLIDE_IN_MS
+            interpolator = COUIEaseInterpolator()
+            addUpdateListener { animator ->
+                applyStorePeekMargin(animator.animatedValue as Int)
+            }
+            start()
+        }
+    }
+
+    private fun applyStorePeekMargin(margin: Int) {
+        binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            if (topMargin != margin) topMargin = margin
+        }
+    }
+
+    private fun resetStorePanes(showDetail: Boolean) {
+        storePeekAnimator?.cancel()
+        storePeekAnimator = null
+        binding.storeListPane.animate().cancel()
+        binding.storeDetailPane.animate().cancel()
+        binding.storeListPane.translationY = 0f
+        binding.storeDetailPane.translationY = 0f
+        binding.storeListPane.alpha = 1f
+        binding.storeDetailPane.alpha = 1f
+        binding.storeListPane.isVisible = !showDetail
+        binding.storeDetailPane.isVisible = showDetail
+        applyStorePeekMargin(if (showDetail) storeDetailPeekMargin() else 0)
+    }
+
+    private fun storeDetailPeekMargin(): Int {
+        val density = resources.displayMetrics.density
+        val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
+        return peek + (20 * density).toInt()
     }
 
     private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
@@ -829,6 +920,7 @@ class HiboardView @JvmOverloads constructor(
         const val MIC_PERMISSION = 43
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
+        const val STORE_FADE_MS = 180L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }
     }
 }
