@@ -158,8 +158,10 @@
             android:orientation="vertical">
 
             <FrameLayout
+                android:id="@+id/storeHeader"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:paddingStart="4dp"
                 android:paddingEnd="8dp">
 
@@ -186,17 +188,6 @@
                     android:textStyle="bold" />
 
                 <ImageView
-                    android:id="@+id/storeSearchBack"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_gravity="start|center_vertical"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/store_back"
-                    android:padding="11dp"
-                    android:src="@drawable/ic_nav_back"
-                    android:visibility="gone" />
-
-                <ImageView
                     android:id="@+id/storeSearch"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
@@ -206,25 +197,18 @@
                     android:padding="11dp"
                     android:src="@drawable/ic_search_dark" />
 
-                <EditText
-                    android:id="@+id/storeSearchField"
+                <com.coui.appcompat.searchview.COUISearchBar
+                    android:id="@+id/storeSearchBar"
+                    style="@style/Widget.COUI.COUISearchBar"
                     android:layout_width="match_parent"
-                    android:layout_height="36dp"
+                    android:layout_height="@dimen/coui_search_bar_height"
                     android:layout_gravity="center_vertical"
-                    android:layout_marginStart="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/bg_store_search"
-                    android:hint="@string/store_search_hint"
-                    android:imeOptions="actionSearch"
-                    android:importantForAutofill="no"
-                    android:inputType="text"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp"
                     android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:singleLine="true"
-                    android:textColor="@color/hiboard_store_title"
-                    android:textColorHint="#FF8E8E93"
-                    android:textSize="15sp"
-                    android:visibility="gone" />
+                    android:paddingEnd="4dp"
+                    android:visibility="gone"
+                    app:searchHint="@string/store_search_hint" />
             </FrameLayout>
 
             <LinearLayout

@@ -11,11 +11,10 @@ import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ScrollView
-import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -34,6 +33,7 @@ import com.coui.appcompat.animation.COUIEaseInterpolator
 import com.coui.appcompat.dialog.COUIAlertDialogBuilder
 import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
+import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.widgetStoreSections
@@ -110,11 +110,8 @@ class HiboardView @JvmOverloads constructor(
         binding.emptyAddButton.setOnClickListener { viewModel.openStore() }
         binding.storeClose.setOnClickListener { viewModel.closeStore() }
         binding.storeSearch.setOnClickListener { viewModel.setStoreSearchOpen(true) }
-        binding.storeSearchBack.setOnClickListener { viewModel.setStoreSearchOpen(false) }
         binding.storeDetailBack.setOnClickListener { viewModel.closeStoreDetail() }
-        binding.storeSearchField.doAfterTextChanged { text ->
-            viewModel.setStoreQuery(text?.toString().orEmpty())
-        }
+        bindStoreSearchBar(viewModel)
         binding.searchBar.setInputMethodAnimationEnabled(false)
         binding.searchBar.searchEditText.apply {
             isFocusable = false
@@ -267,24 +264,26 @@ class HiboardView @JvmOverloads constructor(
             binding.storeClose.isVisible = !state.storeSearchOpen
             binding.storeTitle.isVisible = !state.storeSearchOpen
             binding.storeSearch.isVisible = !state.storeSearchOpen
-            binding.storeSearchBack.isVisible = state.storeSearchOpen
-            binding.storeSearchField.isVisible = state.storeSearchOpen
+            binding.storeSearchBar.isVisible = state.storeSearchOpen
             binding.storeChips.isVisible = !state.storeSearchOpen
             binding.storePager.isVisible = !state.storeSearchOpen
             binding.storePager.isUserInputEnabled = !state.storeSearchOpen
             binding.storeSearchPane.isVisible = state.storeSearchOpen
-            if (state.storeSearchOpen && binding.storeSearchField.text.toString() != state.storeQuery) {
-                binding.storeSearchField.setText(state.storeQuery)
-                binding.storeSearchField.setSelection(state.storeQuery.length)
+            if (state.storeSearchOpen) {
+                val field = binding.storeSearchBar.searchEditText
+                if (field.text.toString() != state.storeQuery) {
+                    field.setText(state.storeQuery)
+                    field.setSelection(state.storeQuery.length)
+                }
             }
         }
         if (state.storeSearchOpen != lastStoreSearchOpen) {
             lastStoreSearchOpen = state.storeSearchOpen
-            setStoreIme(state.storeSearchOpen)
+            syncStoreSearchBar(state.storeSearchOpen)
         }
         if (!state.showStore && lastStoreSearchOpen) {
             lastStoreSearchOpen = false
-            setStoreIme(false)
+            syncStoreSearchBar(false)
         }
         binding.editButton.text = context.getString(R.string.edit_done)
         binding.editButton.isVisible = state.editMode
@@ -624,15 +623,35 @@ class HiboardView @JvmOverloads constructor(
         WindowInsetsControllerCompat(window, this).isAppearanceLightNavigationBars = storeOpen
     }
 
-    private fun setStoreIme(show: Boolean) {
-        val field = binding.storeSearchField
-        val imm = context.getSystemService(InputMethodManager::class.java)
-        if (show) {
-            field.requestFocus()
-            field.post { imm?.showSoftInput(field, InputMethodManager.SHOW_IMPLICIT) }
-        } else {
-            imm?.hideSoftInputFromWindow(field.windowToken, 0)
-            field.clearFocus()
+    private fun bindStoreSearchBar(viewModel: HiboardViewModel) {
+        val bar = binding.storeSearchBar
+        bar.setUseResponsivePadding(false)
+        bar.setSearchAnimateType(COUISearchBar.TYPE_NON_INSTANT_SEARCH)
+        bar.searchEditText.doAfterTextChanged { text ->
+            viewModel.setStoreQuery(text?.toString().orEmpty())
+        }
+        bar.functionalButton?.setOnClickListener { viewModel.setStoreSearchOpen(false) }
+        bar.addOnStateChangeListener { from, to ->
+            if (from == COUISearchBar.STATE_EDIT &&
+                to == COUISearchBar.STATE_NORMAL &&
+                viewModel.state.value.storeSearchOpen
+            ) {
+                viewModel.setStoreSearchOpen(false)
+            }
+        }
+    }
+
+    private fun syncStoreSearchBar(open: Boolean) {
+        val bar = binding.storeSearchBar
+        if (open) {
+            bar.post {
+                if (this.viewModel?.state?.value?.storeSearchOpen != true) return@post
+                if (bar.searchState != COUISearchBar.STATE_EDIT) {
+                    bar.changeState(COUISearchBar.STATE_EDIT, true)
+                }
+            }
+        } else if (bar.searchState != COUISearchBar.STATE_NORMAL) {
+            bar.changeState(COUISearchBar.STATE_NORMAL, false)
         }
     }
 
