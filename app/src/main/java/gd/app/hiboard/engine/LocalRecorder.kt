@@ -48,10 +48,11 @@ class LocalRecorder(context: Context) {
 
     fun start(): Boolean {
         if (state == RecorderUiState.Recording || state == RecorderUiState.Paused) return true
-        val file = File(appContext.cacheDir, "hiboard-record-${System.currentTimeMillis()}.m4a")
+        val file = File(appContext.cacheDir, "hiboard-record-${System.currentTimeMillis()}.mp3")
         val mr = createRecorder()
         return try {
             mr.setAudioSource(MediaRecorder.AudioSource.MIC)
+            // Same as DreamRecorder: AAC in MPEG-4, published as .mp3.
             mr.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             mr.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             mr.setAudioSamplingRate(44_100)
@@ -174,23 +175,9 @@ class LocalRecorder(context: Context) {
             )
         }
         val payload = arr.toString()
-        val jsonName = "${audio.name}.marks.json"
-        importViaRecorder(audio, payload)
-        writeRecorderOwnedSidecar(audio, payload)
-        val dest = audio.parentFile?.let { File(it, jsonName) }
-            ?: File(
-                File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
-                    "Recordings",
-                ),
-                jsonName,
-            )
-        try {
-            dest.parentFile?.mkdirs()
-            dest.writeText(payload)
-        } catch (_: Exception) {
+        if (!importViaRecorder(audio, payload)) {
+            writeRecorderOwnedSidecar(audio, payload)
         }
-        publishSidecar(dest.parentFile ?: dest, jsonName, payload)
     }
 
     private fun importViaRecorder(audio: File, payload: String): Boolean {
@@ -230,38 +217,8 @@ class LocalRecorder(context: Context) {
         }
     }
 
-    private fun publishSidecar(dir: File, jsonName: String, payload: String) {
-        val values = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, jsonName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/Recordings")
-            put(MediaStore.Audio.Media.IS_PENDING, 1)
-        }
-        val uri = try {
-            appContext.contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)
-        } catch (_: Exception) {
-            null
-        } ?: return
-        try {
-            appContext.contentResolver.openOutputStream(uri)?.use { it.write(payload.toByteArray()) }
-            values.clear()
-            values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-            appContext.contentResolver.update(uri, values, null, null)
-            val created = queryPublishedFile(uri) ?: return
-            val dest = File(dir, jsonName)
-            if (created.absolutePath == dest.absolutePath) return
-            if (created.renameTo(dest)) return
-            try {
-                android.system.Os.rename(created.absolutePath, dest.absolutePath)
-            } catch (_: Exception) {
-            }
-        } catch (_: Exception) {
-            runCatching { appContext.contentResolver.delete(uri, null, null) }
-        }
-    }
-
     private fun publish(file: File): File? {
-        val name = "Recording ${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.m4a"
+        val name = "Recording ${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp3"
         val publicDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
             "Recordings",
@@ -269,7 +226,7 @@ class LocalRecorder(context: Context) {
         if (Build.VERSION.SDK_INT >= 29) {
             val values = ContentValues().apply {
                 put(MediaStore.Audio.Media.DISPLAY_NAME, name)
-                put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
+                put(MediaStore.Audio.Media.MIME_TYPE, "audio/mpeg")
                 put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/Recordings")
                 put(MediaStore.Audio.Media.IS_PENDING, 1)
             }
