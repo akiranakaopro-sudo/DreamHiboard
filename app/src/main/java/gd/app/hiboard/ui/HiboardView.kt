@@ -680,6 +680,7 @@ class HiboardView @JvmOverloads constructor(
         val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
         val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, parent, false)
         val openDetail = View.OnClickListener { viewModel.openStoreDetail(entry.id) }
+        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
         val host = block.findViewById<FrameLayout>(R.id.widgetPreview)
         host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
         host.setOnClickListener(openDetail)
