@@ -10,7 +10,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.coui.appcompat.cardview.COUICardView
-import com.coui.appcompat.R as CouiR
 import gd.app.hiboard.R
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
 import gd.app.hiboard.engine.RecorderCommand
@@ -41,10 +40,8 @@ class CardBinder(
         val body = root.findViewById<LinearLayout>(R.id.cardBody)
         val badge = root.findViewById<TextView>(R.id.cardBadge)
         when (card.engine) {
-            CardEngineId.Advice -> bindAdvice(inflater, body, state)
             CardEngineId.Weather -> bindWeather(inflater, body, state)
             CardEngineId.Notes -> bindNotes(inflater, root, body, state)
-            CardEngineId.InfoFlow -> bindInfoFlow(inflater, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
@@ -60,27 +57,6 @@ class CardBinder(
             badge.visibility = View.GONE
         }
         return root
-    }
-
-    private fun bindAdvice(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
-        val view = inflater.inflate(R.layout.card_advice, body, true)
-        view.findViewById<TextView>(R.id.adviceGreeting).text = state.content.adviceGreeting
-        val items = view.findViewById<LinearLayout>(R.id.adviceItems)
-        items.removeAllViews()
-        state.content.adviceItems.forEach { item ->
-            val title = TextView(body.context).apply {
-                text = item.title
-                setTextColor(body.context.couiColor(CouiR.attr.couiColorLabelPrimary))
-                textSize = 14f
-            }
-            val subtitle = TextView(body.context).apply {
-                text = item.subtitle
-                setTextColor(body.context.couiColor(CouiR.attr.couiColorLabelSecondary))
-                textSize = 12f
-            }
-            items.addView(title)
-            items.addView(subtitle)
-        }
     }
 
     private fun bindWeather(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
@@ -104,18 +80,6 @@ class CardBinder(
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
         view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
         root.setOnClickListener { onOpenNotes() }
-    }
-
-    private fun bindInfoFlow(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
-        val view = inflater.inflate(R.layout.card_infoflow, body, true)
-        val list = view.findViewById<LinearLayout>(R.id.infoFlowItems)
-        list.removeAllViews()
-        state.content.infoFlow.forEach { item ->
-            val row = inflater.inflate(R.layout.item_infoflow, list, false)
-            row.findViewById<TextView>(R.id.infoTitle).text = item.title
-            row.findViewById<TextView>(R.id.infoSource).text = item.source
-            list.addView(row)
-        }
     }
 
     private fun bindRecentApps(

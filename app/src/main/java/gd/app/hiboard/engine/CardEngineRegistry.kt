@@ -5,11 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
-import gd.app.hiboard.model.AdviceItem
 import gd.app.hiboard.model.CardAction
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
-import gd.app.hiboard.model.InfoFlowItem
 import gd.app.hiboard.model.ShortcutApp
 import java.util.Calendar
 
@@ -25,7 +23,6 @@ class CardEngineRegistry(context: Context) {
     private val storage = StorageReader(appContext)
     private val recorder = RecorderClient(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
-        CardEngineId.Advice to CardEngine { AdviceContent.current() },
         CardEngineId.Weather to CardEngine {
             CardContent(
                 weatherTempC = 18 + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) % 8,
@@ -38,14 +35,6 @@ class CardEngineRegistry(context: Context) {
                 notesPreview = latest.title,
                 notesSnippet = latest.snippet,
                 notesWhen = formatNotesWhen(latest.updatedAt),
-            )
-        },
-        CardEngineId.InfoFlow to CardEngine {
-            CardContent(
-                infoFlow = listOf(
-                    InfoFlowItem("Minus-one, without the ad stack", "Hiboard"),
-                    InfoFlowItem("Subscribe vs recommend is the product", "Hiboard"),
-                ),
             )
         },
         CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
@@ -141,8 +130,6 @@ class CardEngineRegistry(context: Context) {
     fun syncRecorder() = recorder.sync()
 
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
-        adviceGreeting = b.adviceGreeting.ifBlank { a.adviceGreeting },
-        adviceItems = b.adviceItems.ifEmpty { a.adviceItems },
         weatherTempC = if (b.weatherSummary.isNotBlank()) b.weatherTempC else a.weatherTempC,
         weatherSummary = b.weatherSummary.ifBlank { a.weatherSummary },
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
@@ -155,25 +142,6 @@ class CardEngineRegistry(context: Context) {
         recorderState = if (b.recorderBound) b.recorderState else a.recorderState,
         recorderElapsedMs = if (b.recorderBound) b.recorderElapsedMs else a.recorderElapsedMs,
         recorderBound = a.recorderBound || b.recorderBound,
-        infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
         recentApps = b.recentApps.ifEmpty { a.recentApps },
     )
-}
-
-private object AdviceContent {
-    fun current(): CardContent {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        val greeting = when (hour) {
-            in 5..11 -> "Good morning"
-            in 12..17 -> "Good afternoon"
-            else -> "Good evening"
-        }
-        return CardContent(
-            adviceGreeting = greeting,
-            adviceItems = listOf(
-                AdviceItem("Minus-one screen", "Pinned cards stay; discover stays below."),
-                AdviceItem("No ad SDK", "Pangle, Dingxiang, and Seedling stay out."),
-            ),
-        )
-    }
 }

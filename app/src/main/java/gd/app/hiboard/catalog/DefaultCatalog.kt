@@ -5,9 +5,7 @@ import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
 
 object DefaultCatalog {
-    const val GROUP_GLANCE = "glance"
     const val GROUP_TOOLS = "tools"
-    const val GROUP_FEED = "feed"
 
     val entries: List<CardCatalogEntry> = listOf(
         CardCatalogEntry(
@@ -20,16 +18,6 @@ object DefaultCatalog {
             engine = CardEngineId.RecentApps,
             defaultSubscribed = true,
             locked = true,
-        ),
-        CardCatalogEntry(
-            id = "advice",
-            groupId = GROUP_GLANCE,
-            groupTitle = "Glance",
-            name = "Advice",
-            description = "Full-width daily glance. ColorOS Dragonfly analog, without SMS/cloud.",
-            size = CardSize.FullByTwo,
-            engine = CardEngineId.Advice,
-            defaultSubscribed = true,
         ),
         CardCatalogEntry(
             id = "weather",
@@ -79,16 +67,6 @@ object DefaultCatalog {
             description = "Tap to turn the torch on or off. Uses the rear camera flash.",
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Flashlight,
-            defaultSubscribed = false,
-        ),
-        CardCatalogEntry(
-            id = "infoflow",
-            groupId = GROUP_FEED,
-            groupTitle = "Discover",
-            name = "Info flow",
-            description = "Recommended stories. ColorOS InfoFlow analog, local sample only.",
-            size = CardSize.FourByFour,
-            engine = CardEngineId.InfoFlow,
             defaultSubscribed = false,
         ),
     )

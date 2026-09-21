@@ -14,7 +14,6 @@
     <string name="weather_label">Weather</string>
     <string name="notes_label">All notes</string>
     <string name="notes_add">Add note</string>
-    <string name="infoflow_label">For you</string>
     <string name="recent_apps_label">Recent apps</string>
     <string name="store_close">Close</string>
     <string name="remove_widget">Remove widget</string>
