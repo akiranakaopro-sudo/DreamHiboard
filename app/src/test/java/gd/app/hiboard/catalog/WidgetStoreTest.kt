@@ -53,6 +53,19 @@ class WidgetStoreTest {
     }
 
     @Test
+    fun featuresAndWeatherShowUnlockedWidgets() {
+        val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
+            .flatMap { it.entries }
+        assertEquals(listOf("All notes", "Flashlight", "Recorder", "Storage"), features.map { it.name })
+        assertEquals(true, features.all { it.size.columns == 2 && it.size.rows == 2 })
+        val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
+            .flatMap { it.entries }
+        assertEquals(listOf("Weather"), weather.map { it.name })
+        assertEquals(4, weather.single().size.columns)
+        assertEquals(2, weather.single().size.rows)
+    }
+
+    @Test
     fun tabsAreAllFeaturesWeather() {
         assertEquals(
             listOf(null, DefaultCatalog.GROUP_FEATURES, DefaultCatalog.GROUP_WEATHER),

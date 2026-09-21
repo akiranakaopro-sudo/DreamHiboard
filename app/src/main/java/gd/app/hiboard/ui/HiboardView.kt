@@ -64,6 +64,7 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
     private var storePagerAdapter: StorePagerAdapter? = null
+    private var cardBinder: CardBinder? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
 
@@ -362,6 +363,7 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
+        cardBinder = binder
         bindStorePager(state)
         bindStoreChips(state)
         if (state.storeSearchOpen) bindStoreSearchList(state, viewModel)
@@ -379,7 +381,15 @@ class HiboardView @JvmOverloads constructor(
                     if (vm.state.value.storeGroupId != id) vm.setStoreGroup(id)
                 }
             })
+            binding.storePager.clipChildren = false
+            binding.storePager.clipToPadding = false
             binding.storePager.adapter = it
+            binding.storePager.post {
+                (binding.storePager.getChildAt(0) as? ViewGroup)?.apply {
+                    clipChildren = false
+                    clipToPadding = false
+                }
+            }
         }
         adapter.submit(state.catalog)
         val target = widgetStoreTabIndex(state.storeGroupId)
@@ -487,6 +497,9 @@ class HiboardView @JvmOverloads constructor(
         viewModel: HiboardViewModel,
     ) {
         list.removeAllViews()
+        val density = resources.displayMetrics.density
+        list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
+        indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
         val sections = widgetStoreSections(catalog, query, groupId)
         bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
@@ -579,17 +592,113 @@ class HiboardView @JvmOverloads constructor(
         preview.post { fillStorePreview(preview, entry, state, binder) }
     }
 
+    private fun fillStoreGallery(
+        list: LinearLayout,
+        indexBar: LinearLayout,
+        catalog: List<CardCatalogEntry>,
+        groupId: String,
+        viewModel: HiboardViewModel,
+    ) {
+        val density = resources.displayMetrics.density
+        indexBar.isVisible = false
+        indexBar.removeAllViews()
+        list.clipChildren = false
+        list.clipToPadding = false
+        list.removeAllViews()
+        val padH = (16 * density).toInt()
+        list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+        if (entries.isEmpty()) {
+            val empty = TextView(context).apply {
+                text = context.getString(R.string.store_empty)
+                setTextColor(0xFF8E8E93.toInt())
+                textSize = 15f
+                gravity = Gravity.CENTER
+                setPadding(24, 48, 24, 24)
+            }
+            list.addView(empty)
+            return
+        }
+        val boardWidth = storeGalleryBoardWidth(list)
+        val gap = (12 * density).roundToInt()
+        val pending = mutableListOf<CardCatalogEntry>()
+        fun flushRow() {
+            if (pending.isEmpty()) return
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                clipChildren = false
+                clipToPadding = false
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            pending.forEachIndexed { index, entry ->
+                val block = storeWidgetBlock(row, entry, viewModel, (boardWidth - gap).coerceAtLeast(1))
+                block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (pending.size > 1) {
+                        if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
+                    }
+                }
+                row.addView(block)
+            }
+            if (pending.size == 1) {
+                row.addView(
+                    View(context),
+                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
+                )
+            }
+            list.addView(row)
+            pending.clear()
+        }
+        entries.forEach { entry ->
+            if (entry.size.columns >= 4) {
+                flushRow()
+                list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+            } else {
+                pending.add(entry)
+                if (pending.size == 2) flushRow()
+            }
+        }
+        flushRow()
+    }
+
+    private fun storeGalleryBoardWidth(list: LinearLayout): Int {
+        val pad = list.paddingLeft + list.paddingRight
+        list.width.takeIf { it > pad }?.let { return it - pad }
+        binding.storePager.width.takeIf { it > pad }?.let { return it - pad }
+        return (resources.displayMetrics.widthPixels - pad).coerceAtLeast(1)
+    }
+
+    private fun storeWidgetBlock(
+        parent: ViewGroup,
+        entry: CardCatalogEntry,
+        viewModel: HiboardViewModel,
+        boardWidth: Int,
+    ): View {
+        val density = resources.displayMetrics.density
+        val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
+        val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, parent, false)
+        val openDetail = View.OnClickListener { viewModel.openStoreDetail(entry.id) }
+        val host = block.findViewById<FrameLayout>(R.id.widgetPreview)
+        host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
+        host.setOnClickListener(openDetail)
+        block.setOnClickListener(openDetail)
+        return block
+    }
+
     private fun fillStorePreview(
         host: FrameLayout,
         entry: CardCatalogEntry,
         state: HiboardUiState,
         binder: CardBinder,
+        boardWidth: Int? = null,
     ) {
-        if (!host.isAttachedToWindow) return
         host.removeAllViews()
-        val width = host.width.takeIf { it > 0 }
+        val width = boardWidth ?: host.width.takeIf { it > 0 }
         if (width == null) {
-            host.post { fillStorePreview(host, entry, state, binder) }
+            if (!host.isAttachedToWindow) return
+            host.post { fillStorePreview(host, entry, state, binder, boardWidth) }
             return
         }
         val gutter = (10 * resources.displayMetrics.density).roundToInt()
@@ -691,13 +800,24 @@ class HiboardView @JvmOverloads constructor(
 
         override fun onBindViewHolder(holder: Holder, position: Int) {
             val vm = viewModel ?: return
-            fillStoreSections(
+            val groupId = tabs.getOrNull(position)?.first
+            if (groupId == null) {
+                fillStoreSections(
+                    list = holder.list,
+                    indexBar = holder.index,
+                    scroll = holder.scroll,
+                    catalog = catalog,
+                    query = "",
+                    groupId = null,
+                    viewModel = vm,
+                )
+                return
+            }
+            fillStoreGallery(
                 list = holder.list,
                 indexBar = holder.index,
-                scroll = holder.scroll,
                 catalog = catalog,
-                query = "",
-                groupId = tabs.getOrNull(position)?.first,
+                groupId = groupId,
                 viewModel = vm,
             )
         }
