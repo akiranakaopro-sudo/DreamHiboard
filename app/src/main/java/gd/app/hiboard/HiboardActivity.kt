@@ -1,8 +1,11 @@
 package gd.app.hiboard
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -18,6 +21,10 @@ class HiboardActivity : AppCompatActivity() {
     private val viewModel: HiboardViewModel by viewModels { HiboardViewModel.factory() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         val view = HiboardView(this)
         view.bind(viewModel, this)

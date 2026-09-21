@@ -19,7 +19,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -75,6 +79,14 @@ class HiboardView @JvmOverloads constructor(
         )
         binding.addButton.setTextColor(chrome)
         binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
+            binding.boardRoot.updatePadding(bottom = bars.bottom)
+            binding.storeListPane.updatePadding(bottom = bars.bottom)
+            binding.storeDetailPane.updatePadding(bottom = bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     fun onBackPressed(): Boolean = viewModel?.handleStoreBack() == true
@@ -134,7 +146,13 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        ViewCompat.requestApplyInsets(this)
+    }
+
     override fun onDetachedFromWindow() {
+        setStoreNavBarContrast(false)
         dismissCardMenu()
         collectJob?.cancel()
         super.onDetachedFromWindow()
@@ -315,6 +333,7 @@ class HiboardView @JvmOverloads constructor(
             ?: height.takeIf { it > 0 }?.toFloat()
             ?: resources.displayMetrics.heightPixels.toFloat()
         val ease = COUIEaseInterpolator()
+        setStoreNavBarContrast(show)
         if (show) {
             if (sheet.translationY == 0f) sheet.translationY = distance
             sheet.isVisible = true
@@ -587,6 +606,11 @@ class HiboardView @JvmOverloads constructor(
         host.addView(shield)
         host.layoutParams = host.layoutParams.apply { height = cardH }
         host.requestLayout()
+    }
+
+    private fun setStoreNavBarContrast(storeOpen: Boolean) {
+        val window = context.findActivity()?.window ?: return
+        WindowInsetsControllerCompat(window, this).isAppearanceLightNavigationBars = storeOpen
     }
 
     private fun setStoreIme(show: Boolean) {
