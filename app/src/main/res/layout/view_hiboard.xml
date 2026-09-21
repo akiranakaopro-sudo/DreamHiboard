@@ -192,7 +192,7 @@
                     android:layout_height="44dp"
                     android:layout_gravity="start|center_vertical"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/store_close"
+                    android:contentDescription="@string/store_back"
                     android:padding="11dp"
                     android:src="@drawable/ic_nav_back"
                     android:visibility="gone" />
@@ -244,29 +244,43 @@
                 android:layout_height="0dp"
                 android:layout_weight="1">
 
-                <com.coui.appcompat.scrollview.COUIScrollView
-                    android:id="@+id/storeScroll"
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/storePager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <FrameLayout
+                    android:id="@+id/storeSearchPane"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:fillViewport="true">
+                    android:background="@color/hiboard_store_bg"
+                    android:visibility="gone">
+
+                    <com.coui.appcompat.scrollview.COUIScrollView
+                        android:id="@+id/storeScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fillViewport="true">
+
+                        <LinearLayout
+                            android:id="@+id/storeList"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingEnd="28dp"
+                            android:paddingBottom="24dp" />
+                    </com.coui.appcompat.scrollview.COUIScrollView>
 
                     <LinearLayout
-                        android:id="@+id/storeList"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:id="@+id/storeIndex"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="end"
+                        android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingBottom="24dp" />
-                </com.coui.appcompat.scrollview.COUIScrollView>
-
-                <LinearLayout
-                    android:id="@+id/storeIndex"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="end"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:paddingEnd="6dp"
-                    android:paddingStart="2dp" />
+                        android:paddingEnd="8dp"
+                        android:paddingStart="8dp" />
+                </FrameLayout>
             </FrameLayout>
         </LinearLayout>
 
@@ -291,7 +305,7 @@
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/store_close"
+                    android:contentDescription="@string/store_back"
                     android:padding="11dp"
                     android:src="@drawable/ic_nav_back" />
 

@@ -26,7 +26,7 @@ object DefaultCatalog {
             groupId = GROUP_WEATHER,
             groupTitle = "Weather",
             name = "Weather",
-            description = "Local 2×4 weather scene. Push your own snapshot through the weather API.",
+            description = "Local 4×2 weather scene. Push your own snapshot through the weather API.",
             size = CardSize.FullByTwo,
             engine = CardEngineId.Weather,
             defaultSubscribed = true,

@@ -41,6 +41,12 @@ class WidgetStoreTest {
                 .map { it.name },
         )
         assertEquals(
+            listOf("Weather"),
+            widgetStoreSections(catalog, query = "wea", groupId = DefaultCatalog.GROUP_FEATURES)
+                .flatMap { it.entries }
+                .map { it.name },
+        )
+        assertEquals(
             emptyList<String>(),
             widgetStoreSections(catalog, groupId = "missing").flatMap { it.entries }.map { it.name },
         )
@@ -53,6 +59,10 @@ class WidgetStoreTest {
             widgetStoreTabs().map { it.first },
         )
         assertEquals(listOf("All", "Features", "Weather"), widgetStoreTabs().map { it.second })
+        assertEquals(0, widgetStoreTabIndex(null))
+        assertEquals(1, widgetStoreTabIndex(DefaultCatalog.GROUP_FEATURES))
+        assertEquals(2, widgetStoreTabIndex(DefaultCatalog.GROUP_WEATHER))
+        assertEquals(0, widgetStoreTabIndex("missing"))
     }
 
     @Test

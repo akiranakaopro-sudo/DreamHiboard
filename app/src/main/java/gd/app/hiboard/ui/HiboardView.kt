@@ -10,6 +10,8 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ScrollView
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -22,14 +24,17 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.coui.appcompat.animation.COUIEaseInterpolator
 import com.coui.appcompat.dialog.COUIAlertDialogBuilder
 import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
-import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.catalog.widgetStoreSections
+import gd.app.hiboard.catalog.widgetStoreTabIndex
+import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.databinding.ViewHiboardBinding
 import gd.app.hiboard.engine.FlashlightToggle
 import gd.app.hiboard.engine.RecorderCommand
@@ -54,6 +59,7 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
+    private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
 
@@ -246,6 +252,9 @@ class HiboardView @JvmOverloads constructor(
             binding.storeSearchBack.isVisible = state.storeSearchOpen
             binding.storeSearchField.isVisible = state.storeSearchOpen
             binding.storeChips.isVisible = !state.storeSearchOpen
+            binding.storePager.isVisible = !state.storeSearchOpen
+            binding.storePager.isUserInputEnabled = !state.storeSearchOpen
+            binding.storeSearchPane.isVisible = state.storeSearchOpen
             if (state.storeSearchOpen && binding.storeSearchField.text.toString() != state.storeQuery) {
                 binding.storeSearchField.setText(state.storeQuery)
                 binding.storeSearchField.setSelection(state.storeQuery.length)
@@ -335,12 +344,33 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
-        bindStoreChips(state, viewModel)
-        bindStoreList(state, viewModel)
+        bindStorePager(state)
+        bindStoreChips(state)
+        if (state.storeSearchOpen) bindStoreSearchList(state, viewModel)
         bindStoreDetail(state, viewModel, binder)
     }
 
-    private fun bindStoreChips(state: HiboardUiState, viewModel: HiboardViewModel) {
+    private fun bindStorePager(state: HiboardUiState) {
+        val adapter = storePagerAdapter ?: StorePagerAdapter().also {
+            storePagerAdapter = it
+            binding.storePager.offscreenPageLimit = widgetStoreTabs().size.coerceAtLeast(1)
+            binding.storePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    val vm = this@HiboardView.viewModel ?: return
+                    val id = widgetStoreTabs().getOrNull(position)?.first
+                    if (vm.state.value.storeGroupId != id) vm.setStoreGroup(id)
+                }
+            })
+            binding.storePager.adapter = it
+        }
+        adapter.submit(state.catalog)
+        val target = widgetStoreTabIndex(state.storeGroupId)
+        if (binding.storePager.currentItem != target) {
+            binding.storePager.setCurrentItem(target, false)
+        }
+    }
+
+    private fun bindStoreChips(state: HiboardUiState) {
         val chips = binding.storeChips
         val tabs = widgetStoreTabs()
         if (chips.childCount != tabs.size) {
@@ -354,7 +384,7 @@ class HiboardView @JvmOverloads constructor(
                     },
                 )
                 chips.addView(storeChip(title, last = index == tabs.lastIndex) {
-                    viewModel.setStoreGroup(id)
+                    binding.storePager.setCurrentItem(index, true)
                 })
             }
         }
@@ -385,28 +415,52 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private fun bindStoreIndex(used: Set<String>) {
-        val index = binding.storeIndex
-        index.removeAllViews()
+    private fun bindStoreIndex(
+        indexBar: LinearLayout,
+        list: LinearLayout,
+        scroll: ScrollView,
+        used: Set<String>,
+    ) {
+        indexBar.removeAllViews()
         INDEX_LETTERS.filter { it in used }.forEach { letter ->
             val label = TextView(context).apply {
                 text = letter
-                textSize = 10f
+                textSize = 11f
                 gravity = Gravity.CENTER
+                minWidth = (16 * resources.displayMetrics.density).toInt()
                 setTextColor(context.getColor(R.color.hiboard_store_title))
-                setPadding(0, (1 * resources.displayMetrics.density).toInt(), 0, 0)
-                setOnClickListener { scrollStoreTo(letter) }
+                setPadding(0, (2 * resources.displayMetrics.density).toInt(), 0, 0)
+                setOnClickListener { scrollStoreTo(list, scroll, letter) }
             }
-            index.addView(label)
+            indexBar.addView(label)
         }
     }
 
-    private fun bindStoreList(state: HiboardUiState, viewModel: HiboardViewModel) {
-        val list = binding.storeList
+    private fun bindStoreSearchList(state: HiboardUiState, viewModel: HiboardViewModel) {
+        fillStoreSections(
+            list = binding.storeList,
+            indexBar = binding.storeIndex,
+            scroll = binding.storeScroll,
+            catalog = state.catalog,
+            query = state.storeQuery,
+            groupId = null,
+            viewModel = viewModel,
+        )
+    }
+
+    private fun fillStoreSections(
+        list: LinearLayout,
+        indexBar: LinearLayout,
+        scroll: ScrollView,
+        catalog: List<CardCatalogEntry>,
+        query: String,
+        groupId: String?,
+        viewModel: HiboardViewModel,
+    ) {
         list.removeAllViews()
         val inflater = LayoutInflater.from(context)
-        val sections = widgetStoreSections(state.catalog, state.storeQuery, state.storeGroupId)
-        bindStoreIndex(sections.map { it.letter }.toSet())
+        val sections = widgetStoreSections(catalog, query, groupId)
+        bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
         if (sections.isEmpty()) {
             val empty = TextView(context).apply {
                 text = context.getString(R.string.store_empty)
@@ -461,11 +515,11 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private fun scrollStoreTo(letter: String) {
-        val target = (0 until binding.storeList.childCount)
-            .map { binding.storeList.getChildAt(it) }
+    private fun scrollStoreTo(list: LinearLayout, scroll: ScrollView, letter: String) {
+        val target = (0 until list.childCount)
+            .map { list.getChildAt(it) }
             .firstOrNull { it.tag == "section-$letter" } ?: return
-        binding.storeScroll.smoothScrollTo(0, target.top)
+        scroll.smoothScrollTo(0, target.top)
     }
 
     private fun scrollBoardTo(catalogId: String) {
@@ -559,6 +613,47 @@ class HiboardView @JvmOverloads constructor(
                 context.getColor(R.color.hiboard_flashlight_off),
             )
             CardEngineId.RecentApps -> Triple(R.drawable.ic_search_dark, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+        }
+    }
+
+    private inner class StorePagerAdapter : RecyclerView.Adapter<StorePagerAdapter.Holder>() {
+        private val tabs = widgetStoreTabs()
+        private var catalog: List<CardCatalogEntry> = emptyList()
+
+        fun submit(entries: List<CardCatalogEntry>) {
+            if (catalog == entries) return
+            catalog = entries
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_store_page, parent, false)
+            view.layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            return Holder(view)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            val vm = viewModel ?: return
+            fillStoreSections(
+                list = holder.list,
+                indexBar = holder.index,
+                scroll = holder.scroll,
+                catalog = catalog,
+                query = "",
+                groupId = tabs.getOrNull(position)?.first,
+                viewModel = vm,
+            )
+        }
+
+        override fun getItemCount(): Int = tabs.size
+
+        inner class Holder(root: View) : RecyclerView.ViewHolder(root) {
+            val scroll: ScrollView = root.findViewById(R.id.pageScroll)
+            val list: LinearLayout = root.findViewById(R.id.pageList)
+            val index: LinearLayout = root.findViewById(R.id.pageIndex)
         }
     }
 

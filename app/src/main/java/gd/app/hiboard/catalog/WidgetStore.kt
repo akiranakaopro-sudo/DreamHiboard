@@ -19,7 +19,7 @@ fun widgetStoreSections(
 ): List<WidgetStoreSection> {
     val needle = query.trim()
     val visible = catalog.filter { !it.locked }
-        .filter { groupId == null || it.groupId == groupId }
+        .filter { groupId == null || needle.isNotBlank() || it.groupId == groupId }
         .filter { entry ->
             needle.isBlank() ||
                 entry.name.contains(needle, ignoreCase = true) ||
@@ -38,6 +38,11 @@ fun widgetStoreTabs(): List<Pair<String?, String>> {
         DefaultCatalog.GROUP_FEATURES to "Features",
         DefaultCatalog.GROUP_WEATHER to "Weather",
     )
+}
+
+fun widgetStoreTabIndex(groupId: String?): Int {
+    val index = widgetStoreTabs().indexOfFirst { it.first == groupId }
+    return if (index >= 0) index else 0
 }
 
 fun widgetStoreGroups(catalog: List<CardCatalogEntry>): List<Pair<String, String>> {
