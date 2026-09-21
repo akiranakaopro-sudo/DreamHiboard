@@ -32,15 +32,18 @@ class HiboardViewController(
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
     }
 
-    fun create(): View {
+    fun create(onNavigateHome: () -> Unit = {}): View {
         val vm = ViewModelProvider(this, HiboardViewModel.factory())[HiboardViewModel::class.java]
         viewModel = vm
         vm.onHostEvent(HostEvent.Create)
         val view = HiboardView(context)
+        view.onNavigateHome = onNavigateHome
         view.bind(vm, this)
         hostView = view
         return view
     }
+
+    fun onBackPressed(): Boolean = hostView?.onBackPressed() ?: false
 
     fun enter() {
         lifecycleRegistry.currentState = Lifecycle.State.STARTED

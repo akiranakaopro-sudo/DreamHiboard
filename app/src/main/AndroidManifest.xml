@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <permission
+        android:name="gd.app.hiboard.permission.OVERLAY_CLIENT"
+        android:protectionLevel="signature|privileged" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -108,5 +112,29 @@
                 <data android:scheme="assistantscreen" />
             </intent-filter>
         </activity>
+
+        <!-- OPPO-style WindowServer: launcher binds this for the -1 Quick Glance page.
+             Run in default process (not :watch) so attach shares a healthy app process;
+             isolate later once window attach is stable. -->
+        <service
+            android:name=".overlay.HiboardOverlayService"
+            android:exported="true"
+            android:permission="gd.app.hiboard.permission.OVERLAY_CLIENT">
+            <intent-filter>
+                <action android:name="gd.app.hiboard.intent.action.WINDOW_OVERLAY" />
+            </intent-filter>
+            <meta-data
+                android:name="gd.app.hiboard.overlay.api_version"
+                android:value="3" />
+        </service>
+
+        <receiver
+            android:name=".overlay.OverlayDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="gd.app.hiboard.action.DEBUG_OPEN_OVERLAY" />
+                <action android:name="gd.app.hiboard.action.DEBUG_CLOSE_OVERLAY" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

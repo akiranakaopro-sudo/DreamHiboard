@@ -7,12 +7,16 @@ import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -29,6 +33,7 @@ import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class HiboardView @JvmOverloads constructor(
     rawContext: Context,
@@ -40,6 +45,28 @@ class HiboardView @JvmOverloads constructor(
     private var lastGridKey: Any? = null
     private var lastStoreKey: Any? = null
     private var cardMenu: COUIPopupListWindow? = null
+    private var viewModel: HiboardViewModel? = null
+
+    /** Invoked when the user wants to leave Hiboard for the launcher home (back). */
+    var onNavigateHome: (() -> Unit)? = null
+
+    /** Finger-driven close while fully open (OPPO: progress follows swipe-left). */
+    var onCloseScrollBegin: (() -> Unit)? = null
+    var onCloseScroll: ((progress: Float) -> Unit)? = null
+    var onCloseScrollEnd: ((velocityX: Float) -> Unit)? = null
+
+    /** Set by overlay host when glance is fully open and can be dragged closed. */
+    var closeGestureEnabled: Boolean = false
+
+    private val touchSlop =
+        android.view.ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+    private var downX = 0f
+    private var downY = 0f
+    private var downTime = 0L
+    private var draggingClose = false
+    private var lastDragX = 0f
+    private var lastDragTime = 0L
+    private var velocityX = 0f
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
@@ -53,9 +80,11 @@ class HiboardView @JvmOverloads constructor(
         )
         binding.addButton.setTextColor(chrome)
         binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
+        applyStatusBarSpacing()
     }
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
+        this.viewModel = viewModel
         val binder = CardBinder(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
@@ -96,6 +125,120 @@ class HiboardView @JvmOverloads constructor(
                     render(state, viewModel, binder)
                 }
             }
+        }
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (!closeGestureEnabled) {
+            draggingClose = false
+            return super.onInterceptTouchEvent(ev)
+        }
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = ev.x
+                downY = ev.y
+                downTime = ev.eventTime
+                lastDragX = ev.x
+                lastDragTime = ev.eventTime
+                velocityX = 0f
+                draggingClose = false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (draggingClose) return true
+                val dx = ev.x - downX
+                val dy = ev.y - downY
+                // Horizontal swipe-left to close, not vertical scroll.
+                if (dx < -touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                    draggingClose = true
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                    onCloseScrollBegin?.invoke()
+                    return true
+                }
+            }
+            // Do not clear draggingClose here — UP/CANCEL are delivered to onTouchEvent
+            // after intercept; clearing early skips onCloseScrollEnd and leaves the binder
+            // stuck mid-close (black frost strip + exit shake).
+        }
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        if (!draggingClose) {
+            return super.onTouchEvent(ev)
+        }
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_MOVE -> {
+                updateCloseVelocity(ev)
+                val pulled = (downX - ev.x).coerceAtLeast(0f)
+                val width = width.coerceAtLeast(1).toFloat()
+                val progress = (1f - pulled / width).coerceIn(0f, 1f)
+                onCloseScroll?.invoke(progress)
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                updateCloseVelocity(ev)
+                onCloseScrollEnd?.invoke(velocityX)
+                draggingClose = false
+                parent?.requestDisallowInterceptTouchEvent(false)
+            }
+        }
+        return true
+    }
+
+    private fun updateCloseVelocity(ev: MotionEvent) {
+        val dt = (ev.eventTime - lastDragTime).coerceAtLeast(1L)
+        velocityX = (ev.x - lastDragX) / dt * 1000f
+        lastDragX = ev.x
+        lastDragTime = ev.eventTime
+    }
+
+    /** @return true if the back event was consumed. */
+    fun onBackPressed(): Boolean {
+        val vm = viewModel
+        if (vm != null && vm.state.value.showStore) {
+            vm.closeStore()
+            return true
+        }
+        requestNavigateHome()
+        return true
+    }
+
+    private fun requestNavigateHome() {
+        val vm = viewModel
+        if (vm != null && vm.state.value.showStore) {
+            vm.closeStore()
+            return
+        }
+        onNavigateHome?.invoke()
+    }
+
+    /**
+     * Overlay panel draws under the status bar (full-bleed bg); push chrome below it
+     * with a small ColorOS-like gap.
+     */
+    private fun applyStatusBarSpacing() {
+        // ColorOS leaves a small gap under the status bar (~4dp), not status+8+header 12dp.
+        val extra = (4f * resources.displayMetrics.density).toInt()
+        fun applyTop(topInset: Int) {
+            // Put inset on the header only so we don't stack root padding + header paddingTop.
+            binding.boardHeader.updatePadding(top = topInset + extra)
+            binding.storeRoot.updatePadding(top = topInset + extra)
+            binding.boardRoot.updatePadding(top = 0)
+        }
+        applyTop(fallbackStatusBarHeight())
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            val status = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            applyTop(if (status > 0) status else fallbackStatusBarHeight())
+            insets
+        }
+        ViewCompat.requestApplyInsets(this)
+    }
+
+    private fun fallbackStatusBarHeight(): Int {
+        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (id > 0) {
+            resources.getDimensionPixelSize(id)
+        } else {
+            (24f * resources.displayMetrics.density).toInt()
         }
     }
 
@@ -228,7 +371,11 @@ class HiboardView @JvmOverloads constructor(
         row.findViewById<TextView>(R.id.storeName).text = entry.name
         row.findViewById<TextView>(R.id.storeDesc).text = entry.description
         val action = row.findViewById<TextView>(R.id.storeAction)
-        action.text = if (added) context.getString(R.string.unsubscribe) else context.getString(R.string.subscribe)
+        action.text = if (added) {
+            context.getString(R.string.unsubscribe)
+        } else {
+            context.getString(R.string.subscribe)
+        }
         action.setOnClickListener {
             if (added) viewModel.unsubscribe(entry.id) else viewModel.subscribe(entry.id)
         }
