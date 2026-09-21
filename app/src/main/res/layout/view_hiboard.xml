@@ -168,11 +168,13 @@
                 <TextView
                     android:id="@+id/storeClose"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
                     android:background="?android:attr/selectableItemBackground"
-                    android:gravity="center_vertical"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
                     android:text="@string/store_close"
                     android:textColor="@color/hiboard_store_close"
                     android:textSize="17sp" />
