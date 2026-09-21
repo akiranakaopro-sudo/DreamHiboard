@@ -5,15 +5,15 @@ import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
 
 object DefaultCatalog {
-    const val GROUP_GLANCE = "glance"
-    const val GROUP_TOOLS = "tools"
-    const val GROUP_FEED = "feed"
+    const val GROUP_FEATURES = "features"
+    const val GROUP_WEATHER = "weather"
+    const val GROUP_TOOLS = GROUP_FEATURES
 
     val entries: List<CardCatalogEntry> = listOf(
         CardCatalogEntry(
             id = "recent",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "Recent apps",
             description = "Last opened app first, then Dialer, Contacts, Messages, Camera, and Settings.",
             size = CardSize.FullByOne,
@@ -22,29 +22,39 @@ object DefaultCatalog {
             locked = true,
         ),
         CardCatalogEntry(
-            id = "advice",
-            groupId = GROUP_GLANCE,
-            groupTitle = "Glance",
-            name = "Advice",
-            description = "Full-width daily glance. ColorOS Dragonfly analog, without SMS/cloud.",
-            size = CardSize.FullByTwo,
-            engine = CardEngineId.Advice,
-            defaultSubscribed = true,
-        ),
-        CardCatalogEntry(
             id = "weather",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
             name = "Weather",
-            description = "Local weather tile.",
-            size = CardSize.TwoByTwo,
+            description = "Local 4×2 weather scene. Push your own snapshot through the weather API.",
+            size = CardSize.FullByTwo,
             engine = CardEngineId.Weather,
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "storage",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Storage",
+            description = "RAM used and free. Tap to open System Manager.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Storage,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
+            id = "flashlight",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Flashlight",
+            description = "Tap to turn the torch on or off. Uses the rear camera flash.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Flashlight,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
             id = "notes",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "All notes",
             description = "Latest note from DreamNote. Tap to open the list, plus to write a new note.",
             size = CardSize.TwoByTwo,
@@ -52,30 +62,26 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
-            id = "flashlight",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
-            name = "Flashlight",
-            description = "Tap to turn the torch on or off. Uses the rear camera flash.",
+            id = "recorder",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Recorder",
+            description = "Start, pause, mark, and save with DreamRecorder. Tap the card to open Recorder.",
             size = CardSize.TwoByTwo,
-            engine = CardEngineId.Flashlight,
-            defaultSubscribed = false,
-        ),
-        CardCatalogEntry(
-            id = "infoflow",
-            groupId = GROUP_FEED,
-            groupTitle = "Discover",
-            name = "Info flow",
-            description = "Recommended stories. ColorOS InfoFlow analog, local sample only.",
-            size = CardSize.FourByFour,
-            engine = CardEngineId.InfoFlow,
-            defaultSubscribed = false,
+            engine = CardEngineId.Recorder,
+            defaultSubscribed = true,
         ),
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }
 
     fun lockedIds(): List<String> = entries.filter { it.locked }.map { it.id }
+
+    fun defaultBoardIds(): List<String> =
+        entries.filter { it.defaultSubscribed && !it.locked }.map { it.id }
+
+    fun defaultRecommendedIds(): List<String> =
+        entries.filter { !it.defaultSubscribed && !it.locked }.map { it.id }
 
     fun pinLocked(ids: List<String>): List<String> {
         val locked = lockedIds()

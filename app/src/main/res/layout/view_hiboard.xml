@@ -141,48 +141,227 @@
         </com.coui.appcompat.scrollview.COUIScrollView>
     </LinearLayout>
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/storeRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/couiColorBackgroundWithCard"
-        android:orientation="vertical"
+        android:background="@drawable/bg_store_sheet"
+        android:clickable="true"
+        android:clipToOutline="true"
+        android:focusable="true"
+        android:outlineProvider="background"
         android:visibility="gone">
 
         <LinearLayout
+            android:id="@+id/storeListPane"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical">
 
-            <com.coui.appcompat.button.COUIButton
-                android:id="@+id/storeClose"
-                style="@style/Widget.COUI.Button.Small.ButtonNew.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/store_close" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/catalog_title"
-                android:textColor="?attr/couiColorLabelPrimary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <com.coui.appcompat.scrollview.COUIScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:id="@+id/storeList"
+            <FrameLayout
+                android:id="@+id/storeHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp" />
-        </com.coui.appcompat.scrollview.COUIScrollView>
-    </LinearLayout>
+                android:minHeight="56dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="8dp">
+
+                <TextView
+                    android:id="@+id/storeTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minHeight="56dp"
+                    android:text="@string/catalog_title"
+                    android:textColor="@color/hiboard_store_title"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/storeClose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:text="@string/store_close"
+                    android:textColor="@color/hiboard_store_close"
+                    android:textSize="17sp" />
+
+                <ImageView
+                    android:id="@+id/storeSearch"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/store_search_hint"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_search_dark" />
+
+                <com.coui.appcompat.searchview.COUISearchBar
+                    android:id="@+id/storeSearchBar"
+                    style="@style/Widget.COUI.COUISearchBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/coui_search_bar_height"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="4dp"
+                    android:visibility="gone"
+                    app:searchHint="@string/store_search_hint" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/storeChips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/storePager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <FrameLayout
+                    android:id="@+id/storeSearchPane"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/hiboard_store_bg"
+                    android:visibility="gone">
+
+                    <com.coui.appcompat.scrollview.COUIScrollView
+                        android:id="@+id/storeScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fillViewport="true">
+
+                        <LinearLayout
+                            android:id="@+id/storeList"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingEnd="36dp"
+                            android:paddingBottom="24dp" />
+                    </com.coui.appcompat.scrollview.COUIScrollView>
+
+                    <LinearLayout
+                        android:id="@+id/storeIndex"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
+                        android:paddingEnd="16dp"
+                        android:paddingStart="8dp" />
+                </FrameLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/storeDetailPane"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:clipChildren="false"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="4dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:id="@+id/storeDetailBack"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/store_back"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_nav_back" />
+
+                <TextView
+                    android:id="@+id/storeDetailTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/hiboard_store_title"
+                    android:textSize="17sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/storeDetailHeadline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="32dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/hiboard_store_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/storeDetailDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="32dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:lineSpacingMultiplier="1.15"
+                android:textColor="#FF8E8E93"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:id="@+id/storeDetailPreview"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_weight="1"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:padding="12dp" />
+
+            <com.coui.appcompat.button.COUIButton
+                android:id="@+id/storeDetailAdd"
+                style="@style/Widget.COUI.Button.Large.ButtonNew"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:text="@string/store_add_to_board" />
+        </LinearLayout>
+    </FrameLayout>
 </FrameLayout>

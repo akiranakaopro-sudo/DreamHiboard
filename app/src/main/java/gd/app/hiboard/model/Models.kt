@@ -22,12 +22,18 @@ enum class CardArea {
 }
 
 enum class CardEngineId {
-    Advice,
     Weather,
     Notes,
-    InfoFlow,
     RecentApps,
     Flashlight,
+    Storage,
+    Recorder,
+}
+
+enum class RecorderUiState {
+    Idle,
+    Recording,
+    Paused,
 }
 
 enum class CardAction {
@@ -76,27 +82,29 @@ data class ShortcutApp(
     val activityName: String?,
 )
 
-data class AdviceItem(
-    val title: String,
-    val subtitle: String,
-)
-
-data class InfoFlowItem(
-    val title: String,
-    val source: String,
+data class WeatherDayContent(
+    val label: String = "",
+    val condition: String = "",
+    val lowC: Int = 0,
+    val highC: Int = 0,
 )
 
 data class CardContent(
-    val adviceGreeting: String = "",
-    val adviceItems: List<AdviceItem> = emptyList(),
+    val weatherLocation: String = "",
     val weatherTempC: Int = 22,
     val weatherSummary: String = "",
+    val weatherCondition: String = "",
+    val weatherDays: List<WeatherDayContent> = emptyList(),
     val notesPreview: String = "",
     val notesSnippet: String = "",
     val notesWhen: String = "",
     val flashlightOn: Boolean = false,
     val flashlightAvailable: Boolean = false,
-    val infoFlow: List<InfoFlowItem> = emptyList(),
+    val storageUsedBytes: Long = 0L,
+    val storageTotalBytes: Long = 0L,
+    val recorderState: RecorderUiState = RecorderUiState.Idle,
+    val recorderElapsedMs: Long = 0L,
+    val recorderBound: Boolean = false,
     val recentApps: List<ShortcutApp> = emptyList(),
 )
 

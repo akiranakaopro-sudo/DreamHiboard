@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
@@ -62,7 +63,9 @@ class PackedCardLayout @JvmOverloads constructor(
     private var lastSwapY = 0f
     private var dragIndex: Int = -1
     private var pendingIndex: Int = -1
+    private var pendingAddSlot: Int = -1
     private var dragArmed: Boolean = false
+    private var stoleStream: Boolean = false
     private var grabOffsetX = 0f
     private var grabOffsetY = 0f
     private var dragX = 0f
@@ -170,39 +173,59 @@ class PackedCardLayout @JvmOverloads constructor(
         super.dispatchDraw(canvas)
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            stoleStream = false
+        }
+        if ((isDragging || dragArmed) && event.actionMasked != MotionEvent.ACTION_DOWN) {
+            parent.requestDisallowInterceptTouchEvent(true)
+            if (!stoleStream) {
+                stoleStream = true
+                cancelChildTouches(event)
+            }
+            return onTouchEvent(event)
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 activePointerId = event.getPointerId(0)
                 dragArmed = false
+                stoleStream = false
                 val (x, y) = localPoint(event)
                 downX = x
                 downY = y
                 dragX = x
                 dragY = y
                 pendingIndex = hitIndex(x, y)
+                pendingAddSlot = if (pendingIndex < 0) hitAddSlot(x, y) else -1
                 removeCallbacks(longPressRunnable)
                 if (pendingIndex >= 0) {
                     val card = cards.getOrNull(pendingIndex)
-                    if (card?.canDrag == true) {
+                    if (card?.canDrag == true || card?.canEdit == true) {
                         cardViews.getOrNull(pendingIndex)?.let { startPressFeedback(it) }
                         postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
                     }
+                } else if (pendingAddSlot >= 0) {
+                    addSlotViews.getOrNull(pendingAddSlot)?.let { startPressFeedback(it) }
                 }
             }
             MotionEvent.ACTION_MOVE -> {
                 val (x, y) = localPoint(event)
                 if (!isDragging && !dragArmed && hypot(x - downX, y - downY) > slop) {
-                    removeCallbacks(longPressRunnable)
-                    endPressFeedback(restore = true)
+                    abandonPress()
+                    pendingIndex = -1
+                    pendingAddSlot = -1
                 }
                 if (isDragging || dragArmed) return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
                 if (isDragging || dragArmed) return true
-                parent.requestDisallowInterceptTouchEvent(false)
-                endPressFeedback(restore = true)
+                abandonPress()
+                pendingAddSlot = -1
                 activePointerId = MotionEvent.INVALID_POINTER_ID
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -219,6 +242,12 @@ class PackedCardLayout @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
                 val (x, y) = localPoint(event)
+                if (!isDragging && !dragArmed && hypot(x - downX, y - downY) > slop) {
+                    abandonPress()
+                    pendingIndex = -1
+                    pendingAddSlot = -1
+                    return false
+                }
                 if (dragArmed && !isDragging && hypot(x - downX, y - downY) > slop) {
                     beginDrag()
                 }
@@ -234,21 +263,12 @@ class PackedCardLayout @JvmOverloads constructor(
                     return true
                 }
                 if (dragArmed) {
-                    val index = pendingIndex
-                    val card = cards.getOrNull(index)
-                    val child = cardViews.getOrNull(index)
-                    dragArmed = false
-                    pendingIndex = -1
-                    parent.requestDisallowInterceptTouchEvent(false)
-                    endPressFeedback(restore = true)
-                    if (card != null && child != null && card.canEdit) {
-                        onCardLongPress?.invoke(card, child)
-                    }
+                    clearArm()
                     return true
                 }
+                abandonPress()
                 pendingIndex = -1
-                parent.requestDisallowInterceptTouchEvent(false)
-                endPressFeedback(restore = true)
+                pendingAddSlot = -1
             }
             MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
@@ -256,10 +276,13 @@ class PackedCardLayout @JvmOverloads constructor(
                     endDrag(commit = false)
                     return true
                 }
-                dragArmed = false
+                if (dragArmed) {
+                    clearArm()
+                    return true
+                }
+                abandonPress()
                 pendingIndex = -1
-                parent.requestDisallowInterceptTouchEvent(false)
-                endPressFeedback(restore = true)
+                pendingAddSlot = -1
             }
         }
         return isDragging || dragArmed || pendingIndex >= 0
@@ -271,6 +294,7 @@ class PackedCardLayout @JvmOverloads constructor(
         outlineAnimator?.cancel()
         seatAnimator?.cancel()
         dragArmed = false
+        stoleStream = false
         if (isDragging) endDrag(commit = false)
         super.onDetachedFromWindow()
     }
@@ -299,10 +323,52 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun armLongPress() {
         val index = pendingIndex
         val card = cards.getOrNull(index) ?: return
-        if (card.canDrag != true || isDragging) return
+        val child = cardViews.getOrNull(index) ?: return
+        if (isDragging) return
+        if (card.canDrag != true && card.canEdit != true) return
         dragArmed = true
         parent.requestDisallowInterceptTouchEvent(true)
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        cancelChildTouches()
+        stoleStream = true
+        endPressFeedback(restore = true)
+        if (card.canEdit) {
+            onCardLongPress?.invoke(card, child)
+        }
+    }
+
+    private fun abandonPress() {
+        removeCallbacks(longPressRunnable)
+        parent.requestDisallowInterceptTouchEvent(false)
+        endPressFeedback(restore = true)
+    }
+
+    private fun clearArm() {
+        dragArmed = false
+        pendingIndex = -1
+        pendingAddSlot = -1
+        stoleStream = false
+        abandonPress()
+        activePointerId = MotionEvent.INVALID_POINTER_ID
+    }
+
+    private fun cancelChildTouches(event: MotionEvent? = null) {
+        val cancel = if (event != null) {
+            MotionEvent.obtain(event).apply { action = MotionEvent.ACTION_CANCEL }
+        } else {
+            MotionEvent.obtain(
+                SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_CANCEL,
+                0f,
+                0f,
+                0,
+            )
+        }
+        for (index in 0 until childCount) {
+            getChildAt(index).dispatchTouchEvent(cancel)
+        }
+        cancel.recycle()
     }
 
     private fun beginDrag() {
@@ -415,6 +481,7 @@ class PackedCardLayout @JvmOverloads constructor(
         lastSwapX = 0f
         lastSwapY = 0f
         pendingIndex = -1
+        pendingAddSlot = -1
         activePointerId = MotionEvent.INVALID_POINTER_ID
         cards = nextCards
         cardViews.clear()
@@ -542,6 +609,11 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun viewFor(instanceId: String): View? =
         cardViews.firstOrNull { it.tag == instanceId }
 
+    fun findCard(catalogId: String): View? {
+        val instanceId = cards.firstOrNull { it.catalogId == catalogId }?.instanceId ?: return null
+        return viewFor(instanceId)
+    }
+
     private fun syncAddSlots() {
         addSlots = if (isDragging || cards.isEmpty()) {
             emptyList()
@@ -572,6 +644,17 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun hitIndex(x: Float, y: Float): Int {
         for (index in cardViews.indices.reversed()) {
             val child = cardViews[index]
+            if (x >= child.left && x < child.right && y >= child.top && y < child.bottom) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    private fun hitAddSlot(x: Float, y: Float): Int {
+        for (index in addSlotViews.indices.reversed()) {
+            val child = addSlotViews[index]
+            if (child.visibility != View.VISIBLE) continue
             if (x >= child.left && x < child.right && y >= child.top && y < child.bottom) {
                 return index
             }

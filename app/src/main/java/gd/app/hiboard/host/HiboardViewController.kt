@@ -43,8 +43,6 @@ class HiboardViewController(
         return view
     }
 
-    fun onBackPressed(): Boolean = hostView?.onBackPressed() ?: false
-
     fun enter() {
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
         viewModel?.onHostEvent(HostEvent.Enter)
@@ -72,4 +70,6 @@ class HiboardViewController(
         store.clear()
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
     }
+
+    fun onBackPressed(): Boolean = hostView?.onBackPressed() == true
 }

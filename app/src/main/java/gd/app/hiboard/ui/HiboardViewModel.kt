@@ -8,6 +8,8 @@ import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.CardEngineRegistry
+import gd.app.hiboard.engine.RecorderCommand
+import gd.app.hiboard.engine.RecorderSendResult
 import gd.app.hiboard.host.HostEvent
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardAction
@@ -16,6 +18,9 @@ import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
+import gd.app.hiboard.ui.grid.insertFillingEmptyTwoByTwo
+import gd.app.hiboard.ui.grid.pinLockedCards
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +35,12 @@ data class HiboardUiState(
     val showStore: Boolean = false,
     val screenVisible: Boolean = true,
     val pendingDeeplinkCard: String? = null,
+    val boardReady: Boolean = false,
+    val storeQuery: String = "",
+    val storeGroupId: String? = null,
+    val storeDetailId: String? = null,
+    val storeSearchOpen: Boolean = false,
+    val revealCatalogId: String? = null,
 )
 
 class HiboardViewModel(
@@ -43,13 +54,32 @@ class HiboardViewModel(
     init {
         viewModelScope.launch {
             repository.snapshot.collect { board ->
-                _state.update { it.copy(board = board) }
+                _state.update { it.copy(board = board, boardReady = true) }
             }
         }
         onHostEvent(HostEvent.Create)
         viewModelScope.launch {
             engines.flashlightOn.collect {
                 _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
+        viewModelScope.launch {
+            engines.notesRevisions.collect {
+                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
+        viewModelScope.launch {
+            engines.weatherSnapshot.collect {
+                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
+        viewModelScope.launch {
+            var lastState = engines.recorderStatus.value.state
+            engines.recorderStatus.collect { status ->
+                if (status.state != lastState) {
+                    lastState = status.state
+                    _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+                }
             }
         }
     }
@@ -62,6 +92,7 @@ class HiboardViewModel(
             }
             HostEvent.Enter, HostEvent.Resume -> {
                 engines.refreshRecents()
+                engines.syncRecorder()
                 _state.update {
                     it.copy(
                         screenVisible = true,
@@ -88,11 +119,106 @@ class HiboardViewModel(
     }
 
     fun openStore() {
-        _state.update { it.copy(showStore = true) }
+        _state.update {
+            it.copy(
+                showStore = true,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+            )
+        }
     }
 
     fun closeStore() {
-        _state.update { it.copy(showStore = false, editMode = false) }
+        _state.update {
+            it.copy(
+                showStore = false,
+                editMode = false,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+            )
+        }
+    }
+
+    fun setStoreQuery(query: String) {
+        _state.update { if (it.storeQuery == query) it else it.copy(storeQuery = query) }
+    }
+
+    fun setStoreGroup(groupId: String?) {
+        _state.update { it.copy(storeGroupId = groupId, storeDetailId = null) }
+    }
+
+    fun openStoreDetail(catalogId: String) {
+        _state.update { it.copy(storeDetailId = catalogId, storeSearchOpen = false) }
+    }
+
+    fun closeStoreDetail() {
+        _state.update { it.copy(storeDetailId = null) }
+    }
+
+    fun setStoreSearchOpen(open: Boolean) {
+        _state.update {
+            it.copy(
+                storeSearchOpen = open,
+                storeQuery = if (open) it.storeQuery else "",
+                storeDetailId = null,
+            )
+        }
+    }
+
+    fun handleStoreBack(): Boolean {
+        val state = _state.value
+        if (!state.showStore) return false
+        if (state.storeDetailId != null) {
+            closeStoreDetail()
+            return true
+        }
+        if (state.storeSearchOpen) {
+            setStoreSearchOpen(false)
+            return true
+        }
+        closeStore()
+        return true
+    }
+
+    fun pinFromStore(catalogId: String) {
+        val entry = DefaultCatalog.byId(catalogId) ?: return
+        _state.update { state ->
+            val subscribed = if (state.board.subscribed.any { it.catalogId == catalogId }) {
+                state.board.subscribed
+            } else {
+                val incoming = CardInstance(
+                    instanceId = UUID.nameUUIDFromBytes("${CardArea.Subscribe}:$catalogId".toByteArray()).toString(),
+                    catalogId = entry.id,
+                    displayName = entry.name,
+                    size = entry.size,
+                    area = CardArea.Subscribe,
+                    engine = entry.engine,
+                    canDrag = !entry.locked,
+                    canEdit = !entry.locked,
+                    order = state.board.subscribed.size,
+                )
+                pinLockedCards(insertFillingEmptyTwoByTwo(state.board.subscribed, incoming))
+            }
+            state.copy(
+                board = state.board.copy(subscribed = subscribed),
+                showStore = false,
+                editMode = false,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+                revealCatalogId = catalogId,
+            )
+        }
+        subscribe(catalogId)
+    }
+
+    fun consumeReveal() {
+        _state.update { if (it.revealCatalogId == null) it else it.copy(revealCatalogId = null) }
     }
 
     fun subscribe(catalogId: String) {
@@ -137,6 +263,10 @@ class HiboardViewModel(
                 pendingDeeplinkCard = cardId,
                 editMode = edit,
                 showStore = store,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
             )
         }
         if (cardId != null && DefaultCatalog.byId(cardId) != null) {
@@ -149,6 +279,20 @@ class HiboardViewModel(
     fun createNote() = engines.createNote()
 
     fun toggleFlashlight() = engines.toggleFlashlight()
+
+    fun openSystemManager() = engines.openSystemManager()
+
+    fun sendRecorder(command: RecorderCommand): RecorderSendResult {
+        val result = engines.sendRecorder(command)
+        if (command != RecorderCommand.Mark) {
+            _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+        }
+        return result
+    }
+
+    fun recorderLive() = engines.recorderLive()
+
+    fun openRecorder() = engines.openRecorder()
 
     fun openQuickSearch() = engines.openQuickSearch()
 

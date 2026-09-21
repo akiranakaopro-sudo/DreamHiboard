@@ -1,74 +1,137 @@
 package gd.app.hiboard.data
 
 import android.content.Context
+import android.database.ContentObserver
+import android.database.Cursor
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import gd.app.hiboard.engine.NOTE_PACKAGE
 import gd.app.hiboard.engine.NotesPreview
+import gd.app.hiboard.engine.noteHeadlineAndBody
+import gd.app.hiboard.engine.pickDisplayNote
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class NotesRepository(context: Context) {
     private val appContext = context.applicationContext
+    private val _revisions = MutableStateFlow(0)
+    val revisions: StateFlow<Int> = _revisions
 
-    fun latest(): NotesPreview {
-        querySearch()?.let { return it }
-        queryLatest()?.let { return it }
-        return NotesPreview()
-    }
+    private val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            onChange(selfChange, null)
+        }
 
-    private fun querySearch(): NotesPreview? {
-        val resolver = appContext.contentResolver
-        return try {
-            resolver.query(SEARCH_URI, null, null, null, null)?.use { cursor ->
-                var best: NotesPreview? = null
-                while (cursor.moveToNext()) {
-                    val id = long(cursor, "_id", "guid")
-                    val content = string(cursor, "content")
-                    val updated = long(cursor, "updated", "updated_at")
-                    if (id <= 0L && content.isBlank()) continue
-                    val lines = content.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
-                    val candidate = NotesPreview(
-                        id = id,
-                        title = lines.firstOrNull().orEmpty(),
-                        snippet = lines.drop(1).firstOrNull().orEmpty(),
-                        updatedAt = updated,
-                    )
-                    if (best == null || candidate.updatedAt >= best.updatedAt) {
-                        best = candidate
-                    }
-                }
-                best
-            }
-        } catch (_: SecurityException) {
-            null
-        } catch (_: Exception) {
-            null
+        override fun onChange(selfChange: Boolean, uri: Uri?) {
+            _revisions.value = _revisions.value + 1
         }
     }
 
-    private fun queryLatest(): NotesPreview? {
+    init {
+        val resolver = appContext.contentResolver
+        (listOf(SEARCH_URI) + URIS).forEach { uri ->
+            try {
+                resolver.registerContentObserver(uri, true, observer)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun latest(): NotesPreview = pickDisplayNote(allNotes())
+
+    private fun allNotes(): List<NotesPreview> {
+        val byId = linkedMapOf<Long, NotesPreview>()
+        (querySearch() + queryLatest()).forEach { note ->
+            val key = if (note.id > 0L) note.id else note.updatedAt
+            val existing = byId[key]
+            byId[key] = when {
+                existing == null -> note
+                note.hasText && !existing.hasText -> note
+                existing.hasText && !note.hasText -> existing
+                note.updatedAt >= existing.updatedAt -> note
+                else -> existing
+            }
+        }
+        return byId.values.toList()
+    }
+
+    private fun querySearch(): List<NotesPreview> {
+        val resolver = appContext.contentResolver
+        return try {
+            resolver.query(SEARCH_URI, null, null, null, null)?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        readNote(cursor, titleKeys = emptyArray(), contentKeys = arrayOf("content"))
+                            ?.let(::add)
+                    }
+                }
+            }.orEmpty()
+        } catch (_: SecurityException) {
+            emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun queryLatest(): List<NotesPreview> {
         val resolver = appContext.contentResolver
         URIS.forEach { uri ->
             try {
                 resolver.query(uri, null, null, null, "updated DESC")?.use { cursor ->
-                    if (!cursor.moveToFirst()) return@use
-                    val id = long(cursor, "_id", "id", "note_id", "guid")
-                    val title = string(cursor, "title", "name", "subject")
-                    val snippet = string(cursor, "snippet", "summary", "content", "body", "text")
-                    val updated = long(cursor, "updated", "updated_at", "modified", "time", "date")
-                    if (id > 0L || title.isNotBlank() || snippet.isNotBlank()) {
-                        val lines = snippet.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
-                        val headline = title.ifBlank { lines.firstOrNull().orEmpty() }
-                        val rest = if (title.isBlank()) lines.drop(1).firstOrNull().orEmpty() else lines.firstOrNull().orEmpty()
-                        return NotesPreview(id, headline, rest, updated)
+                    val notes = buildList {
+                        while (cursor.moveToNext()) {
+                            readNote(
+                                cursor,
+                                titleKeys = arrayOf("title", "name", "subject"),
+                                contentKeys = arrayOf("snippet", "summary", "content", "body", "text"),
+                            )?.let(::add)
+                        }
                     }
+                    if (notes.isNotEmpty()) return notes
                 }
             } catch (_: SecurityException) {
             } catch (_: Exception) {
             }
         }
-        return null
+        return emptyList()
     }
 
-    private fun string(cursor: android.database.Cursor, vararg keys: String): String {
+    private fun readNote(
+        cursor: Cursor,
+        titleKeys: Array<String>,
+        contentKeys: Array<String>,
+    ): NotesPreview? {
+        if (isGone(cursor)) return null
+        val id = long(cursor, "_id", "id", "note_id", "guid")
+        val title = if (titleKeys.isEmpty()) "" else string(cursor, *titleKeys)
+        val content = string(cursor, *contentKeys)
+        val updated = long(cursor, "updated", "updated_at", "modified", "time", "date")
+        if (id <= 0L && title.isBlank() && content.isBlank()) return null
+        val (headline, body) = noteHeadlineAndBody(title, content)
+        return NotesPreview(id, headline, body, updated)
+    }
+
+    private fun isGone(cursor: Cursor): Boolean {
+        val keys = arrayOf("deleted", "is_deleted", "trash", "in_trash", "is_trash")
+        keys.forEach { key ->
+            val index = cursor.getColumnIndex(key)
+            if (index < 0) return@forEach
+            when (cursor.getType(index)) {
+                Cursor.FIELD_TYPE_INTEGER -> if (cursor.getInt(index) != 0) return true
+                Cursor.FIELD_TYPE_STRING -> {
+                    val value = cursor.getString(index).orEmpty().trim()
+                    if (value == "1" || value.equals("true", true) || value.equals("yes", true)) {
+                        return true
+                    }
+                }
+                else -> Unit
+            }
+        }
+        return false
+    }
+
+    private fun string(cursor: Cursor, vararg keys: String): String {
         keys.forEach { key ->
             val index = cursor.getColumnIndex(key)
             if (index >= 0) return cursor.getString(index).orEmpty().trim()
@@ -76,13 +139,13 @@ class NotesRepository(context: Context) {
         return ""
     }
 
-    private fun long(cursor: android.database.Cursor, vararg keys: String): Long {
+    private fun long(cursor: Cursor, vararg keys: String): Long {
         keys.forEach { key ->
             val index = cursor.getColumnIndex(key)
             if (index < 0) return@forEach
             return when (cursor.getType(index)) {
-                android.database.Cursor.FIELD_TYPE_INTEGER -> cursor.getLong(index)
-                android.database.Cursor.FIELD_TYPE_STRING -> cursor.getString(index)?.toLongOrNull() ?: 0L
+                Cursor.FIELD_TYPE_INTEGER -> cursor.getLong(index)
+                Cursor.FIELD_TYPE_STRING -> cursor.getString(index)?.toLongOrNull() ?: 0L
                 else -> cursor.getLong(index)
             }
         }

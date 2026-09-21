@@ -1,36 +1,60 @@
 package gd.app.hiboard.ui
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
+import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
+import com.coui.appcompat.animation.COUIEaseInterpolator
+import com.coui.appcompat.animation.COUIMoveEaseInterpolator
 import com.coui.appcompat.dialog.COUIAlertDialogBuilder
 import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
+import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.widgetStoreSections
+import gd.app.hiboard.catalog.widgetStoreTabIndex
+import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.databinding.ViewHiboardBinding
 import gd.app.hiboard.engine.FlashlightToggle
+import gd.app.hiboard.engine.RecorderCommand
+import gd.app.hiboard.engine.RecorderSendResult
+import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -44,6 +68,15 @@ class HiboardView @JvmOverloads constructor(
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
     private var lastStoreKey: Any? = null
+    private var lastStoreSearchOpen = false
+    private var storeSheetOpen = false
+    private var storeDetailOpen = false
+    private var storePeekAnimator: ValueAnimator? = null
+    private var storeSheetDragging = false
+    private var storeSheetDragDownY = 0f
+    private var storeSheetDragStartTy = 0f
+    private var storeSheetVelocity: VelocityTracker? = null
+    private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
 
@@ -59,7 +92,7 @@ class HiboardView @JvmOverloads constructor(
     var closeGestureEnabled: Boolean = false
 
     private val touchSlop =
-        android.view.ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+        ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private var downX = 0f
     private var downY = 0f
     private var downTime = 0L
@@ -80,7 +113,21 @@ class HiboardView @JvmOverloads constructor(
         )
         binding.addButton.setTextColor(chrome)
         binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
-        applyStatusBarSpacing()
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
+            binding.boardRoot.updatePadding(bottom = bars.bottom)
+            binding.storeListPane.updatePadding(bottom = bars.bottom)
+            binding.storeDetailPane.updatePadding(bottom = bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+    }
+
+    fun onBackPressed(): Boolean {
+        if (viewModel?.handleStoreBack() == true) return true
+        val home = onNavigateHome ?: return false
+        home.invoke()
+        return true
     }
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
@@ -89,6 +136,10 @@ class HiboardView @JvmOverloads constructor(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
+            onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
+            onRecorderCommand = { command -> sendRecorder(viewModel, command) },
+            recorderLive = viewModel::recorderLive,
+            onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,
@@ -97,6 +148,15 @@ class HiboardView @JvmOverloads constructor(
         binding.addButton.setOnClickListener { viewModel.openStore() }
         binding.emptyAddButton.setOnClickListener { viewModel.openStore() }
         binding.storeClose.setOnClickListener { viewModel.closeStore() }
+        binding.storeSearch.setOnClickListener { viewModel.setStoreSearchOpen(true) }
+        binding.storeDetailBack.setOnClickListener { viewModel.closeStoreDetail() }
+        binding.storeRoot.setOnClickListener {
+            if (viewModel.state.value.storeDetailId != null) viewModel.closeStore()
+        }
+        binding.storeListPane.isClickable = true
+        binding.storeDetailPane.isClickable = true
+        bindStoreSheetDrag(viewModel)
+        bindStoreSearchBar(viewModel)
         binding.searchBar.setInputMethodAnimationEnabled(false)
         binding.searchBar.searchEditText.apply {
             isFocusable = false
@@ -191,58 +251,13 @@ class HiboardView @JvmOverloads constructor(
         lastDragTime = ev.eventTime
     }
 
-    /** @return true if the back event was consumed. */
-    fun onBackPressed(): Boolean {
-        val vm = viewModel
-        if (vm != null && vm.state.value.showStore) {
-            vm.closeStore()
-            return true
-        }
-        requestNavigateHome()
-        return true
-    }
-
-    private fun requestNavigateHome() {
-        val vm = viewModel
-        if (vm != null && vm.state.value.showStore) {
-            vm.closeStore()
-            return
-        }
-        onNavigateHome?.invoke()
-    }
-
-    /**
-     * Overlay panel draws under the status bar (full-bleed bg); push chrome below it
-     * with a small ColorOS-like gap.
-     */
-    private fun applyStatusBarSpacing() {
-        // ColorOS leaves a small gap under the status bar (~4dp), not status+8+header 12dp.
-        val extra = (4f * resources.displayMetrics.density).toInt()
-        fun applyTop(topInset: Int) {
-            // Put inset on the header only so we don't stack root padding + header paddingTop.
-            binding.boardHeader.updatePadding(top = topInset + extra)
-            binding.storeRoot.updatePadding(top = topInset + extra)
-            binding.boardRoot.updatePadding(top = 0)
-        }
-        applyTop(fallbackStatusBarHeight())
-        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
-            val status = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            applyTop(if (status > 0) status else fallbackStatusBarHeight())
-            insets
-        }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         ViewCompat.requestApplyInsets(this)
     }
 
-    private fun fallbackStatusBarHeight(): Int {
-        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (id > 0) {
-            resources.getDimensionPixelSize(id)
-        } else {
-            (24f * resources.displayMetrics.density).toInt()
-        }
-    }
-
     override fun onDetachedFromWindow() {
+        setStoreNavBarContrast(false)
         dismissCardMenu()
         collectJob?.cancel()
         super.onDetachedFromWindow()
@@ -274,10 +289,14 @@ class HiboardView @JvmOverloads constructor(
         }
         popup.setOnDismissListener { if (cardMenu === popup) cardMenu = null }
         cardMenu = popup
-        anchor.post {
-            if (cardMenu === popup && anchor.isAttachedToWindow) {
-                popup.show(anchor)
-            }
+        fun present() {
+            if (cardMenu !== popup || !anchor.isAttachedToWindow || anchor.windowToken == null) return
+            popup.show(anchor)
+        }
+        if (anchor.windowToken != null) {
+            present()
+        } else {
+            anchor.post { present() }
         }
     }
 
@@ -316,8 +335,29 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private companion object {
-        const val CAMERA_PERMISSION = 42
+    private fun sendRecorder(viewModel: HiboardViewModel, command: RecorderCommand) {
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        when (val result = viewModel.sendRecorder(command)) {
+            RecorderSendResult.NeedsMic -> {
+                val activity = context.findActivity() ?: return
+                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MIC_PERMISSION)
+                }
+            }
+            is RecorderSendResult.Marked -> {
+                Toast.makeText(
+                    context,
+                    "${result.text}  ${formatRecorderTime(result.timeMs)}",
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+            RecorderSendResult.Saved -> {
+                Toast.makeText(context, R.string.recorder_saved, Toast.LENGTH_SHORT).show()
+            }
+            RecorderSendResult.Sent, RecorderSendResult.Failed -> Unit
+        }
     }
 
     private fun render(
@@ -325,16 +365,55 @@ class HiboardView @JvmOverloads constructor(
         viewModel: HiboardViewModel,
         binder: CardBinder,
     ) {
-        binding.boardRoot.isVisible = !state.showStore
-        binding.storeRoot.isVisible = state.showStore
+        animateStoreSheet(state.showStore)
+        val storeKey = listOf(
+            state.board.subscribed.map { it.catalogId },
+            state.showStore,
+            state.storeQuery,
+            state.storeGroupId,
+            state.storeDetailId,
+            state.storeSearchOpen,
+        )
+        if (state.showStore && storeKey != lastStoreKey) {
+            lastStoreKey = storeKey
+            bindStore(state, viewModel)
+        }
+        if (!state.showStore) lastStoreKey = null
+        if (state.showStore) {
+            animateStoreDetail(state.storeDetailId != null)
+            binding.storeClose.isVisible = !state.storeSearchOpen
+            binding.storeTitle.isVisible = !state.storeSearchOpen
+            binding.storeSearch.isVisible = !state.storeSearchOpen
+            binding.storeSearchBar.isVisible = state.storeSearchOpen
+            binding.storeChips.isVisible = !state.storeSearchOpen
+            binding.storePager.isVisible = !state.storeSearchOpen
+            binding.storePager.isUserInputEnabled = !state.storeSearchOpen
+            binding.storeSearchPane.isVisible = state.storeSearchOpen
+            if (state.storeSearchOpen) {
+                val field = binding.storeSearchBar.searchEditText
+                if (field.text.toString() != state.storeQuery) {
+                    field.setText(state.storeQuery)
+                    field.setSelection(state.storeQuery.length)
+                }
+            }
+        }
+        if (state.storeSearchOpen != lastStoreSearchOpen) {
+            lastStoreSearchOpen = state.storeSearchOpen
+            syncStoreSearchBar(state.storeSearchOpen)
+        }
+        if (!state.showStore && lastStoreSearchOpen) {
+            lastStoreSearchOpen = false
+            syncStoreSearchBar(false)
+        }
         binding.editButton.text = context.getString(R.string.edit_done)
         binding.editButton.isVisible = state.editMode
         binding.addButton.text = context.getString(R.string.add_widget_symbol)
         binding.addButton.isVisible = true
-        binding.emptyPinned.isVisible = state.board.subscribed.none { it.canEdit }
+        binding.emptyPinned.isVisible =
+            state.boardReady && state.board.subscribed.none { it.canEdit }
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
         binding.recentAppsHeader.isVisible =
-            !state.showStore && state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
+            state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
         if (!dragging && gridKey != lastGridKey) {
@@ -343,42 +422,681 @@ class HiboardView @JvmOverloads constructor(
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
         }
-        val storeKey = state.board.subscribed.map { it.catalogId } to state.showStore
-        if (state.showStore && storeKey != lastStoreKey) {
-            lastStoreKey = storeKey
-            bindStore(state, viewModel)
+        if (!state.showStore) {
+            state.revealCatalogId?.let { catalogId ->
+                binding.subscribedGrid.post { scrollBoardTo(catalogId) }
+                viewModel.consumeReveal()
+            }
+        }
+    }
+
+    private fun bindStoreSheetDrag(viewModel: HiboardViewModel) {
+        val title = binding.storeTitle
+        val sheet = binding.storeRoot
+        val slop = ViewConfiguration.get(context).scaledTouchSlop
+        title.setOnTouchListener { _, event ->
+            if (!title.isVisible || !storeSheetOpen) return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    storeSheetDragDownY = event.rawY
+                    storeSheetDragStartTy = sheet.translationY
+                    storeSheetDragging = false
+                    storeSheetVelocity?.recycle()
+                    storeSheetVelocity = VelocityTracker.obtain().also { it.addMovement(event) }
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    storeSheetVelocity?.addMovement(event)
+                    val dy = event.rawY - storeSheetDragDownY
+                    if (!storeSheetDragging && dy > slop) {
+                        storeSheetDragging = true
+                        sheet.animate().cancel()
+                        title.parent.requestDisallowInterceptTouchEvent(true)
+                    }
+                    if (storeSheetDragging) {
+                        sheet.translationY = (storeSheetDragStartTy + dy).coerceAtLeast(0f)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    storeSheetVelocity?.addMovement(event)
+                    storeSheetVelocity?.computeCurrentVelocity(1000)
+                    val velocityY = storeSheetVelocity?.yVelocity ?: 0f
+                    storeSheetVelocity?.recycle()
+                    storeSheetVelocity = null
+                    title.parent.requestDisallowInterceptTouchEvent(false)
+                    val dragged = storeSheetDragging
+                    storeSheetDragging = false
+                    if (!dragged) return@setOnTouchListener true
+                    val distance = sheet.height.takeIf { it > 0 }?.toFloat()
+                        ?: height.takeIf { it > 0 }?.toFloat()
+                        ?: resources.displayMetrics.heightPixels.toFloat()
+                    val dismiss = event.actionMasked == MotionEvent.ACTION_UP &&
+                        (velocityY > STORE_DISMISS_VELOCITY ||
+                            sheet.translationY > distance * STORE_DISMISS_FRACTION)
+                    if (dismiss) {
+                        viewModel.closeStore()
+                        if (storeSheetOpen) animateStoreSheet(false)
+                    } else {
+                        snapStoreSheet()
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun snapStoreSheet() {
+        val sheet = binding.storeRoot
+        if (!storeSheetOpen) return
+        sheet.animate().cancel()
+        sheet.animate()
+            .translationY(0f)
+            .setDuration(STORE_SLIDE_IN_MS)
+            .setInterpolator(COUIEaseInterpolator())
+            .start()
+    }
+
+    private fun animateStoreSheet(show: Boolean) {
+        val sheet = binding.storeRoot
+        if (show == storeSheetOpen) return
+        storeSheetOpen = show
+        storeSheetDragging = false
+        sheet.animate().cancel()
+        storePeekAnimator?.cancel()
+        val distance = sheet.height.takeIf { it > 0 }?.toFloat()
+            ?: height.takeIf { it > 0 }?.toFloat()
+            ?: resources.displayMetrics.heightPixels.toFloat()
+        val ease = COUIEaseInterpolator()
+        setStoreNavBarContrast(show)
+        if (show) {
+            storeDetailOpen = false
+            resetStorePanes(showDetail = false)
+            if (sheet.translationY == 0f) sheet.translationY = distance
+            sheet.isVisible = true
+            fun slideUp() {
+                if (!storeSheetOpen) return
+                val from = sheet.height.takeIf { it > 0 }?.toFloat() ?: distance
+                if (sheet.translationY == 0f) sheet.translationY = from
+                sheet.animate()
+                    .translationY(0f)
+                    .setDuration(STORE_SLIDE_IN_MS)
+                    .setInterpolator(ease)
+                    .start()
+            }
+            if (sheet.height == 0) sheet.post { slideUp() } else slideUp()
+        } else {
+            sheet.animate()
+                .translationY(distance)
+                .setDuration(STORE_SLIDE_OUT_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (storeSheetOpen) return@withEndAction
+                    storeDetailOpen = false
+                    resetStorePanes(showDetail = false)
+                    sheet.isVisible = false
+                    sheet.translationY = 0f
+                }
+                .start()
         }
     }
 
     private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel) {
-        val list = binding.storeList
-        list.removeAllViews()
-        val pinned = state.board.subscribed.map { it.catalogId }.toSet()
-        val inflater = LayoutInflater.from(context)
-        state.catalog.filter { !it.locked }.forEach { entry ->
-            list.addView(storeRow(inflater, list, entry, entry.id in pinned, viewModel))
+        bindStorePager(state)
+        bindStoreChips(state)
+        if (state.storeSearchOpen) bindStoreSearchList(state, viewModel)
+        bindStoreDetail(state, viewModel)
+    }
+
+    private fun bindStorePager(state: HiboardUiState) {
+        val adapter = storePagerAdapter ?: StorePagerAdapter().also {
+            storePagerAdapter = it
+            binding.storePager.offscreenPageLimit = widgetStoreTabs().size.coerceAtLeast(1)
+            binding.storePager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    val vm = this@HiboardView.viewModel ?: return
+                    val id = widgetStoreTabs().getOrNull(position)?.first
+                    if (vm.state.value.storeGroupId != id) vm.setStoreGroup(id)
+                }
+            })
+            binding.storePager.clipChildren = false
+            binding.storePager.clipToPadding = false
+            binding.storePager.adapter = it
+            binding.storePager.post {
+                (binding.storePager.getChildAt(0) as? ViewGroup)?.apply {
+                    clipChildren = false
+                    clipToPadding = false
+                }
+            }
+        }
+        adapter.submit(state.catalog)
+        val target = widgetStoreTabIndex(state.storeGroupId)
+        if (binding.storePager.currentItem != target) {
+            binding.storePager.setCurrentItem(target, false)
         }
     }
 
-    private fun storeRow(
-        inflater: android.view.LayoutInflater,
+    private fun bindStoreChips(state: HiboardUiState) {
+        val chips = binding.storeChips
+        val tabs = widgetStoreTabs()
+        if (chips.childCount != tabs.size) {
+            chips.removeAllViews()
+            tabs.forEachIndexed { index, (id, _) ->
+                val title = context.getString(
+                    when (id) {
+                        DefaultCatalog.GROUP_FEATURES -> R.string.store_filter_features
+                        DefaultCatalog.GROUP_WEATHER -> R.string.store_filter_weather
+                        else -> R.string.store_filter_all
+                    },
+                )
+                chips.addView(storeChip(title, last = index == tabs.lastIndex) {
+                    binding.storePager.setCurrentItem(index, true)
+                })
+            }
+        }
+        val selected = state.storeGroupId
+        for (index in 0 until chips.childCount) {
+            val chip = chips.getChildAt(index) as TextView
+            val on = tabs.getOrNull(index)?.first == selected
+            chip.setBackgroundResource(if (on) R.drawable.bg_store_chip_on else R.drawable.bg_store_chip_off)
+            chip.setTextColor(context.getColor(R.color.hiboard_store_title))
+        }
+    }
+
+    private fun storeChip(label: String, last: Boolean, onClick: () -> Unit): TextView {
+        val density = resources.displayMetrics.density
+        val padV = (11 * density).toInt()
+        val gap = (8 * density).toInt()
+        return TextView(context).apply {
+            text = label
+            textSize = 14f
+            gravity = Gravity.CENTER
+            maxLines = 1
+            includeFontPadding = false
+            minHeight = (40 * density).toInt()
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, padV, 0, padV)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (!last) marginEnd = gap
+            }
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun bindStoreIndex(
+        indexBar: LinearLayout,
+        list: LinearLayout,
+        scroll: ScrollView,
+        used: Set<String>,
+    ) {
+        indexBar.removeAllViews()
+        val density = resources.displayMetrics.density
+        INDEX_LETTERS.forEach { letter ->
+            val label = TextView(context).apply {
+                text = letter
+                textSize = 13f
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                minWidth = (18 * density).toInt()
+                setTextColor(
+                    if (letter in used) context.getColor(R.color.hiboard_store_title)
+                    else 0xFF8E8E93.toInt(),
+                )
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                setPadding(0, 0, 0, 0)
+                setOnClickListener { scrollStoreTo(list, scroll, letter) }
+            }
+            indexBar.addView(label)
+        }
+    }
+
+    private fun bindStoreSearchList(state: HiboardUiState, viewModel: HiboardViewModel) {
+        fillStoreSections(
+            list = binding.storeList,
+            indexBar = binding.storeIndex,
+            scroll = binding.storeScroll,
+            catalog = state.catalog,
+            query = state.storeQuery,
+            groupId = null,
+            viewModel = viewModel,
+        )
+    }
+
+    private fun fillStoreSections(
+        list: LinearLayout,
+        indexBar: LinearLayout,
+        scroll: ScrollView,
+        catalog: List<CardCatalogEntry>,
+        query: String,
+        groupId: String?,
+        viewModel: HiboardViewModel,
+    ) {
+        list.removeAllViews()
+        val density = resources.displayMetrics.density
+        list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
+        indexBar.isVisible = true
+        val inflater = LayoutInflater.from(context)
+        val sections = widgetStoreSections(catalog, query, groupId)
+        bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
+        if (sections.isEmpty()) {
+            val empty = TextView(context).apply {
+                text = context.getString(R.string.store_empty)
+                setTextColor(0xFF8E8E93.toInt())
+                textSize = 15f
+                gravity = Gravity.CENTER
+                setPadding(24, 48, 24, 24)
+            }
+            list.addView(empty)
+            return
+        }
+        sections.forEach { section ->
+            val header = inflater.inflate(R.layout.item_widget_section, list, false) as TextView
+            header.text = section.letter
+            header.tag = "section-${section.letter}"
+            list.addView(header)
+            section.entries.forEachIndexed { entryIndex, entry ->
+                list.addView(widgetRow(inflater, list, entry, viewModel))
+                if (entryIndex < section.entries.lastIndex) {
+                    list.addView(rowDivider())
+                }
+            }
+        }
+    }
+
+    private fun widgetRow(
+        inflater: LayoutInflater,
         parent: LinearLayout,
         entry: CardCatalogEntry,
-        added: Boolean,
         viewModel: HiboardViewModel,
     ): View {
-        val row = inflater.inflate(R.layout.item_store_card, parent, false)
-        row.findViewById<TextView>(R.id.storeName).text = entry.name
-        row.findViewById<TextView>(R.id.storeDesc).text = entry.description
-        val action = row.findViewById<TextView>(R.id.storeAction)
-        action.text = if (added) {
-            context.getString(R.string.unsubscribe)
-        } else {
-            context.getString(R.string.subscribe)
-        }
-        action.setOnClickListener {
-            if (added) viewModel.unsubscribe(entry.id) else viewModel.subscribe(entry.id)
-        }
+        val row = inflater.inflate(R.layout.item_widget_row, parent, false)
+        val icon = row.findViewById<ImageView>(R.id.widgetIcon)
+        val look = widgetIcon(entry.engine)
+        icon.setImageResource(look.first)
+        icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
+        icon.backgroundTintList = ColorStateList.valueOf(look.third)
+        row.findViewById<TextView>(R.id.widgetName).text = entry.name
+        row.findViewById<TextView>(R.id.widgetCount).text = context.getString(R.string.store_widget_one)
+        row.setOnClickListener { viewModel.openStoreDetail(entry.id) }
         return row
+    }
+
+    private fun rowDivider(): View {
+        val start = (76 * resources.displayMetrics.density).toInt()
+        return View(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (resources.displayMetrics.density).toInt().coerceAtLeast(1),
+            ).apply { marginStart = start }
+            setBackgroundColor(0x1A000000)
+        }
+    }
+
+    private fun scrollStoreTo(list: LinearLayout, scroll: ScrollView, letter: String) {
+        val target = (0 until list.childCount)
+            .map { list.getChildAt(it) }
+            .firstOrNull { it.tag == "section-$letter" } ?: return
+        scroll.smoothScrollTo(0, target.top)
+    }
+
+    private fun scrollBoardTo(catalogId: String) {
+        val card = binding.subscribedGrid.findCard(catalogId) ?: return
+        val y = (binding.subscribedGrid.top + card.top).coerceAtLeast(0)
+        binding.boardScroll.smoothScrollTo(0, y)
+    }
+
+    private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel) {
+        val entry = DefaultCatalog.byId(state.storeDetailId.orEmpty()) ?: return
+        val added = state.board.subscribed.any { it.catalogId == entry.id }
+        binding.storeDetailTitle.text = entry.groupTitle
+        binding.storeDetailHeadline.text = entry.name
+        binding.storeDetailDesc.text = entry.description
+        binding.storeDetailAdd.text = context.getString(
+            if (added) R.string.store_added else R.string.store_add_to_board,
+        )
+        binding.storeDetailAdd.isEnabled = !added
+        binding.storeDetailAdd.setOnClickListener {
+            if (!added) viewModel.pinFromStore(entry.id)
+        }
+        fillStoreDetailPreview(entry)
+    }
+
+    private fun animateStoreDetail(showDetail: Boolean) {
+        if (showDetail == storeDetailOpen) return
+        if (!storeSheetOpen) {
+            storeDetailOpen = false
+            resetStorePanes(showDetail = false)
+            return
+        }
+        storeDetailOpen = showDetail
+        val list = binding.storeListPane
+        val detail = binding.storeDetailPane
+        list.animate().cancel()
+        detail.animate().cancel()
+        val ease = COUIMoveEaseInterpolator()
+        if (showDetail) {
+            detail.alpha = 0f
+            list.alpha = 1f
+        } else {
+            list.alpha = 0f
+            detail.alpha = 1f
+        }
+        list.isVisible = true
+        detail.isVisible = true
+        if (showDetail) {
+            list.animate()
+                .alpha(0f)
+                .setStartDelay(0)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (!storeDetailOpen) return@withEndAction
+                    list.isVisible = false
+                    list.alpha = 1f
+                }
+                .start()
+            detail.animate()
+                .alpha(1f)
+                .setStartDelay(STORE_FADE_DELAY_MS)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .start()
+        } else {
+            list.animate()
+                .alpha(1f)
+                .setStartDelay(STORE_FADE_DELAY_MS)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .start()
+            detail.animate()
+                .alpha(0f)
+                .setStartDelay(0)
+                .setDuration(STORE_FADE_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (storeDetailOpen) return@withEndAction
+                    detail.isVisible = false
+                    detail.alpha = 1f
+                }
+                .start()
+        }
+        animateStorePeek(showDetail)
+    }
+
+    private fun animateStorePeek(detail: Boolean) {
+        val sheet = binding.storeRoot
+        val target = if (detail) storeDetailPeekMargin() else 0
+        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin ?: 0
+        storePeekAnimator?.cancel()
+        if (from == target) {
+            applyStorePeekMargin(target)
+            return
+        }
+        storePeekAnimator = ValueAnimator.ofInt(from, target).apply {
+            duration = STORE_PEEK_MS
+            interpolator = COUIMoveEaseInterpolator()
+            addUpdateListener { animator ->
+                applyStorePeekMargin(animator.animatedValue as Int)
+            }
+            start()
+        }
+    }
+
+    private fun applyStorePeekMargin(margin: Int) {
+        binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            if (topMargin != margin) topMargin = margin
+        }
+    }
+
+    private fun resetStorePanes(showDetail: Boolean) {
+        storePeekAnimator?.cancel()
+        storePeekAnimator = null
+        binding.storeListPane.animate().cancel()
+        binding.storeDetailPane.animate().cancel()
+        binding.storeListPane.translationY = 0f
+        binding.storeDetailPane.translationY = 0f
+        binding.storeListPane.alpha = 1f
+        binding.storeDetailPane.alpha = 1f
+        binding.storeListPane.isVisible = !showDetail
+        binding.storeDetailPane.isVisible = showDetail
+        applyStorePeekMargin(if (showDetail) storeDetailPeekMargin() else 0)
+    }
+
+    private fun storeDetailPeekMargin(): Int {
+        val density = resources.displayMetrics.density
+        val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
+        return peek + (20 * density).toInt()
+    }
+
+    private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
+        val host = binding.storeDetailPreview
+        host.removeAllViews()
+        fun addPreview() {
+            if (!host.isAttachedToWindow) return
+            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
+                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
+                    .coerceAtLeast(1)
+            val (cardW, cardH) = storePreviewDims(entry, boardWidth, resources.displayMetrics.density)
+            host.removeAllViews()
+            host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
+        }
+        if (host.width > 0) addPreview() else host.post { addPreview() }
+    }
+
+    private fun fillStoreGallery(
+        list: LinearLayout,
+        indexBar: LinearLayout,
+        catalog: List<CardCatalogEntry>,
+        groupId: String,
+        viewModel: HiboardViewModel,
+    ) {
+        val density = resources.displayMetrics.density
+        indexBar.isVisible = false
+        indexBar.removeAllViews()
+        list.clipChildren = false
+        list.clipToPadding = false
+        list.removeAllViews()
+        val padH = (16 * density).toInt()
+        list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+        if (entries.isEmpty()) {
+            val empty = TextView(context).apply {
+                text = context.getString(R.string.store_empty)
+                setTextColor(0xFF8E8E93.toInt())
+                textSize = 15f
+                gravity = Gravity.CENTER
+                setPadding(24, 48, 24, 24)
+            }
+            list.addView(empty)
+            return
+        }
+        val boardWidth = storeGalleryBoardWidth(list)
+        val gap = (12 * density).roundToInt()
+        val pending = mutableListOf<CardCatalogEntry>()
+        fun flushRow() {
+            if (pending.isEmpty()) return
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                clipChildren = false
+                clipToPadding = false
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            pending.forEachIndexed { index, entry ->
+                val block = storeWidgetBlock(row, entry, viewModel, (boardWidth - gap).coerceAtLeast(1))
+                block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (pending.size > 1) {
+                        if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
+                    }
+                }
+                row.addView(block)
+            }
+            if (pending.size == 1) {
+                row.addView(
+                    View(context),
+                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
+                )
+            }
+            list.addView(row)
+            pending.clear()
+        }
+        entries.forEach { entry ->
+            if (entry.size.columns >= 4) {
+                flushRow()
+                list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+            } else {
+                pending.add(entry)
+                if (pending.size == 2) flushRow()
+            }
+        }
+        flushRow()
+    }
+
+    private fun storeGalleryBoardWidth(list: LinearLayout): Int {
+        val pad = list.paddingLeft + list.paddingRight
+        list.width.takeIf { it > pad }?.let { return it - pad }
+        binding.storePager.width.takeIf { it > pad }?.let { return it - pad }
+        return (resources.displayMetrics.widthPixels - pad).coerceAtLeast(1)
+    }
+
+    private fun storeWidgetBlock(
+        parent: ViewGroup,
+        entry: CardCatalogEntry,
+        viewModel: HiboardViewModel,
+        boardWidth: Int,
+    ): View {
+        val density = resources.displayMetrics.density
+        val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
+        val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, parent, false)
+        val openDetail = View.OnClickListener { viewModel.openStoreDetail(entry.id) }
+        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
+        val host = block.findViewById<FrameLayout>(R.id.widgetPreview)
+        host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
+        host.setOnClickListener(openDetail)
+        block.setOnClickListener(openDetail)
+        return block
+    }
+
+    private fun setStoreNavBarContrast(storeOpen: Boolean) {
+        val window = context.findActivity()?.window ?: return
+        WindowInsetsControllerCompat(window, this).isAppearanceLightNavigationBars = storeOpen
+    }
+
+    private fun bindStoreSearchBar(viewModel: HiboardViewModel) {
+        val bar = binding.storeSearchBar
+        bar.setUseResponsivePadding(false)
+        bar.setSearchAnimateType(COUISearchBar.TYPE_NON_INSTANT_SEARCH)
+        bar.searchEditText.doAfterTextChanged { text ->
+            viewModel.setStoreQuery(text?.toString().orEmpty())
+        }
+        bar.functionalButton?.setOnClickListener { viewModel.setStoreSearchOpen(false) }
+        bar.addOnStateChangeListener { from, to ->
+            if (from == COUISearchBar.STATE_EDIT &&
+                to == COUISearchBar.STATE_NORMAL &&
+                viewModel.state.value.storeSearchOpen
+            ) {
+                viewModel.setStoreSearchOpen(false)
+            }
+        }
+    }
+
+    private fun syncStoreSearchBar(open: Boolean) {
+        val bar = binding.storeSearchBar
+        if (open) {
+            bar.post {
+                if (this.viewModel?.state?.value?.storeSearchOpen != true) return@post
+                if (bar.searchState != COUISearchBar.STATE_EDIT) {
+                    bar.changeState(COUISearchBar.STATE_EDIT, true)
+                }
+            }
+        } else if (bar.searchState != COUISearchBar.STATE_NORMAL) {
+            bar.changeState(COUISearchBar.STATE_NORMAL, false)
+        }
+    }
+
+    private fun widgetIcon(engine: CardEngineId): Triple<Int, Int?, Int> {
+        return when (engine) {
+            CardEngineId.Weather -> Triple(R.drawable.ic_weather_sunny, null, 0xFFD6ECFF.toInt())
+            CardEngineId.Notes -> Triple(R.drawable.ic_notes_mark, null, context.getColor(R.color.hiboard_notes_card))
+            CardEngineId.Storage -> Triple(R.drawable.ic_storage_clean, context.getColor(R.color.hiboard_storage_title), Color.WHITE)
+            CardEngineId.Recorder -> Triple(R.drawable.ic_recorder_record, 0xFFE32E27.toInt(), 0xFFFFE8E6.toInt())
+            CardEngineId.Flashlight -> Triple(
+                R.drawable.ic_flashlight,
+                context.getColor(R.color.hiboard_flashlight_icon_off),
+                context.getColor(R.color.hiboard_flashlight_off),
+            )
+            CardEngineId.RecentApps -> Triple(R.drawable.ic_search_dark, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+        }
+    }
+
+    private inner class StorePagerAdapter : RecyclerView.Adapter<StorePagerAdapter.Holder>() {
+        private val tabs = widgetStoreTabs()
+        private var catalog: List<CardCatalogEntry> = emptyList()
+
+        fun submit(entries: List<CardCatalogEntry>) {
+            if (catalog == entries) return
+            catalog = entries
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_store_page, parent, false)
+            view.layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            return Holder(view)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            val vm = viewModel ?: return
+            val groupId = tabs.getOrNull(position)?.first
+            if (groupId == null) {
+                fillStoreSections(
+                    list = holder.list,
+                    indexBar = holder.index,
+                    scroll = holder.scroll,
+                    catalog = catalog,
+                    query = "",
+                    groupId = null,
+                    viewModel = vm,
+                )
+                return
+            }
+            fillStoreGallery(
+                list = holder.list,
+                indexBar = holder.index,
+                catalog = catalog,
+                groupId = groupId,
+                viewModel = vm,
+            )
+        }
+
+        override fun getItemCount(): Int = tabs.size
+
+        inner class Holder(root: View) : RecyclerView.ViewHolder(root) {
+            val scroll: ScrollView = root.findViewById(R.id.pageScroll)
+            val list: LinearLayout = root.findViewById(R.id.pageList)
+            val index: LinearLayout = root.findViewById(R.id.pageIndex)
+        }
+    }
+
+    private companion object {
+        const val CAMERA_PERMISSION = 42
+        const val MIC_PERMISSION = 43
+        const val STORE_SLIDE_IN_MS = 360L
+        const val STORE_SLIDE_OUT_MS = 280L
+        const val STORE_DISMISS_FRACTION = 0.18f
+        const val STORE_DISMISS_VELOCITY = 900f
+        const val STORE_PEEK_MS = 420L
+        const val STORE_FADE_MS = 320L
+        const val STORE_FADE_DELAY_MS = 40L
+        val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }
     }
 }

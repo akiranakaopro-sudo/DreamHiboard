@@ -1,8 +1,11 @@
 package gd.app.hiboard
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -18,6 +21,10 @@ class HiboardActivity : AppCompatActivity() {
     private val viewModel: HiboardViewModel by viewModels { HiboardViewModel.factory() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         val view = HiboardView(this)
         view.bind(viewModel, this)
@@ -27,13 +34,10 @@ class HiboardActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (viewModel.state.value.showStore) {
-                        viewModel.closeStore()
-                    } else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                        isEnabled = true
-                    }
+                    if (viewModel.handleStoreBack()) return
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
                 }
             },
         )
@@ -74,7 +78,7 @@ class HiboardActivity : AppCompatActivity() {
         val card = data.getQueryParameter("card") ?: data.getQueryParameter("id")
         val host = data.host.orEmpty()
         viewModel.applyDeeplink(
-            cardId = card ?: host.takeIf { it in setOf("advice", "weather", "notes", "infoflow", "recent", "flashlight") },
+            cardId = card ?: host.takeIf { it in setOf("weather", "notes", "recent", "flashlight", "storage", "recorder") },
             edit = host == "edit" || data.getBooleanQueryParameter("edit", false),
             store = host == "store" || host == "subscribe",
         )

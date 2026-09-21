@@ -24,4 +24,17 @@
     <color name="hiboard_flashlight_label_on">#FFE7A3</color>
     <color name="hiboard_flashlight_icon_off">#8A97AB</color>
     <color name="hiboard_flashlight_icon_on">#FFD56A</color>
+    <color name="hiboard_storage_card">#FFFFFFFF</color>
+    <color name="hiboard_storage_title">#1C1C1E</color>
+    <color name="hiboard_storage_usage">#8E8E93</color>
+    <color name="hiboard_storage_bar_used">#34C759</color>
+    <color name="hiboard_storage_bar_track">#E8E8ED</color>
+    <color name="hiboard_storage_cleanup_fill">#FFFFFFFF</color>
+    <color name="hiboard_storage_cleanup_stroke">#E4E4EA</color>
+    <color name="hiboard_recorder_card">#FFFFFFFF</color>
+    <color name="hiboard_recorder_title">#1C1C1E</color>
+    <color name="hiboard_recorder_title_idle">#8E8E93</color>
+    <color name="hiboard_recorder_wave">#C8C8CD</color>
+    <color name="hiboard_recorder_tick">#E32E27</color>
+    <color name="hiboard_recorder_flag">#3478F6</color>
 </resources>
