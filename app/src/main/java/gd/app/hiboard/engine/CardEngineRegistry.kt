@@ -23,6 +23,7 @@ class CardEngineRegistry(context: Context) {
     private val notes = NotesRepository(appContext)
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
+    private val recorder = RecorderClient(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Advice to CardEngine { AdviceContent.current() },
         CardEngineId.Weather to CardEngine {
@@ -59,6 +60,14 @@ class CardEngineRegistry(context: Context) {
             CardContent(
                 storageUsedBytes = status.usedBytes,
                 storageTotalBytes = status.totalBytes,
+            )
+        },
+        CardEngineId.Recorder to CardEngine {
+            val status = recorder.status.value
+            CardContent(
+                recorderState = status.state,
+                recorderElapsedMs = status.elapsedMs,
+                recorderBound = true,
             )
         },
     )
@@ -117,10 +126,19 @@ class CardEngineRegistry(context: Context) {
     }
 
     val flashlightOn = flashlight.on
+    val recorderStatus = recorder.status
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
 
     fun openSystemManager(): Intent? = storage.openSystemManager()
+
+    fun sendRecorder(command: RecorderCommand): RecorderSendResult = recorder.send(command)
+
+    fun recorderLive() = recorder.live()
+
+    fun openRecorder(): Intent? = recorder.openRecorder()
+
+    fun syncRecorder() = recorder.sync()
 
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
         adviceGreeting = b.adviceGreeting.ifBlank { a.adviceGreeting },
@@ -134,6 +152,9 @@ class CardEngineRegistry(context: Context) {
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,
         storageTotalBytes = if (b.storageTotalBytes > 0L) b.storageTotalBytes else a.storageTotalBytes,
+        recorderState = if (b.recorderBound) b.recorderState else a.recorderState,
+        recorderElapsedMs = if (b.recorderBound) b.recorderElapsedMs else a.recorderElapsedMs,
+        recorderBound = a.recorderBound || b.recorderBound,
         infoFlow = b.infoFlow.ifEmpty { a.infoFlow },
         recentApps = b.recentApps.ifEmpty { a.recentApps },
     )

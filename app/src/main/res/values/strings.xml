@@ -26,4 +26,12 @@
     <string name="flashlight_unavailable">No flash</string>
     <string name="storage_label">Storage</string>
     <string name="storage_cleanup">Clean up</string>
+    <string name="recorder_label">Recorder</string>
+    <string name="recorder_start">Start recording</string>
+    <string name="recorder_pause">Pause recording</string>
+    <string name="recorder_resume">Resume recording</string>
+    <string name="recorder_mark">Mark</string>
+    <string name="recorder_save">Save recording</string>
+    <string name="recorder_flag_new">Mark %d</string>
+    <string name="recorder_saved">Saved</string>
 </resources>

@@ -13,9 +13,14 @@ import com.coui.appcompat.cardview.COUICardView
 import com.coui.appcompat.R as CouiR
 import gd.app.hiboard.R
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
+import gd.app.hiboard.engine.RecorderCommand
+import gd.app.hiboard.engine.RecorderStatus
+import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStorageUsage
+import gd.app.hiboard.engine.recorderPrimaryCommand
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
 
 class CardBinder(
@@ -23,6 +28,9 @@ class CardBinder(
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
     private val onOpenStorage: () -> Unit,
+    private val onRecorderCommand: (RecorderCommand) -> Unit,
+    private val recorderLive: () -> RecorderStatus,
+    private val onOpenRecorder: () -> Unit,
     private val onOpenApp: (ShortcutApp) -> Unit,
     private val onRemove: (String) -> Unit,
     private val onAdd: (String) -> Unit,
@@ -40,6 +48,7 @@ class CardBinder(
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
+            CardEngineId.Recorder -> bindRecorder(inflater, root, body, state)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -200,6 +209,79 @@ class CardBinder(
         view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
         view.findViewById<View>(R.id.storageCleanup).setOnClickListener(open)
         root.setOnClickListener(open)
+    }
+
+    private fun bindRecorder(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val density = body.resources.displayMetrics.density
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_recorder_card))
+            setContentPadding(
+                (10 * density).toInt(),
+                (10 * density).toInt(),
+                (10 * density).toInt(),
+                (8 * density).toInt(),
+            )
+            clipToPadding = false
+        }
+        (root as? ViewGroup)?.clipChildren = false
+        body.clipChildren = false
+        body.clipToPadding = false
+        val view = inflater.inflate(R.layout.card_recorder, body, true)
+        val recorderState = state.content.recorderState
+        val live = recorderState != RecorderUiState.Idle
+        val time = view.findViewById<TextView>(R.id.recorderTime)
+        time.setTextColor(
+            body.context.getColor(
+                if (recorderState == RecorderUiState.Idle) {
+                    R.color.hiboard_recorder_title_idle
+                } else {
+                    R.color.hiboard_recorder_title
+                },
+            ),
+        )
+        time.text = formatRecorderTime(state.content.recorderElapsedMs)
+        view.findViewById<RecorderWaveView>(R.id.recorderWave).bind(
+            recording = recorderState == RecorderUiState.Recording,
+            sessionActive = live,
+            timeView = time,
+            source = recorderLive,
+        )
+        val mark = view.findViewById<View>(R.id.recorderMark)
+        val save = view.findViewById<View>(R.id.recorderSave)
+        val primary = view.findViewById<ImageView>(R.id.recorderPrimary)
+        mark.visibility = if (live) View.VISIBLE else View.INVISIBLE
+        save.visibility = if (live) View.VISIBLE else View.INVISIBLE
+        mark.isClickable = live
+        save.isClickable = live
+        when (recorderState) {
+            RecorderUiState.Recording -> {
+                primary.setImageResource(R.drawable.ic_recorder_pause)
+                primary.contentDescription = body.context.getString(R.string.recorder_pause)
+            }
+            RecorderUiState.Paused -> {
+                primary.setImageResource(R.drawable.ic_recorder_resume)
+                primary.contentDescription = body.context.getString(R.string.recorder_resume)
+            }
+            RecorderUiState.Idle -> {
+                primary.setImageResource(R.drawable.ic_recorder_record)
+                primary.contentDescription = body.context.getString(R.string.recorder_start)
+            }
+        }
+        val open = View.OnClickListener { onOpenRecorder() }
+        view.findViewById<View>(R.id.recorderRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+        primary.setOnClickListener {
+            onRecorderCommand(recorderPrimaryCommand(recorderState))
+        }
+        mark.setOnClickListener { onRecorderCommand(RecorderCommand.Mark) }
+        save.setOnClickListener { button ->
+            button.post { onRecorderCommand(RecorderCommand.Save) }
+        }
     }
 }
 

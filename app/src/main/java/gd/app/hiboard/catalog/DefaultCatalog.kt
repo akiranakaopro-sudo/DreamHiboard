@@ -62,6 +62,16 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "recorder",
+            groupId = GROUP_TOOLS,
+            groupTitle = "Tools",
+            name = "Recorder",
+            description = "Start, pause, mark, and save with DreamRecorder. Tap the card to open Recorder.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Recorder,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
             id = "flashlight",
             groupId = GROUP_TOOLS,
             groupTitle = "Tools",

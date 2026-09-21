@@ -8,6 +8,8 @@ import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.CardEngineRegistry
+import gd.app.hiboard.engine.RecorderCommand
+import gd.app.hiboard.engine.RecorderSendResult
 import gd.app.hiboard.host.HostEvent
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardAction
@@ -52,6 +54,15 @@ class HiboardViewModel(
                 _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
             }
         }
+        viewModelScope.launch {
+            var lastState = engines.recorderStatus.value.state
+            engines.recorderStatus.collect { status ->
+                if (status.state != lastState) {
+                    lastState = status.state
+                    _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+                }
+            }
+        }
     }
 
     fun onHostEvent(event: HostEvent) {
@@ -62,6 +73,7 @@ class HiboardViewModel(
             }
             HostEvent.Enter, HostEvent.Resume -> {
                 engines.refreshRecents()
+                engines.syncRecorder()
                 _state.update {
                     it.copy(
                         screenVisible = true,
@@ -151,6 +163,18 @@ class HiboardViewModel(
     fun toggleFlashlight() = engines.toggleFlashlight()
 
     fun openSystemManager() = engines.openSystemManager()
+
+    fun sendRecorder(command: RecorderCommand): RecorderSendResult {
+        val result = engines.sendRecorder(command)
+        if (command != RecorderCommand.Mark) {
+            _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+        }
+        return result
+    }
+
+    fun recorderLive() = engines.recorderLive()
+
+    fun openRecorder() = engines.openRecorder()
 
     fun openQuickSearch() = engines.openQuickSearch()
 

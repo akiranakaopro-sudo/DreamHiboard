@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recorderRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:focusable="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/recorderTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFeatureSettings="tnum"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:textColor="@color/hiboard_recorder_title_idle"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <gd.app.hiboard.ui.RecorderWaveView
+        android:id="@+id/recorderWave"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="2dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp">
+
+        <ImageButton
+            android:id="@+id/recorderMark"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/recorder_mark"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_recorder_mark" />
+
+        <ImageButton
+            android:id="@+id/recorderPrimary"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/recorder_start"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_recorder_record" />
+
+        <ImageButton
+            android:id="@+id/recorderSave"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/recorder_save"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_recorder_save" />
+    </LinearLayout>
+</LinearLayout>

@@ -29,6 +29,13 @@ enum class CardEngineId {
     RecentApps,
     Flashlight,
     Storage,
+    Recorder,
+}
+
+enum class RecorderUiState {
+    Idle,
+    Recording,
+    Paused,
 }
 
 enum class CardAction {
@@ -99,6 +106,9 @@ data class CardContent(
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,
     val storageTotalBytes: Long = 0L,
+    val recorderState: RecorderUiState = RecorderUiState.Idle,
+    val recorderElapsedMs: Long = 0L,
+    val recorderBound: Boolean = false,
     val infoFlow: List<InfoFlowItem> = emptyList(),
     val recentApps: List<ShortcutApp> = emptyList(),
 )

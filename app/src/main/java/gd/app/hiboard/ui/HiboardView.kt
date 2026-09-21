@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
@@ -23,6 +24,9 @@ import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.databinding.ViewHiboardBinding
 import gd.app.hiboard.engine.FlashlightToggle
+import gd.app.hiboard.engine.RecorderCommand
+import gd.app.hiboard.engine.RecorderSendResult
+import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
@@ -61,6 +65,9 @@ class HiboardView @JvmOverloads constructor(
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
             onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
+            onRecorderCommand = { command -> sendRecorder(viewModel, command) },
+            recorderLive = viewModel::recorderLive,
+            onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,
@@ -178,8 +185,34 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    private fun sendRecorder(viewModel: HiboardViewModel, command: RecorderCommand) {
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        when (val result = viewModel.sendRecorder(command)) {
+            RecorderSendResult.NeedsMic -> {
+                val activity = context.findActivity() ?: return
+                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MIC_PERMISSION)
+                }
+            }
+            is RecorderSendResult.Marked -> {
+                Toast.makeText(
+                    context,
+                    "${result.text}  ${formatRecorderTime(result.timeMs)}",
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+            RecorderSendResult.Saved -> {
+                Toast.makeText(context, R.string.recorder_saved, Toast.LENGTH_SHORT).show()
+            }
+            RecorderSendResult.Sent, RecorderSendResult.Failed -> Unit
+        }
+    }
+
     private companion object {
         const val CAMERA_PERMISSION = 42
+        const val MIC_PERMISSION = 43
     }
 
     private fun render(

@@ -31,4 +31,10 @@
     <color name="hiboard_storage_bar_track">#E8E8ED</color>
     <color name="hiboard_storage_cleanup_fill">#FFFFFFFF</color>
     <color name="hiboard_storage_cleanup_stroke">#E4E4EA</color>
+    <color name="hiboard_recorder_card">#FFFFFFFF</color>
+    <color name="hiboard_recorder_title">#1C1C1E</color>
+    <color name="hiboard_recorder_title_idle">#8E8E93</color>
+    <color name="hiboard_recorder_wave">#C8C8CD</color>
+    <color name="hiboard_recorder_tick">#E32E27</color>
+    <color name="hiboard_recorder_flag">#3478F6</color>
 </resources>
