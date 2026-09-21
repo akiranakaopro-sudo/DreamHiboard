@@ -182,7 +182,7 @@
                     android:layout_gravity="center"
                     android:text="@string/catalog_title"
                     android:textColor="@color/hiboard_store_title"
-                    android:textSize="17sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <ImageView
@@ -266,18 +266,18 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:paddingEnd="28dp"
+                            android:paddingEnd="36dp"
                             android:paddingBottom="24dp" />
                     </com.coui.appcompat.scrollview.COUIScrollView>
 
                     <LinearLayout
                         android:id="@+id/storeIndex"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="end"
-                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical"
-                        android:paddingEnd="8dp"
+                        android:paddingEnd="16dp"
                         android:paddingStart="8dp" />
                 </FrameLayout>
             </FrameLayout>

@@ -417,14 +417,16 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun storeChip(label: String, last: Boolean, onClick: () -> Unit): TextView {
-        val padV = (7 * resources.displayMetrics.density).toInt()
-        val gap = (8 * resources.displayMetrics.density).toInt()
+        val density = resources.displayMetrics.density
+        val padV = (11 * density).toInt()
+        val gap = (8 * density).toInt()
         return TextView(context).apply {
             text = label
             textSize = 14f
             gravity = Gravity.CENTER
             maxLines = 1
             includeFontPadding = false
+            minHeight = (40 * density).toInt()
             ellipsize = android.text.TextUtils.TruncateAt.END
             setPadding(0, padV, 0, padV)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
@@ -441,14 +443,23 @@ class HiboardView @JvmOverloads constructor(
         used: Set<String>,
     ) {
         indexBar.removeAllViews()
-        INDEX_LETTERS.filter { it in used }.forEach { letter ->
+        val density = resources.displayMetrics.density
+        INDEX_LETTERS.forEach { letter ->
             val label = TextView(context).apply {
                 text = letter
-                textSize = 11f
+                textSize = 13f
                 gravity = Gravity.CENTER
-                minWidth = (16 * resources.displayMetrics.density).toInt()
-                setTextColor(context.getColor(R.color.hiboard_store_title))
-                setPadding(0, (2 * resources.displayMetrics.density).toInt(), 0, 0)
+                includeFontPadding = false
+                minWidth = (18 * density).toInt()
+                setTextColor(
+                    if (letter in used) context.getColor(R.color.hiboard_store_title)
+                    else 0xFF8E8E93.toInt(),
+                )
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                setPadding(0, 0, 0, 0)
                 setOnClickListener { scrollStoreTo(list, scroll, letter) }
             }
             indexBar.addView(label)
