@@ -609,6 +609,11 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun viewFor(instanceId: String): View? =
         cardViews.firstOrNull { it.tag == instanceId }
 
+    fun findCard(catalogId: String): View? {
+        val instanceId = cards.firstOrNull { it.catalogId == catalogId }?.instanceId ?: return null
+        return viewFor(instanceId)
+    }
+
     private fun syncAddSlots() {
         addSlots = if (isDragging || cards.isEmpty()) {
             emptyList()

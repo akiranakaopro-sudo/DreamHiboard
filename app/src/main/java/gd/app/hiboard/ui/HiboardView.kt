@@ -22,6 +22,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.coui.appcompat.animation.COUIEaseInterpolator
 import com.coui.appcompat.dialog.COUIAlertDialogBuilder
 import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
@@ -52,6 +53,7 @@ class HiboardView @JvmOverloads constructor(
     private var lastGridKey: Any? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
+    private var storeSheetOpen = false
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
 
@@ -234,19 +236,20 @@ class HiboardView @JvmOverloads constructor(
         viewModel: HiboardViewModel,
         binder: CardBinder,
     ) {
-        binding.boardRoot.isVisible = !state.showStore
-        binding.storeRoot.isVisible = state.showStore
-        binding.storeListPane.isVisible = state.showStore && state.storeDetailId == null
-        binding.storeDetailPane.isVisible = state.showStore && state.storeDetailId != null
-        binding.storeClose.isVisible = !state.storeSearchOpen
-        binding.storeTitle.isVisible = !state.storeSearchOpen
-        binding.storeSearch.isVisible = !state.storeSearchOpen
-        binding.storeSearchBack.isVisible = state.storeSearchOpen
-        binding.storeSearchField.isVisible = state.storeSearchOpen
-        binding.storeChipScroll.isVisible = !state.storeSearchOpen
-        if (state.storeSearchOpen && binding.storeSearchField.text.toString() != state.storeQuery) {
-            binding.storeSearchField.setText(state.storeQuery)
-            binding.storeSearchField.setSelection(state.storeQuery.length)
+        animateStoreSheet(state.showStore)
+        if (state.showStore) {
+            binding.storeListPane.isVisible = state.storeDetailId == null
+            binding.storeDetailPane.isVisible = state.storeDetailId != null
+            binding.storeClose.isVisible = !state.storeSearchOpen
+            binding.storeTitle.isVisible = !state.storeSearchOpen
+            binding.storeSearch.isVisible = !state.storeSearchOpen
+            binding.storeSearchBack.isVisible = state.storeSearchOpen
+            binding.storeSearchField.isVisible = state.storeSearchOpen
+            binding.storeChipScroll.isVisible = !state.storeSearchOpen
+            if (state.storeSearchOpen && binding.storeSearchField.text.toString() != state.storeQuery) {
+                binding.storeSearchField.setText(state.storeQuery)
+                binding.storeSearchField.setSelection(state.storeQuery.length)
+            }
         }
         if (state.storeSearchOpen != lastStoreSearchOpen) {
             lastStoreSearchOpen = state.storeSearchOpen
@@ -264,13 +267,19 @@ class HiboardView @JvmOverloads constructor(
             state.boardReady && state.board.subscribed.none { it.canEdit }
         binding.subscribedGrid.isVisible = state.board.subscribed.isNotEmpty()
         binding.recentAppsHeader.isVisible =
-            !state.showStore && state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
+            state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val gridKey = listOf(state.board, state.editMode, state.content)
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
+            }
+        }
+        if (!state.showStore) {
+            state.revealCatalogId?.let { catalogId ->
+                binding.subscribedGrid.post { scrollBoardTo(catalogId) }
+                viewModel.consumeReveal()
             }
         }
         val storeKey = listOf(
@@ -286,6 +295,43 @@ class HiboardView @JvmOverloads constructor(
             bindStore(state, viewModel, binder)
         }
         if (!state.showStore) lastStoreKey = null
+    }
+
+    private fun animateStoreSheet(show: Boolean) {
+        val sheet = binding.storeRoot
+        if (show == storeSheetOpen) return
+        storeSheetOpen = show
+        sheet.animate().cancel()
+        val distance = sheet.height.takeIf { it > 0 }?.toFloat()
+            ?: height.takeIf { it > 0 }?.toFloat()
+            ?: resources.displayMetrics.heightPixels.toFloat()
+        val ease = COUIEaseInterpolator()
+        if (show) {
+            if (sheet.translationY == 0f) sheet.translationY = distance
+            sheet.isVisible = true
+            fun slideUp() {
+                if (!storeSheetOpen) return
+                val from = sheet.height.takeIf { it > 0 }?.toFloat() ?: distance
+                if (sheet.translationY == 0f) sheet.translationY = from
+                sheet.animate()
+                    .translationY(0f)
+                    .setDuration(STORE_SLIDE_IN_MS)
+                    .setInterpolator(ease)
+                    .start()
+            }
+            if (sheet.height == 0) sheet.post { slideUp() } else slideUp()
+        } else {
+            sheet.animate()
+                .translationY(distance)
+                .setDuration(STORE_SLIDE_OUT_MS)
+                .setInterpolator(ease)
+                .withEndAction {
+                    if (storeSheetOpen) return@withEndAction
+                    sheet.isVisible = false
+                    sheet.translationY = 0f
+                }
+                .start()
+        }
     }
 
     private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
@@ -414,6 +460,12 @@ class HiboardView @JvmOverloads constructor(
         binding.storeScroll.smoothScrollTo(0, target.top)
     }
 
+    private fun scrollBoardTo(catalogId: String) {
+        val card = binding.subscribedGrid.findCard(catalogId) ?: return
+        val y = (binding.subscribedGrid.top + card.top).coerceAtLeast(0)
+        binding.boardScroll.smoothScrollTo(0, y)
+    }
+
     private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
         val entry = DefaultCatalog.byId(state.storeDetailId.orEmpty()) ?: return
         val added = state.board.subscribed.any { it.catalogId == entry.id }
@@ -505,6 +557,8 @@ class HiboardView @JvmOverloads constructor(
     private companion object {
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
+        const val STORE_SLIDE_IN_MS = 360L
+        const val STORE_SLIDE_OUT_MS = 280L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }
     }
 }

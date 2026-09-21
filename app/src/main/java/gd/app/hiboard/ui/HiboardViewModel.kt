@@ -18,6 +18,9 @@ import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
+import gd.app.hiboard.ui.grid.insertFillingEmptyTwoByTwo
+import gd.app.hiboard.ui.grid.pinLockedCards
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +40,7 @@ data class HiboardUiState(
     val storeGroupId: String? = null,
     val storeDetailId: String? = null,
     val storeSearchOpen: Boolean = false,
+    val revealCatalogId: String? = null,
 )
 
 class HiboardViewModel(
@@ -181,8 +185,40 @@ class HiboardViewModel(
     }
 
     fun pinFromStore(catalogId: String) {
+        val entry = DefaultCatalog.byId(catalogId) ?: return
+        _state.update { state ->
+            val subscribed = if (state.board.subscribed.any { it.catalogId == catalogId }) {
+                state.board.subscribed
+            } else {
+                val incoming = CardInstance(
+                    instanceId = UUID.nameUUIDFromBytes("${CardArea.Subscribe}:$catalogId".toByteArray()).toString(),
+                    catalogId = entry.id,
+                    displayName = entry.name,
+                    size = entry.size,
+                    area = CardArea.Subscribe,
+                    engine = entry.engine,
+                    canDrag = !entry.locked,
+                    canEdit = !entry.locked,
+                    order = state.board.subscribed.size,
+                )
+                pinLockedCards(insertFillingEmptyTwoByTwo(state.board.subscribed, incoming))
+            }
+            state.copy(
+                board = state.board.copy(subscribed = subscribed),
+                showStore = false,
+                editMode = false,
+                storeQuery = "",
+                storeGroupId = null,
+                storeDetailId = null,
+                storeSearchOpen = false,
+                revealCatalogId = catalogId,
+            )
+        }
         subscribe(catalogId)
-        closeStore()
+    }
+
+    fun consumeReveal() {
+        _state.update { if (it.revealCatalogId == null) it else it.copy(revealCatalogId = null) }
     }
 
     fun subscribe(catalogId: String) {
