@@ -32,6 +32,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.coui.appcompat.animation.COUIEaseInterpolator
+import com.coui.appcompat.animation.COUIMoveEaseInterpolator
 import com.coui.appcompat.dialog.COUIAlertDialogBuilder
 import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
@@ -609,7 +610,7 @@ class HiboardView @JvmOverloads constructor(
         val detail = binding.storeDetailPane
         list.animate().cancel()
         detail.animate().cancel()
-        val ease = COUIEaseInterpolator()
+        val ease = COUIMoveEaseInterpolator()
         if (showDetail) {
             detail.alpha = 0f
             list.alpha = 1f
@@ -622,6 +623,7 @@ class HiboardView @JvmOverloads constructor(
         if (showDetail) {
             list.animate()
                 .alpha(0f)
+                .setStartDelay(0)
                 .setDuration(STORE_FADE_MS)
                 .setInterpolator(ease)
                 .withEndAction {
@@ -632,17 +634,20 @@ class HiboardView @JvmOverloads constructor(
                 .start()
             detail.animate()
                 .alpha(1f)
+                .setStartDelay(STORE_FADE_DELAY_MS)
                 .setDuration(STORE_FADE_MS)
                 .setInterpolator(ease)
                 .start()
         } else {
             list.animate()
                 .alpha(1f)
+                .setStartDelay(STORE_FADE_DELAY_MS)
                 .setDuration(STORE_FADE_MS)
                 .setInterpolator(ease)
                 .start()
             detail.animate()
                 .alpha(0f)
+                .setStartDelay(0)
                 .setDuration(STORE_FADE_MS)
                 .setInterpolator(ease)
                 .withEndAction {
@@ -665,8 +670,8 @@ class HiboardView @JvmOverloads constructor(
             return
         }
         storePeekAnimator = ValueAnimator.ofInt(from, target).apply {
-            duration = STORE_SLIDE_IN_MS
-            interpolator = COUIEaseInterpolator()
+            duration = STORE_PEEK_MS
+            interpolator = COUIMoveEaseInterpolator()
             addUpdateListener { animator ->
                 applyStorePeekMargin(animator.animatedValue as Int)
             }
@@ -920,7 +925,9 @@ class HiboardView @JvmOverloads constructor(
         const val MIC_PERMISSION = 43
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
-        const val STORE_FADE_MS = 180L
+        const val STORE_PEEK_MS = 420L
+        const val STORE_FADE_MS = 320L
+        const val STORE_FADE_DELAY_MS = 40L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }
     }
 }
