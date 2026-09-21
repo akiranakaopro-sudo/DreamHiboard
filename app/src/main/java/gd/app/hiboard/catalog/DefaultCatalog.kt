@@ -5,13 +5,15 @@ import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
 
 object DefaultCatalog {
-    const val GROUP_TOOLS = "tools"
+    const val GROUP_FEATURES = "features"
+    const val GROUP_WEATHER = "weather"
+    const val GROUP_TOOLS = GROUP_FEATURES
 
     val entries: List<CardCatalogEntry> = listOf(
         CardCatalogEntry(
             id = "recent",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "Recent apps",
             description = "Last opened app first, then Dialer, Contacts, Messages, Camera, and Settings.",
             size = CardSize.FullByOne,
@@ -21,8 +23,8 @@ object DefaultCatalog {
         ),
         CardCatalogEntry(
             id = "weather",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
             name = "Weather",
             description = "Local 2×4 weather scene. Push your own snapshot through the weather API.",
             size = CardSize.FullByTwo,
@@ -31,8 +33,8 @@ object DefaultCatalog {
         ),
         CardCatalogEntry(
             id = "notes",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "All notes",
             description = "Latest note from DreamNote. Tap to open the list, plus to write a new note.",
             size = CardSize.TwoByTwo,
@@ -41,8 +43,8 @@ object DefaultCatalog {
         ),
         CardCatalogEntry(
             id = "storage",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "Storage",
             description = "RAM used and free. Tap to open System Manager.",
             size = CardSize.TwoByTwo,
@@ -51,8 +53,8 @@ object DefaultCatalog {
         ),
         CardCatalogEntry(
             id = "recorder",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "Recorder",
             description = "Start, pause, mark, and save with DreamRecorder. Tap the card to open Recorder.",
             size = CardSize.TwoByTwo,
@@ -61,8 +63,8 @@ object DefaultCatalog {
         ),
         CardCatalogEntry(
             id = "flashlight",
-            groupId = GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
             name = "Flashlight",
             description = "Tap to turn the torch on or off. Uses the rear camera flash.",
             size = CardSize.TwoByTwo,

@@ -228,24 +228,16 @@
                     android:visibility="gone" />
             </FrameLayout>
 
-            <HorizontalScrollView
-                android:id="@+id/storeChipScroll"
+            <LinearLayout
+                android:id="@+id/storeChips"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clipToPadding="false"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingStart="16dp"
                 android:paddingTop="4dp"
                 android:paddingEnd="16dp"
-                android:paddingBottom="8dp"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/storeChips"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                android:paddingBottom="8dp" />
 
             <FrameLayout
                 android:layout_width="match_parent"

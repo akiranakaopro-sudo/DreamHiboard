@@ -32,6 +32,14 @@ fun widgetStoreSections(
         .map { WidgetStoreSection(it.key, it.value) }
 }
 
+fun widgetStoreTabs(): List<Pair<String?, String>> {
+    return listOf(
+        null to "All",
+        DefaultCatalog.GROUP_FEATURES to "Features",
+        DefaultCatalog.GROUP_WEATHER to "Weather",
+    )
+}
+
 fun widgetStoreGroups(catalog: List<CardCatalogEntry>): List<Pair<String, String>> {
     return catalog.filter { !it.locked }
         .map { it.groupId to it.groupTitle }

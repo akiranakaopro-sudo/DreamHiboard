@@ -10,6 +10,8 @@
     <string name="catalog_title">Widgets</string>
     <string name="store_search_hint">Search</string>
     <string name="store_filter_all">All</string>
+    <string name="store_filter_features">Features</string>
+    <string name="store_filter_weather">Weather</string>
     <string name="store_widget_one">1 widget</string>
     <string name="store_widget_many">%d widgets</string>
     <string name="store_added">Added</string>

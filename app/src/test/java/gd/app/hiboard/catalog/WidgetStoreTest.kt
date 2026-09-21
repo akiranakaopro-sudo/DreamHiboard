@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WidgetStoreTest {
-    private val weather = entry("weather", "Weather")
+    private val weather = entry("weather", "Weather", groupId = DefaultCatalog.GROUP_WEATHER)
     private val notes = entry("notes", "All notes")
     private val storage = entry("storage", "Storage")
     private val locked = entry("recent", "Recent apps", locked = true)
@@ -29,9 +29,30 @@ class WidgetStoreTest {
             widgetStoreSections(catalog, query = "wea").flatMap { it.entries }.map { it.name },
         )
         assertEquals(
+            listOf("Weather"),
+            widgetStoreSections(catalog, groupId = DefaultCatalog.GROUP_WEATHER)
+                .flatMap { it.entries }
+                .map { it.name },
+        )
+        assertEquals(
+            listOf("All notes", "Storage"),
+            widgetStoreSections(catalog, groupId = DefaultCatalog.GROUP_FEATURES)
+                .flatMap { it.entries }
+                .map { it.name },
+        )
+        assertEquals(
             emptyList<String>(),
             widgetStoreSections(catalog, groupId = "missing").flatMap { it.entries }.map { it.name },
         )
+    }
+
+    @Test
+    fun tabsAreAllFeaturesWeather() {
+        assertEquals(
+            listOf(null, DefaultCatalog.GROUP_FEATURES, DefaultCatalog.GROUP_WEATHER),
+            widgetStoreTabs().map { it.first },
+        )
+        assertEquals(listOf("All", "Features", "Weather"), widgetStoreTabs().map { it.second })
     }
 
     @Test
@@ -40,11 +61,16 @@ class WidgetStoreTest {
         assertEquals("3 widgets", widgetCountLabel(3))
     }
 
-    private fun entry(id: String, name: String, locked: Boolean = false): CardCatalogEntry {
+    private fun entry(
+        id: String,
+        name: String,
+        locked: Boolean = false,
+        groupId: String = DefaultCatalog.GROUP_FEATURES,
+    ): CardCatalogEntry {
         return CardCatalogEntry(
             id = id,
-            groupId = DefaultCatalog.GROUP_TOOLS,
-            groupTitle = "Tools",
+            groupId = groupId,
+            groupTitle = if (groupId == DefaultCatalog.GROUP_WEATHER) "Weather" else "Features",
             name = name,
             description = name,
             size = CardSize.TwoByTwo,

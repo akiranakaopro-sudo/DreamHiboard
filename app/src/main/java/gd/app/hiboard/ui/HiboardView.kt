@@ -28,7 +28,7 @@ import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
-import gd.app.hiboard.catalog.widgetStoreGroups
+import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.databinding.ViewHiboardBinding
 import gd.app.hiboard.engine.FlashlightToggle
@@ -245,7 +245,7 @@ class HiboardView @JvmOverloads constructor(
             binding.storeSearch.isVisible = !state.storeSearchOpen
             binding.storeSearchBack.isVisible = state.storeSearchOpen
             binding.storeSearchField.isVisible = state.storeSearchOpen
-            binding.storeChipScroll.isVisible = !state.storeSearchOpen
+            binding.storeChips.isVisible = !state.storeSearchOpen
             if (state.storeSearchOpen && binding.storeSearchField.text.toString() != state.storeQuery) {
                 binding.storeSearchField.setText(state.storeQuery)
                 binding.storeSearchField.setSelection(state.storeQuery.length)
@@ -342,37 +342,45 @@ class HiboardView @JvmOverloads constructor(
 
     private fun bindStoreChips(state: HiboardUiState, viewModel: HiboardViewModel) {
         val chips = binding.storeChips
-        if (chips.childCount == 0) {
-            chips.addView(storeChip(context.getString(R.string.store_filter_all)) {
-                viewModel.setStoreGroup(null)
-            })
-            widgetStoreGroups(state.catalog).forEach { (id, title) ->
-                chips.addView(storeChip(title) { viewModel.setStoreGroup(id) })
+        val tabs = widgetStoreTabs()
+        if (chips.childCount != tabs.size) {
+            chips.removeAllViews()
+            tabs.forEachIndexed { index, (id, _) ->
+                val title = context.getString(
+                    when (id) {
+                        DefaultCatalog.GROUP_FEATURES -> R.string.store_filter_features
+                        DefaultCatalog.GROUP_WEATHER -> R.string.store_filter_weather
+                        else -> R.string.store_filter_all
+                    },
+                )
+                chips.addView(storeChip(title, last = index == tabs.lastIndex) {
+                    viewModel.setStoreGroup(id)
+                })
             }
         }
         val selected = state.storeGroupId
         for (index in 0 until chips.childCount) {
             val chip = chips.getChildAt(index) as TextView
-            val groupId = if (index == 0) null else widgetStoreGroups(state.catalog).getOrNull(index - 1)?.first
-            val on = groupId == selected
+            val on = tabs.getOrNull(index)?.first == selected
             chip.setBackgroundResource(if (on) R.drawable.bg_store_chip_on else R.drawable.bg_store_chip_off)
             chip.setTextColor(context.getColor(R.color.hiboard_store_title))
         }
     }
 
-    private fun storeChip(label: String, onClick: () -> Unit): TextView {
-        val padH = (14 * resources.displayMetrics.density).toInt()
-        val padV = (6 * resources.displayMetrics.density).toInt()
+    private fun storeChip(label: String, last: Boolean, onClick: () -> Unit): TextView {
+        val padV = (7 * resources.displayMetrics.density).toInt()
         val gap = (8 * resources.displayMetrics.density).toInt()
         return TextView(context).apply {
             text = label
             textSize = 14f
-            setPadding(padH, padV, padH, padV)
+            gravity = Gravity.CENTER
+            maxLines = 1
             includeFontPadding = false
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            ).apply { marginEnd = gap }
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, padV, 0, padV)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (!last) marginEnd = gap
+            }
             setOnClickListener { onClick() }
         }
     }
