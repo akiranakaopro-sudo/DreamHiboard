@@ -117,6 +117,43 @@ class LocalRecorder(context: Context) {
         return mark
     }
 
+    /**
+     * Stop the local MediaRecorder so the MPEG-4 file is finalized, without publishing.
+     * Sound Recorder then appends onto this clip.
+     */
+    fun releaseForHandoff(): RecorderHandoff? {
+        if (state == RecorderUiState.Idle) return null
+        val file = outputFile
+        val mr = recorder
+        val duration = elapsedMs()
+        val savedMarks = marks.toList()
+        val paused = state == RecorderUiState.Paused
+        state = RecorderUiState.Idle
+        startedAtRealtime = 0L
+        accumulatedMs = 0L
+        lastAmplitude = 0f
+        recorder = null
+        outputFile = null
+        marks.clear()
+        try {
+            mr?.stop()
+        } catch (_: Exception) {
+        }
+        runCatching { mr?.reset() }
+        runCatching { mr?.release() }
+        if (file == null || !file.exists() || file.length() <= 0L) {
+            file?.delete()
+            return null
+        }
+        return RecorderHandoff(
+            file = file,
+            durationMs = duration.coerceAtLeast(0L),
+            paused = paused,
+            marksJson = encodeMarks(savedMarks),
+            markTimes = savedMarks.map { it.timeMs },
+        )
+    }
+
     fun save(): Boolean {
         if (state == RecorderUiState.Idle) return true
         val file = outputFile
@@ -164,8 +201,7 @@ class LocalRecorder(context: Context) {
         }
     }
 
-    private fun persistMarks(audio: File, savedMarks: List<RecorderMark>) {
-        if (savedMarks.isEmpty()) return
+    private fun encodeMarks(savedMarks: List<RecorderMark>): String {
         val arr = JSONArray()
         savedMarks.forEach { mark ->
             arr.put(
@@ -176,7 +212,12 @@ class LocalRecorder(context: Context) {
                     .put("picturePath", ""),
             )
         }
-        val payload = arr.toString()
+        return arr.toString()
+    }
+
+    private fun persistMarks(audio: File, savedMarks: List<RecorderMark>) {
+        if (savedMarks.isEmpty()) return
+        val payload = encodeMarks(savedMarks)
         if (!importViaRecorder(audio, payload)) {
             writeRecorderOwnedSidecar(audio, payload)
         }
@@ -311,3 +352,11 @@ class LocalRecorder(context: Context) {
         }
     }
 }
+
+data class RecorderHandoff(
+    val file: File,
+    val durationMs: Long,
+    val paused: Boolean,
+    val marksJson: String,
+    val markTimes: List<Long>,
+)

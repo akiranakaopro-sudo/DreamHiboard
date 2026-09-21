@@ -6,14 +6,20 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import gd.app.hiboard.R
 import gd.app.hiboard.model.RecorderUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 enum class RecorderCommand {
     Start,
@@ -65,8 +71,10 @@ fun formatRecorderTime(elapsedMs: Long): String {
 
 internal const val RECORDER_PACKAGE = "gd.app.soundrecorder"
 internal const val RECORDER_SERVICE = "gd.app.soundrecorder.recorderservice.RecorderService"
+internal const val RECORDER_ACTIVITY = "gd.app.soundrecorder.record.RecorderActivity"
 internal const val RECORDER_PERMISSION = "gd.app.soundrecorder.permission.CONTROL_RECORDING"
 internal const val RECORDER_ACTION_START = "gd.app.soundrecorder.action.START"
+internal const val RECORDER_ACTION_START_RECORDING = "gd.app.soundrecorder.action.START_RECORDING"
 internal const val RECORDER_ACTION_PAUSE = "gd.app.soundrecorder.action.PAUSE"
 internal const val RECORDER_ACTION_RESUME = "gd.app.soundrecorder.action.RESUME"
 internal const val RECORDER_ACTION_STOP = "gd.app.soundrecorder.action.STOP"
@@ -75,6 +83,10 @@ internal const val RECORDER_ACTION_SYNC = "gd.app.soundrecorder.action.SYNC"
 internal const val RECORDER_ACTION_STATE = "gd.app.soundrecorder.broadcast.STATE"
 internal const val RECORDER_EXTRA_STATE = "extra_card_state"
 internal const val RECORDER_EXTRA_ELAPSED = "extra_card_elapsed"
+internal const val RECORDER_EXTRA_APPEND_PATH = "extra_append_path"
+internal const val RECORDER_EXTRA_BASE_ELAPSED = "extra_base_elapsed"
+internal const val RECORDER_EXTRA_START_PAUSED = "extra_start_paused"
+internal const val RECORDER_EXTRA_MARKS_JSON = "extra_marks_json"
 
 fun recorderServiceIntent(action: String): Intent {
     return Intent(action).setClassName(RECORDER_PACKAGE, RECORDER_SERVICE)
@@ -106,17 +118,19 @@ class RecorderClient(context: Context) {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != RECORDER_ACTION_STATE) return
-            usingRemote = true
             val next = recorderUiStateFrom(intent.getStringExtra(RECORDER_EXTRA_STATE))
+            if (next == RecorderUiState.Idle) {
+                usingRemote = false
+                remoteMarkCount = 0
+                RecorderWaveSession.reset()
+            } else {
+                usingRemote = true
+            }
             _status.value = RecorderStatus(
                 state = next,
                 elapsedMs = intent.getLongExtra(RECORDER_EXTRA_ELAPSED, 0L).coerceAtLeast(0L),
                 marks = _status.value.marks,
             )
-            if (next == RecorderUiState.Idle) {
-                remoteMarkCount = 0
-                RecorderWaveSession.reset()
-            }
             syncTicker()
         }
     }
@@ -153,7 +167,8 @@ class RecorderClient(context: Context) {
         if (command == RecorderCommand.Start && !hasMicPermission()) {
             return RecorderSendResult.NeedsMic
         }
-        if (canUseRemote()) {
+        val remote = usingRemote && command != RecorderCommand.Start
+        if (remote || canUseRemote()) {
             usingRemote = true
             optimistic(command)
             dispatchRemote(remoteAction(command))
@@ -248,8 +263,61 @@ class RecorderClient(context: Context) {
     }
 
     fun openRecorder(): Intent? {
-        return appContext.packageManager.getLaunchIntentForPackage(RECORDER_PACKAGE)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        val flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        if (_status.value.state == RecorderUiState.Idle) {
+            return appContext.packageManager.getLaunchIntentForPackage(RECORDER_PACKAGE)?.apply {
+                addFlags(flags or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+            }
+        }
+        if (usingRemote) return recordPageIntent(flags)
+        val snap = local.releaseForHandoff() ?: return recordPageIntent(flags)
+        val dest = importHandoff(snap.file)
+        if (dest == null) return recordPageIntent(flags)
+        snap.file.delete()
+        usingRemote = true
+        RecorderWaveSession.reset()
+        _status.value = RecorderStatus(
+            state = if (snap.paused) RecorderUiState.Paused else RecorderUiState.Recording,
+            elapsedMs = snap.durationMs,
+            marks = snap.markTimes,
+        )
+        syncTicker()
+        return recordPageIntent(flags)
+            .putExtra(RECORDER_EXTRA_APPEND_PATH, dest)
+            .putExtra(RECORDER_EXTRA_BASE_ELAPSED, snap.durationMs)
+            .putExtra(RECORDER_EXTRA_START_PAUSED, snap.paused)
+            .putExtra(RECORDER_EXTRA_MARKS_JSON, snap.marksJson)
+    }
+
+    private fun recordPageIntent(flags: Int): Intent {
+        return Intent(RECORDER_ACTION_START_RECORDING)
+            .setClassName(RECORDER_PACKAGE, RECORDER_ACTIVITY)
+            .addFlags(flags)
+    }
+
+    private fun importHandoff(file: File): String? {
+        val pfd = try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        } catch (_: Exception) {
+            return null
+        }
+        return try {
+            val name = "Recording ${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp3"
+            val extras = Bundle().apply {
+                putString("name", name)
+                putParcelable("fd", pfd)
+            }
+            val result = appContext.contentResolver.call(
+                android.net.Uri.parse("content://gd.app.soundrecorder.marks"),
+                "handoff",
+                null,
+                extras,
+            )
+            result?.getString("path")?.takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        } finally {
+            runCatching { pfd.close() }
         }
     }
 
