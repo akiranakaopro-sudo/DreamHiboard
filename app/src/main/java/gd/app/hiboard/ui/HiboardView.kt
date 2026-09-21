@@ -10,7 +10,10 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -68,6 +71,10 @@ class HiboardView @JvmOverloads constructor(
     private var storeSheetOpen = false
     private var storeDetailOpen = false
     private var storePeekAnimator: ValueAnimator? = null
+    private var storeSheetDragging = false
+    private var storeSheetDragDownY = 0f
+    private var storeSheetDragStartTy = 0f
+    private var storeSheetVelocity: VelocityTracker? = null
     private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
@@ -121,6 +128,7 @@ class HiboardView @JvmOverloads constructor(
         }
         binding.storeListPane.isClickable = true
         binding.storeDetailPane.isClickable = true
+        bindStoreSheetDrag(viewModel)
         bindStoreSearchBar(viewModel)
         binding.searchBar.setInputMethodAnimationEnabled(false)
         binding.searchBar.searchEditText.apply {
@@ -332,10 +340,79 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    private fun bindStoreSheetDrag(viewModel: HiboardViewModel) {
+        val title = binding.storeTitle
+        val sheet = binding.storeRoot
+        val slop = ViewConfiguration.get(context).scaledTouchSlop
+        title.setOnTouchListener { _, event ->
+            if (!title.isVisible || !storeSheetOpen) return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    storeSheetDragDownY = event.rawY
+                    storeSheetDragStartTy = sheet.translationY
+                    storeSheetDragging = false
+                    storeSheetVelocity?.recycle()
+                    storeSheetVelocity = VelocityTracker.obtain().also { it.addMovement(event) }
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    storeSheetVelocity?.addMovement(event)
+                    val dy = event.rawY - storeSheetDragDownY
+                    if (!storeSheetDragging && dy > slop) {
+                        storeSheetDragging = true
+                        sheet.animate().cancel()
+                        title.parent.requestDisallowInterceptTouchEvent(true)
+                    }
+                    if (storeSheetDragging) {
+                        sheet.translationY = (storeSheetDragStartTy + dy).coerceAtLeast(0f)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    storeSheetVelocity?.addMovement(event)
+                    storeSheetVelocity?.computeCurrentVelocity(1000)
+                    val velocityY = storeSheetVelocity?.yVelocity ?: 0f
+                    storeSheetVelocity?.recycle()
+                    storeSheetVelocity = null
+                    title.parent.requestDisallowInterceptTouchEvent(false)
+                    val dragged = storeSheetDragging
+                    storeSheetDragging = false
+                    if (!dragged) return@setOnTouchListener true
+                    val distance = sheet.height.takeIf { it > 0 }?.toFloat()
+                        ?: height.takeIf { it > 0 }?.toFloat()
+                        ?: resources.displayMetrics.heightPixels.toFloat()
+                    val dismiss = event.actionMasked == MotionEvent.ACTION_UP &&
+                        (velocityY > STORE_DISMISS_VELOCITY ||
+                            sheet.translationY > distance * STORE_DISMISS_FRACTION)
+                    if (dismiss) {
+                        viewModel.closeStore()
+                        if (storeSheetOpen) animateStoreSheet(false)
+                    } else {
+                        snapStoreSheet()
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun snapStoreSheet() {
+        val sheet = binding.storeRoot
+        if (!storeSheetOpen) return
+        sheet.animate().cancel()
+        sheet.animate()
+            .translationY(0f)
+            .setDuration(STORE_SLIDE_IN_MS)
+            .setInterpolator(COUIEaseInterpolator())
+            .start()
+    }
+
     private fun animateStoreSheet(show: Boolean) {
         val sheet = binding.storeRoot
         if (show == storeSheetOpen) return
         storeSheetOpen = show
+        storeSheetDragging = false
         sheet.animate().cancel()
         storePeekAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
@@ -925,6 +1002,8 @@ class HiboardView @JvmOverloads constructor(
         const val MIC_PERMISSION = 43
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
+        const val STORE_DISMISS_FRACTION = 0.18f
+        const val STORE_DISMISS_VELOCITY = 900f
         const val STORE_PEEK_MS = 420L
         const val STORE_FADE_MS = 320L
         const val STORE_FADE_DELAY_MS = 40L

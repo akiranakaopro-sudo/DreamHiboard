@@ -168,6 +168,20 @@
                 android:paddingEnd="8dp">
 
                 <TextView
+                    android:id="@+id/storeTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minHeight="56dp"
+                    android:text="@string/catalog_title"
+                    android:textColor="@color/hiboard_store_title"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
                     android:id="@+id/storeClose"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -180,16 +194,6 @@
                     android:text="@string/store_close"
                     android:textColor="@color/hiboard_store_close"
                     android:textSize="17sp" />
-
-                <TextView
-                    android:id="@+id/storeTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/catalog_title"
-                    android:textColor="@color/hiboard_store_title"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
 
                 <ImageView
                     android:id="@+id/storeSearch"
