@@ -63,6 +63,7 @@ class PackedCardLayout @JvmOverloads constructor(
     private var lastSwapY = 0f
     private var dragIndex: Int = -1
     private var pendingIndex: Int = -1
+    private var pendingAddSlot: Int = -1
     private var dragArmed: Boolean = false
     private var stoleStream: Boolean = false
     private var grabOffsetX = 0f
@@ -199,6 +200,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 dragX = x
                 dragY = y
                 pendingIndex = hitIndex(x, y)
+                pendingAddSlot = if (pendingIndex < 0) hitAddSlot(x, y) else -1
                 removeCallbacks(longPressRunnable)
                 if (pendingIndex >= 0) {
                     val card = cards.getOrNull(pendingIndex)
@@ -206,6 +208,8 @@ class PackedCardLayout @JvmOverloads constructor(
                         cardViews.getOrNull(pendingIndex)?.let { startPressFeedback(it) }
                         postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
                     }
+                } else if (pendingAddSlot >= 0) {
+                    addSlotViews.getOrNull(pendingAddSlot)?.let { startPressFeedback(it) }
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -213,6 +217,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 if (!isDragging && !dragArmed && hypot(x - downX, y - downY) > slop) {
                     abandonPress()
                     pendingIndex = -1
+                    pendingAddSlot = -1
                 }
                 if (isDragging || dragArmed) return true
             }
@@ -220,6 +225,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 removeCallbacks(longPressRunnable)
                 if (isDragging || dragArmed) return true
                 abandonPress()
+                pendingAddSlot = -1
                 activePointerId = MotionEvent.INVALID_POINTER_ID
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -239,6 +245,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 if (!isDragging && !dragArmed && hypot(x - downX, y - downY) > slop) {
                     abandonPress()
                     pendingIndex = -1
+                    pendingAddSlot = -1
                     return false
                 }
                 if (dragArmed && !isDragging && hypot(x - downX, y - downY) > slop) {
@@ -261,6 +268,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 }
                 abandonPress()
                 pendingIndex = -1
+                pendingAddSlot = -1
             }
             MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
@@ -274,6 +282,7 @@ class PackedCardLayout @JvmOverloads constructor(
                 }
                 abandonPress()
                 pendingIndex = -1
+                pendingAddSlot = -1
             }
         }
         return isDragging || dragArmed || pendingIndex >= 0
@@ -337,6 +346,7 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun clearArm() {
         dragArmed = false
         pendingIndex = -1
+        pendingAddSlot = -1
         stoleStream = false
         abandonPress()
         activePointerId = MotionEvent.INVALID_POINTER_ID
@@ -471,6 +481,7 @@ class PackedCardLayout @JvmOverloads constructor(
         lastSwapX = 0f
         lastSwapY = 0f
         pendingIndex = -1
+        pendingAddSlot = -1
         activePointerId = MotionEvent.INVALID_POINTER_ID
         cards = nextCards
         cardViews.clear()
@@ -628,6 +639,17 @@ class PackedCardLayout @JvmOverloads constructor(
     private fun hitIndex(x: Float, y: Float): Int {
         for (index in cardViews.indices.reversed()) {
             val child = cardViews[index]
+            if (x >= child.left && x < child.right && y >= child.top && y < child.bottom) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    private fun hitAddSlot(x: Float, y: Float): Int {
+        for (index in addSlotViews.indices.reversed()) {
+            val child = addSlotViews[index]
+            if (child.visibility != View.VISIBLE) continue
             if (x >= child.left && x < child.right && y >= child.top && y < child.bottom) {
                 return index
             }
