@@ -149,5 +149,10 @@
             android:authorities="gd.app.hiboard.recordings"
             android:exported="true"
             android:permission="gd.app.soundrecorder.permission.CONTROL_RECORDING" />
+
+        <provider
+            android:name=".engine.WeatherProvider"
+            android:authorities="gd.app.hiboard.weather"
+            android:exported="true" />
     </application>
 </manifest>

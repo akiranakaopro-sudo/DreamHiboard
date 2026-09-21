@@ -82,9 +82,19 @@ data class ShortcutApp(
     val activityName: String?,
 )
 
+data class WeatherDayContent(
+    val label: String = "",
+    val condition: String = "",
+    val lowC: Int = 0,
+    val highC: Int = 0,
+)
+
 data class CardContent(
+    val weatherLocation: String = "",
     val weatherTempC: Int = 22,
     val weatherSummary: String = "",
+    val weatherCondition: String = "",
+    val weatherDays: List<WeatherDayContent> = emptyList(),
     val notesPreview: String = "",
     val notesSnippet: String = "",
     val notesWhen: String = "",

@@ -18,6 +18,9 @@
     <color name="hiboard_notes_fold">#F0C56A</color>
     <color name="hiboard_notes_title">#3A3126</color>
     <color name="hiboard_notes_muted">#9A8B74</color>
+    <color name="hiboard_weather_fallback">#152238</color>
+    <color name="hiboard_weather_on_image">#FFFFFFFF</color>
+    <color name="hiboard_weather_on_image_muted">#D6E4F4</color>
     <color name="hiboard_flashlight_off">#1A2330</color>
     <color name="hiboard_flashlight_on">#3A2A12</color>
     <color name="hiboard_flashlight_label_off">#C5D0E0</color>

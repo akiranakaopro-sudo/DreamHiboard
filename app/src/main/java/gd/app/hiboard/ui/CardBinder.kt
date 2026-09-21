@@ -15,13 +15,17 @@ import gd.app.hiboard.R
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderStatus
+import gd.app.hiboard.engine.WeatherCondition
+import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStorageUsage
 import gd.app.hiboard.engine.recorderPrimaryCommand
+import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
+import gd.app.hiboard.model.WeatherDayContent
 
 class CardBinder(
     private val onOpenNotes: () -> Unit,
@@ -41,7 +45,7 @@ class CardBinder(
         val body = root.findViewById<LinearLayout>(R.id.cardBody)
         val badge = root.findViewById<TextView>(R.id.cardBadge)
         when (card.engine) {
-            CardEngineId.Weather -> bindWeather(inflater, body, state)
+            CardEngineId.Weather -> bindWeather(inflater, root, body, state)
             CardEngineId.Notes -> bindNotes(inflater, root, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
@@ -60,11 +64,61 @@ class CardBinder(
         return root
     }
 
-    private fun bindWeather(inflater: LayoutInflater, body: LinearLayout, state: HiboardUiState) {
+    private fun bindWeather(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val condition = WeatherCondition.from(state.content.weatherCondition.ifBlank { state.content.weatherSummary })
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_weather_fallback))
+            setContentPadding(0, 0, 0, 0)
+            clipToOutline = true
+        }
         val view = inflater.inflate(R.layout.card_weather, body, true)
-        view.findViewById<TextView>(R.id.weatherTemp).text = "${state.content.weatherTempC}°"
+        view.findViewById<ImageView>(R.id.weatherBackground).setImageResource(weatherBackgroundRes(condition))
+        view.findViewById<TextView>(R.id.weatherLocation).text =
+            state.content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location }
         view.findViewById<TextView>(R.id.weatherSummary).text =
-            state.content.weatherSummary.ifBlank { "Local sample" }
+            state.content.weatherSummary.ifBlank { condition.displayName }
+        view.findViewById<ImageView>(R.id.weatherConditionIcon).setImageResource(weatherIconRes(condition))
+        view.findViewById<TextView>(R.id.weatherTemp).text = "${state.content.weatherTempC}°"
+        val forecast = view.findViewById<LinearLayout>(R.id.weatherForecast)
+        forecast.removeAllViews()
+        val days = state.content.weatherDays.ifEmpty {
+            WeatherSnapshot.DEFAULT.resolved().days.map { day ->
+                WeatherDayContent(day.label, day.condition.json, day.lowC, day.highC)
+            }
+        }
+        days.forEach { day ->
+            val item = inflater.inflate(R.layout.item_weather_day, forecast, false)
+            val dayCondition = WeatherCondition.from(day.condition)
+            item.findViewById<TextView>(R.id.weatherDayLabel).text = day.label
+            item.findViewById<ImageView>(R.id.weatherDayIcon).setImageResource(weatherIconRes(dayCondition))
+            item.findViewById<TextView>(R.id.weatherDayRange).text = "${day.lowC}° / ${day.highC}°"
+            forecast.addView(item)
+        }
+    }
+
+    private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
+        WeatherCondition.Sunny -> R.drawable.bg_weather_sunny
+        WeatherCondition.Cloudy -> R.drawable.bg_weather_cloudy
+        WeatherCondition.Rain -> R.drawable.bg_weather_rain
+        WeatherCondition.Thunder -> R.drawable.bg_weather_thunder
+        WeatherCondition.Snow -> R.drawable.bg_weather_snow
+        WeatherCondition.Fog -> R.drawable.bg_weather_fog
+        WeatherCondition.Night -> R.drawable.bg_weather_night
+    }
+
+    private fun weatherIconRes(condition: WeatherCondition): Int = when (condition) {
+        WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
+        WeatherCondition.Cloudy -> R.drawable.ic_weather_cloudy
+        WeatherCondition.Rain -> R.drawable.ic_weather_rain
+        WeatherCondition.Thunder -> R.drawable.ic_weather_thunder
+        WeatherCondition.Snow -> R.drawable.ic_weather_snow
+        WeatherCondition.Fog -> R.drawable.ic_weather_fog
+        WeatherCondition.Night -> R.drawable.ic_weather_night
     }
 
     private fun bindNotes(

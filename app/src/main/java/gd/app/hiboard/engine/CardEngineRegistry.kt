@@ -5,11 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
+import gd.app.hiboard.data.WeatherStore
 import gd.app.hiboard.model.CardAction
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.ShortcutApp
-import java.util.Calendar
+import gd.app.hiboard.model.WeatherDayContent
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
@@ -19,14 +20,21 @@ class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
     private val recents = RecentAppsRepository(appContext)
     private val notes = NotesRepository(appContext)
+    private val weather = WeatherStore.get(appContext)
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
     private val recorder = RecorderClient(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Weather to CardEngine {
+            val latest = weather.current().resolved()
             CardContent(
-                weatherTempC = 18 + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) % 8,
-                weatherSummary = "Local sample",
+                weatherLocation = latest.location,
+                weatherTempC = latest.temperatureC,
+                weatherSummary = latest.condition.displayName,
+                weatherCondition = latest.condition.json,
+                weatherDays = latest.days.map { day ->
+                    WeatherDayContent(day.label, day.condition.json, day.lowC, day.highC)
+                },
             )
         },
         CardEngineId.Notes to CardEngine {
@@ -117,6 +125,7 @@ class CardEngineRegistry(context: Context) {
     val flashlightOn = flashlight.on
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
+    val weatherSnapshot = weather.snapshot
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
 
@@ -131,8 +140,11 @@ class CardEngineRegistry(context: Context) {
     fun syncRecorder() = recorder.sync()
 
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
+        weatherLocation = b.weatherLocation.ifBlank { a.weatherLocation },
         weatherTempC = if (b.weatherSummary.isNotBlank()) b.weatherTempC else a.weatherTempC,
         weatherSummary = b.weatherSummary.ifBlank { a.weatherSummary },
+        weatherCondition = b.weatherCondition.ifBlank { a.weatherCondition },
+        weatherDays = b.weatherDays.ifEmpty { a.weatherDays },
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
         notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
         notesWhen = b.notesWhen.ifBlank { a.notesWhen },

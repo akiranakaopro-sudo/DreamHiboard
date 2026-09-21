@@ -61,6 +61,11 @@ class HiboardViewModel(
             }
         }
         viewModelScope.launch {
+            engines.weatherSnapshot.collect {
+                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            }
+        }
+        viewModelScope.launch {
             var lastState = engines.recorderStatus.value.state
             engines.recorderStatus.collect { status ->
                 if (status.state != lastState) {
