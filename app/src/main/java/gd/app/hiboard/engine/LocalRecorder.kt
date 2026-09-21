@@ -5,7 +5,9 @@ import android.content.Context
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.provider.MediaStore
 import gd.app.hiboard.R
@@ -219,15 +221,17 @@ class LocalRecorder(context: Context) {
 
     private fun publish(file: File): File? {
         val name = "Recording ${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp3"
+        publishViaRecorder(file, name)?.let { return it }
+        val relativePath = "${Environment.DIRECTORY_MUSIC}/Recordings/Standard Recordings"
         val publicDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
-            "Recordings",
+            "Recordings/Standard Recordings",
         )
         if (Build.VERSION.SDK_INT >= 29) {
             val values = ContentValues().apply {
                 put(MediaStore.Audio.Media.DISPLAY_NAME, name)
                 put(MediaStore.Audio.Media.MIME_TYPE, "audio/mpeg")
-                put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/Recordings")
+                put(MediaStore.Audio.Media.RELATIVE_PATH, "$relativePath/")
                 put(MediaStore.Audio.Media.IS_PENDING, 1)
             }
             val uri = appContext.contentResolver.insert(
@@ -248,6 +252,36 @@ class LocalRecorder(context: Context) {
         return dest
     }
 
+    /**
+     * Copy into Sound Recorder so that app owns the file. MediaStore inserts
+     * from this UID cannot be trashed by Sound Recorder on Android 10+ FUSE.
+     */
+    private fun publishViaRecorder(file: File, name: String): File? {
+        val pfd = try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        } catch (_: Exception) {
+            return null
+        }
+        return try {
+            val extras = Bundle().apply {
+                putString("name", name)
+                putParcelable("fd", pfd)
+            }
+            val result = appContext.contentResolver.call(
+                Uri.parse("content://gd.app.soundrecorder.marks"),
+                "publish",
+                null,
+                extras,
+            )
+            val dest = result?.getString("path")
+            if (result?.getBoolean("ok") == true && !dest.isNullOrBlank()) File(dest) else null
+        } catch (_: Exception) {
+            null
+        } finally {
+            runCatching { pfd.close() }
+        }
+    }
+
     private fun queryPublishedFile(uri: Uri): File? {
         val projection = arrayOf(
             MediaStore.MediaColumns.DATA,
@@ -266,9 +300,9 @@ class LocalRecorder(context: Context) {
                 val relIdx = cursor.getColumnIndex(MediaStore.MediaColumns.RELATIVE_PATH)
                 val name = if (nameIdx >= 0) cursor.getString(nameIdx) else return null
                 val rel = if (relIdx >= 0) {
-                    cursor.getString(relIdx) ?: "Music/Recordings/"
+                    cursor.getString(relIdx) ?: "Music/Recordings/Standard Recordings/"
                 } else {
-                    "Music/Recordings/"
+                    "Music/Recordings/Standard Recordings/"
                 }
                 File(File(Environment.getExternalStorageDirectory(), rel.trim('/')), name)
             }

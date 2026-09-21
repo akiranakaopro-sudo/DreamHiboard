@@ -143,5 +143,11 @@
                 <data android:scheme="assistantscreen" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".engine.RecorderCleanupProvider"
+            android:authorities="gd.app.hiboard.recordings"
+            android:exported="true"
+            android:permission="gd.app.soundrecorder.permission.CONTROL_RECORDING" />
     </application>
 </manifest>
