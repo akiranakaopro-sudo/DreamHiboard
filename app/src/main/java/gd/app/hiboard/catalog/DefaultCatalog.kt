@@ -32,16 +32,6 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
-            id = "notes",
-            groupId = GROUP_FEATURES,
-            groupTitle = "Features",
-            name = "All notes",
-            description = "Latest note from DreamNote. Tap to open the list, plus to write a new note.",
-            size = CardSize.TwoByTwo,
-            engine = CardEngineId.Notes,
-            defaultSubscribed = true,
-        ),
-        CardCatalogEntry(
             id = "storage",
             groupId = GROUP_FEATURES,
             groupTitle = "Features",
@@ -49,6 +39,26 @@ object DefaultCatalog {
             description = "RAM used and free. Tap to open System Manager.",
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Storage,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
+            id = "flashlight",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Flashlight",
+            description = "Tap to turn the torch on or off. Uses the rear camera flash.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Flashlight,
+            defaultSubscribed = true,
+        ),
+        CardCatalogEntry(
+            id = "notes",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "All notes",
+            description = "Latest note from DreamNote. Tap to open the list, plus to write a new note.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Notes,
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
@@ -61,21 +71,17 @@ object DefaultCatalog {
             engine = CardEngineId.Recorder,
             defaultSubscribed = true,
         ),
-        CardCatalogEntry(
-            id = "flashlight",
-            groupId = GROUP_FEATURES,
-            groupTitle = "Features",
-            name = "Flashlight",
-            description = "Tap to turn the torch on or off. Uses the rear camera flash.",
-            size = CardSize.TwoByTwo,
-            engine = CardEngineId.Flashlight,
-            defaultSubscribed = false,
-        ),
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }
 
     fun lockedIds(): List<String> = entries.filter { it.locked }.map { it.id }
+
+    fun defaultBoardIds(): List<String> =
+        entries.filter { it.defaultSubscribed && !it.locked }.map { it.id }
+
+    fun defaultRecommendedIds(): List<String> =
+        entries.filter { !it.defaultSubscribed && !it.locked }.map { it.id }
 
     fun pinLocked(ids: List<String>): List<String> {
         val locked = lockedIds()

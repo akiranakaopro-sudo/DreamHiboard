@@ -1,7 +1,10 @@
 package gd.app.hiboard.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import gd.app.hiboard.catalog.DefaultCatalog
@@ -20,14 +23,8 @@ class BoardRepository(context: Context) {
     private val dataStore = context.applicationContext.boardStore
 
     val snapshot: Flow<BoardSnapshot> = dataStore.data.map { prefs ->
-        val subscribedRaw = prefs[KEY_SUBSCRIBED]
-        val recommendedRaw = prefs[KEY_RECOMMENDED]
-        val subscribedIds = DefaultCatalog.pinLocked(
-            subscribedRaw?.split(',')?.filter { it.isNotBlank() && DefaultCatalog.byId(it) != null }
-                ?: DefaultCatalog.entries.filter { it.defaultSubscribed && !it.locked }.map { it.id },
-        )
-        val recommendedIds = recommendedRaw?.split(',')?.filter { it.isNotBlank() && DefaultCatalog.byId(it) != null }
-            ?: DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
+        val subscribedIds = DefaultCatalog.pinLocked(prefs.subscribedIds())
+        val recommendedIds = prefs.recommendedIds()
         BoardSnapshot(
             subscribed = instantiate(subscribedIds, CardArea.Subscribe),
             recommended = instantiate(recommendedIds.filter { it !in DefaultCatalog.lockedIds() }, CardArea.Recommend),
@@ -37,9 +34,7 @@ class BoardRepository(context: Context) {
     suspend fun subscribe(catalogId: String) {
         if (DefaultCatalog.byId(catalogId)?.locked == true) return
         dataStore.edit { prefs ->
-            val current = prefs[KEY_SUBSCRIBED].toIdList().ifEmpty {
-                DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
-            }
+            val current = prefs.subscribedIds()
             if (catalogId !in current) {
                 val incoming = instantiate(listOf(catalogId), CardArea.Subscribe).singleOrNull()
                 val next = if (incoming != null) {
@@ -49,47 +44,41 @@ class BoardRepository(context: Context) {
                     current + catalogId
                 }
                 prefs[KEY_SUBSCRIBED] = next.joinToString(",")
+            } else {
+                prefs[KEY_SUBSCRIBED] = DefaultCatalog.pinLocked(current).joinToString(",")
             }
-            val recommended = prefs[KEY_RECOMMENDED].toIdList().ifEmpty {
-                DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
-            }
-            prefs[KEY_RECOMMENDED] = recommended.filterNot { it == catalogId }.joinToString(",")
+            prefs[KEY_RECOMMENDED] = prefs.recommendedIds().filterNot { it == catalogId }.joinToString(",")
+            prefs.markBoardStored()
         }
     }
 
     suspend fun unsubscribe(catalogId: String) {
         if (DefaultCatalog.byId(catalogId)?.locked == true) return
         dataStore.edit { prefs ->
-            val current = prefs[KEY_SUBSCRIBED].toIdList().ifEmpty {
-                DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
-            }
+            val current = prefs.subscribedIds()
             prefs[KEY_SUBSCRIBED] = current.filterNot { it == catalogId }.joinToString(",")
-            val recommended = prefs[KEY_RECOMMENDED].toIdList().ifEmpty {
-                DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
-            }
+            val recommended = prefs.recommendedIds()
             if (catalogId !in recommended && DefaultCatalog.byId(catalogId) != null) {
                 prefs[KEY_RECOMMENDED] = (recommended + catalogId).joinToString(",")
+            } else {
+                prefs[KEY_RECOMMENDED] = recommended.joinToString(",")
             }
+            prefs.markBoardStored()
         }
     }
 
     suspend fun reorder(area: CardArea, catalogIds: List<String>) {
         dataStore.edit { prefs ->
-            val key = if (area == CardArea.Subscribe) KEY_SUBSCRIBED else KEY_RECOMMENDED
-            val defaults = if (area == CardArea.Subscribe) {
-                DefaultCatalog.entries.filter { it.defaultSubscribed }.map { it.id }
-            } else {
-                DefaultCatalog.entries.filter { !it.defaultSubscribed }.map { it.id }
-            }
-            val current = prefs[key].toIdList().ifEmpty { defaults }
+            val current = if (area == CardArea.Subscribe) prefs.subscribedIds() else prefs.recommendedIds()
             val incoming = catalogIds.filter { it in current.toSet() }
             val rest = current.filter { it !in incoming.toSet() }
             val next = incoming + rest
-            prefs[key] = if (area == CardArea.Subscribe) {
-                DefaultCatalog.pinLocked(next).joinToString(",")
+            if (area == CardArea.Subscribe) {
+                prefs[KEY_SUBSCRIBED] = DefaultCatalog.pinLocked(next).joinToString(",")
             } else {
-                next.filter { it !in DefaultCatalog.lockedIds() }.joinToString(",")
+                prefs[KEY_RECOMMENDED] = next.filter { it !in DefaultCatalog.lockedIds() }.joinToString(",")
             }
+            prefs.markBoardStored()
         }
     }
 
@@ -115,11 +104,29 @@ class BoardRepository(context: Context) {
         }
     }
 
+    private fun Preferences.storedBoard(): Boolean =
+        (this[KEY_LAYOUT_VERSION] ?: 0) >= BOARD_LAYOUT_VERSION
+
+    private fun Preferences.subscribedIds(): List<String> {
+        val stored = this[KEY_SUBSCRIBED].toIdList()
+        return if (storedBoard() && stored.isNotEmpty()) stored else DefaultCatalog.defaultBoardIds()
+    }
+
+    private fun Preferences.recommendedIds(): List<String> {
+        return if (storedBoard()) this[KEY_RECOMMENDED].toIdList() else DefaultCatalog.defaultRecommendedIds()
+    }
+
+    private fun MutablePreferences.markBoardStored() {
+        this[KEY_LAYOUT_VERSION] = BOARD_LAYOUT_VERSION
+    }
+
     private fun String?.toIdList(): List<String> =
-        this?.split(',')?.map { it.trim() }?.filter { it.isNotBlank() }.orEmpty()
+        this?.split(',')?.map { it.trim() }?.filter { it.isNotBlank() && DefaultCatalog.byId(it) != null }.orEmpty()
 
     private companion object {
+        const val BOARD_LAYOUT_VERSION = 2
         val KEY_SUBSCRIBED = stringPreferencesKey("subscribed")
         val KEY_RECOMMENDED = stringPreferencesKey("recommended")
+        val KEY_LAYOUT_VERSION = intPreferencesKey("board_layout_version")
     }
 }

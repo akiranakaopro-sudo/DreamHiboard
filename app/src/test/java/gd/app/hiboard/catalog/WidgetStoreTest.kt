@@ -66,6 +66,17 @@ class WidgetStoreTest {
     }
 
     @Test
+    fun defaultBoardOrderIsWeatherStorageFlashlightNotesRecorder() {
+        assertEquals(
+            listOf("weather", "storage", "flashlight", "notes", "recorder"),
+            DefaultCatalog.defaultBoardIds(),
+        )
+        assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
+        assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
+        assertEquals(emptyList<String>(), DefaultCatalog.defaultRecommendedIds())
+    }
+
+    @Test
     fun tabsAreAllFeaturesWeather() {
         assertEquals(
             listOf(null, DefaultCatalog.GROUP_FEATURES, DefaultCatalog.GROUP_WEATHER),
