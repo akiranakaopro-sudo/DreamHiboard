@@ -22,6 +22,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
@@ -64,7 +65,6 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
     private var storePagerAdapter: StorePagerAdapter? = null
-    private var cardBinder: CardBinder? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
 
@@ -112,6 +112,11 @@ class HiboardView @JvmOverloads constructor(
         binding.storeClose.setOnClickListener { viewModel.closeStore() }
         binding.storeSearch.setOnClickListener { viewModel.setStoreSearchOpen(true) }
         binding.storeDetailBack.setOnClickListener { viewModel.closeStoreDetail() }
+        binding.storeRoot.setOnClickListener {
+            if (viewModel.state.value.storeDetailId != null) viewModel.closeStore()
+        }
+        binding.storeListPane.isClickable = true
+        binding.storeDetailPane.isClickable = true
         bindStoreSearchBar(viewModel)
         binding.searchBar.setInputMethodAnimationEnabled(false)
         binding.searchBar.searchEditText.apply {
@@ -262,6 +267,7 @@ class HiboardView @JvmOverloads constructor(
         if (state.showStore) {
             binding.storeListPane.isVisible = state.storeDetailId == null
             binding.storeDetailPane.isVisible = state.storeDetailId != null
+            syncStoreDetailChrome(detail = state.storeDetailId != null)
             binding.storeClose.isVisible = !state.storeSearchOpen
             binding.storeTitle.isVisible = !state.storeSearchOpen
             binding.storeSearch.isVisible = !state.storeSearchOpen
@@ -319,7 +325,7 @@ class HiboardView @JvmOverloads constructor(
         )
         if (state.showStore && storeKey != lastStoreKey) {
             lastStoreKey = storeKey
-            bindStore(state, viewModel, binder)
+            bindStore(state, viewModel)
         }
         if (!state.showStore) lastStoreKey = null
     }
@@ -362,12 +368,11 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
-        cardBinder = binder
+    private fun bindStore(state: HiboardUiState, viewModel: HiboardViewModel) {
         bindStorePager(state)
         bindStoreChips(state)
         if (state.storeSearchOpen) bindStoreSearchList(state, viewModel)
-        bindStoreDetail(state, viewModel, binder)
+        bindStoreDetail(state, viewModel)
     }
 
     private fun bindStorePager(state: HiboardUiState) {
@@ -570,26 +575,53 @@ class HiboardView @JvmOverloads constructor(
         binding.boardScroll.smoothScrollTo(0, y)
     }
 
-    private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel, binder: CardBinder) {
+    private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel) {
         val entry = DefaultCatalog.byId(state.storeDetailId.orEmpty()) ?: return
         val added = state.board.subscribed.any { it.catalogId == entry.id }
-        binding.storeDetailTitle.text = entry.name
-        binding.storeDetailSize.text = context.getString(
-            R.string.widget_details_size,
-            entry.size.columns,
-            entry.size.rows,
-        )
+        binding.storeDetailTitle.text = entry.groupTitle
+        binding.storeDetailHeadline.text = entry.name
         binding.storeDetailDesc.text = entry.description
         binding.storeDetailAdd.text = context.getString(
-            if (added) R.string.store_added else R.string.subscribe,
+            if (added) R.string.store_added else R.string.store_add_to_board,
         )
         binding.storeDetailAdd.isEnabled = !added
         binding.storeDetailAdd.setOnClickListener {
             if (!added) viewModel.pinFromStore(entry.id)
         }
-        val preview = binding.storeDetailPreview
-        preview.removeAllViews()
-        preview.post { fillStorePreview(preview, entry, state, binder) }
+        fillStoreDetailPreview(entry)
+    }
+
+    private fun syncStoreDetailChrome(detail: Boolean) {
+        val density = resources.displayMetrics.density
+        if (detail) {
+            binding.storeRoot.background = null
+            binding.storeRoot.clipToOutline = false
+            val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
+            binding.storeDetailPane.updateLayoutParams<FrameLayout.LayoutParams> {
+                topMargin = peek + (20 * density).toInt()
+            }
+        } else {
+            binding.storeRoot.setBackgroundResource(R.drawable.bg_store_sheet)
+            binding.storeRoot.clipToOutline = true
+            binding.storeDetailPane.updateLayoutParams<FrameLayout.LayoutParams> {
+                topMargin = 0
+            }
+        }
+    }
+
+    private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
+        val host = binding.storeDetailPreview
+        host.removeAllViews()
+        fun addPreview() {
+            if (!host.isAttachedToWindow) return
+            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
+                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
+                    .coerceAtLeast(1)
+            val (cardW, cardH) = storePreviewDims(entry, boardWidth, resources.displayMetrics.density)
+            host.removeAllViews()
+            host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
+        }
+        if (host.width > 0) addPreview() else host.post { addPreview() }
     }
 
     private fun fillStoreGallery(
@@ -686,46 +718,6 @@ class HiboardView @JvmOverloads constructor(
         host.setOnClickListener(openDetail)
         block.setOnClickListener(openDetail)
         return block
-    }
-
-    private fun fillStorePreview(
-        host: FrameLayout,
-        entry: CardCatalogEntry,
-        state: HiboardUiState,
-        binder: CardBinder,
-        boardWidth: Int? = null,
-    ) {
-        host.removeAllViews()
-        val width = boardWidth ?: host.width.takeIf { it > 0 }
-        if (width == null) {
-            if (!host.isAttachedToWindow) return
-            host.post { fillStorePreview(host, entry, state, binder, boardWidth) }
-            return
-        }
-        val gutter = (10 * resources.displayMetrics.density).roundToInt()
-        val cell = ((width - gutter * 3) / 4f).roundToInt().coerceAtLeast(1)
-        val cardW = cell * entry.size.columns + gutter * (entry.size.columns - 1).coerceAtLeast(0)
-        val cardH = cell * entry.size.rows + gutter * (entry.size.rows - 1).coerceAtLeast(0)
-        val instance = CardInstance(
-            instanceId = "preview:${entry.id}",
-            catalogId = entry.id,
-            displayName = entry.name,
-            size = entry.size,
-            area = CardArea.Subscribe,
-            engine = entry.engine,
-            canDrag = false,
-            canEdit = false,
-        )
-        val card = binder.create(host, instance, state, recommend = false)
-        card.layoutParams = FrameLayout.LayoutParams(cardW, cardH).apply { gravity = Gravity.CENTER_HORIZONTAL }
-        host.addView(card)
-        val shield = View(context).apply {
-            layoutParams = FrameLayout.LayoutParams(cardW, cardH).apply { gravity = Gravity.CENTER_HORIZONTAL }
-            isClickable = true
-        }
-        host.addView(shield)
-        host.layoutParams = host.layoutParams.apply { height = cardH }
-        host.requestLayout()
     }
 
     private fun setStoreNavBarContrast(storeOpen: Boolean) {

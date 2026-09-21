@@ -18,6 +18,7 @@
     <string name="store_empty">No widgets</string>
     <string name="unsubscribe">Remove</string>
     <string name="subscribe">Add</string>
+    <string name="store_add_to_board">Add to Hiboard</string>
     <string name="empty_pinned">Pin cards from the store to build your minus-one screen.</string>
     <string name="weather_label">Weather</string>
     <string name="notes_label">All notes</string>
