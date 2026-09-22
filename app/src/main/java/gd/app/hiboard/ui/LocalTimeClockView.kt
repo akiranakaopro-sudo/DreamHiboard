@@ -68,7 +68,9 @@ fun bindLocalTimeClock(
         LinearLayout.LayoutParams.MATCH_PARENT,
     )
     body.addView(clock)
-    val open = View.OnClickListener { onOpen?.invoke() }
-    clock.setOnClickListener(open)
-    card.setOnClickListener(open)
+    if (onOpen != null) {
+        val open = View.OnClickListener { onOpen.invoke() }
+        clock.setOnClickListener(open)
+        card.setOnClickListener(open)
+    }
 }

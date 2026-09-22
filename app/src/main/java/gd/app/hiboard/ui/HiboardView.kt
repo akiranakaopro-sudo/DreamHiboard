@@ -692,6 +692,7 @@ class HiboardView @JvmOverloads constructor(
             openedDetailId = null
             storeDetailPick = null
             detailMemberKey = null
+            binding.storeDetailIndicator.isVisible = false
             return
         }
         val members = state.catalog.filter { !it.locked && it.listCategory() == focus.listCategory() }
@@ -702,24 +703,32 @@ class HiboardView @JvmOverloads constructor(
         }
         val picked = members.firstOrNull { it.id == storeDetailPick } ?: members.first()
         storeDetailPick = picked.id
-        val added = state.board.subscribed.any { it.catalogId == picked.id }
-        binding.storeDetailTitle.text = picked.groupTitle
-        binding.storeDetailHeadline.text = picked.listCategory()
-        binding.storeDetailDesc.text = picked.description
+        applyDetailSelection(picked, viewModel)
+        binding.storeDetailIndicator.isVisible = members.size > 1
+        val memberKey = members.joinToString(",") { it.id }
+        val host = binding.storeDetailPreview
+        if (memberKey != detailMemberKey || host.childCount == 0) {
+            detailMemberKey = memberKey
+            if (members.size == 1) {
+                fillStoreDetailPreview(members.first())
+            } else {
+                fillStoreDetailPager(members, members.indexOf(picked).coerceAtLeast(0))
+            }
+        }
+    }
+
+    private fun applyDetailSelection(entry: CardCatalogEntry, viewModel: HiboardViewModel) {
+        val added = viewModel.state.value.board.subscribed.any { it.catalogId == entry.id }
+        binding.storeDetailTitle.text = entry.groupTitle
+        binding.storeDetailHeadline.text = entry.name
+        binding.storeDetailDesc.text = entry.description
         binding.storeDetailAdd.text = context.getString(
             if (added) R.string.store_added else R.string.store_add_to_board,
         )
         binding.storeDetailAdd.isEnabled = !added
         binding.storeDetailAdd.setOnClickListener {
-            if (!added) viewModel.pinFromStore(picked.id)
+            if (!added) viewModel.pinFromStore(entry.id)
         }
-        val memberKey = members.joinToString(",") { it.id }
-        val host = binding.storeDetailPreview
-        if (memberKey != detailMemberKey || host.childCount == 0) {
-            detailMemberKey = memberKey
-            if (members.size == 1) fillStoreDetailPreview(members.first()) else fillStoreDetailChoices(members)
-        }
-        if (members.size > 1) markDetailPick(host, picked.id)
     }
 
     private fun animateStoreDetail(showDetail: Boolean) {
@@ -844,67 +853,62 @@ class HiboardView @JvmOverloads constructor(
         if (host.width > 0) addPreview() else host.post { addPreview() }
     }
 
-    private fun fillStoreDetailChoices(members: List<CardCatalogEntry>) {
+    private fun fillStoreDetailPager(members: List<CardCatalogEntry>, index: Int) {
         val host = binding.storeDetailPreview
         host.removeAllViews()
-        fun addChoices() {
+        fun addPager() {
             if (!host.isAttachedToWindow) return
             val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
                 ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
                     .coerceAtLeast(1)
             host.clipChildren = true
-            host.clipToPadding = true
             host.removeAllViews()
-            val scroll = ScrollView(context).apply {
-                isFillViewport = true
-                clipChildren = true
-                clipToPadding = true
+            val pager = ViewPager2(context).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
+                offscreenPageLimit = 1
+                adapter = DetailPreviewAdapter(members, boardWidth, resources.displayMetrics.density)
             }
-            val column = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                clipChildren = false
-                clipToPadding = false
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                )
-            }
-            val density = resources.displayMetrics.density
-            members.forEach { entry ->
-                val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
-                val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, column, false)
-                block.tag = entry.id
-                block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
-                val preview = block.findViewById<FrameLayout>(R.id.widgetPreview)
-                preview.addView(createStoreWidgetPreview(preview, entry, cardW, cardH))
-                block.setOnClickListener {
-                    storeDetailPick = entry.id
-                    val vm = viewModel ?: return@setOnClickListener
-                    bindStoreDetail(vm.state.value, vm)
+            host.addView(pager)
+            val indicator = binding.storeDetailIndicator
+            indicator.setDotsCount(members.size)
+            centerDetailIndicator(members.size)
+            indicator.setCurrentPosition(index)
+            indicator.setIsClickable(true)
+            indicator.setOnDotClickListener { dot -> pager.setCurrentItem(dot, true) }
+            pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+                    indicator.setCurrentPosition(position, positionOffset)
                 }
-                column.addView(block)
-            }
-            scroll.addView(column)
-            host.addView(scroll)
-            markDetailPick(host, storeDetailPick)
+
+                override fun onPageSelected(position: Int) {
+                    val entry = members.getOrNull(position) ?: return
+                    storeDetailPick = entry.id
+                    val vm = viewModel ?: return
+                    applyDetailSelection(entry, vm)
+                }
+            })
+            pager.setCurrentItem(index, false)
         }
-        if (host.width > 0) addChoices() else host.post { addChoices() }
+        if (host.width > 0) addPager() else host.post { addPager() }
     }
 
-    private fun markDetailPick(host: ViewGroup, pickedId: String?) {
-        val scroll = host.getChildAt(0) as? ScrollView ?: return
-        val column = scroll.getChildAt(0) as? LinearLayout ?: return
-        for (index in 0 until column.childCount) {
-            val block = column.getChildAt(index)
-            val selected = block.tag == pickedId
-            block.setBackgroundColor(if (selected) 0x140066FF.toInt() else Color.TRANSPARENT)
-            block.findViewById<TextView>(R.id.widgetPreviewName)?.setTextColor(
-                if (selected) 0xFF0066FF.toInt() else context.getColor(R.color.hiboard_store_title),
-            )
+    /** COUI measures a full slot after the last dot, so the ink sits left of the view. */
+    private fun centerDetailIndicator(count: Int) {
+        val indicator = binding.storeDetailIndicator
+        indicator.post {
+            if (count <= 1) {
+                indicator.translationX = 0f
+                return@post
+            }
+            val density = resources.displayMetrics.density
+            val dot = 6f * density
+            val interval = 12f * density
+            val content = dot + interval * (count - 1)
+            val shift = (indicator.width - content) / 2f
+            indicator.translationX = if (indicator.layoutDirection == View.LAYOUT_DIRECTION_RTL) -shift else shift
         }
     }
 
@@ -1060,6 +1064,34 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.LocalTime -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.Music -> Triple(R.drawable.ic_music_note, Color.WHITE, 0xFFA48462.toInt())
         }
+    }
+
+    private class DetailPreviewAdapter(
+        private val members: List<CardCatalogEntry>,
+        private val boardWidth: Int,
+        private val density: Float,
+    ) : RecyclerView.Adapter<DetailPreviewAdapter.Holder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val page = FrameLayout(parent.context).apply {
+                layoutParams = RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
+            }
+            return Holder(page)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            val page = holder.page
+            page.removeAllViews()
+            val entry = members[position]
+            val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
+            page.addView(createStoreWidgetPreview(page, entry, cardW, cardH))
+        }
+
+        override fun getItemCount(): Int = members.size
+
+        class Holder(val page: FrameLayout) : RecyclerView.ViewHolder(page)
     }
 
     private inner class StorePagerAdapter : RecyclerView.Adapter<StorePagerAdapter.Holder>() {

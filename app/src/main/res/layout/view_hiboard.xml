@@ -353,6 +353,21 @@
                 android:clipToPadding="false"
                 android:padding="12dp" />
 
+            <com.coui.appcompat.indicator.COUIPageIndicator
+                android:id="@+id/storeDetailIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:dotColor="#44000000"
+                app:dotSize="6dp"
+                app:dotSizeMedium="4.5dp"
+                app:dotSizeSmall="2.5dp"
+                app:dotSpacing="6dp"
+                app:traceDotColor="#E6000000" />
+
             <com.coui.appcompat.button.COUIButton
                 android:id="@+id/storeDetailAdd"
                 style="@style/Widget.COUI.Button.Large.ButtonNew"

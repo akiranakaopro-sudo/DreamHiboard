@@ -113,7 +113,9 @@ fun bindClockCard(
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_calendar_card))
     card.setContentPadding(pad, pad, pad, pad)
     val view = LayoutInflater.from(body.context).inflate(R.layout.card_clock, body, true)
-    val open = View.OnClickListener { onOpen?.invoke() }
-    view.setOnClickListener(open)
-    card.setOnClickListener(open)
+    if (onOpen != null) {
+        val open = View.OnClickListener { onOpen.invoke() }
+        view.setOnClickListener(open)
+        card.setOnClickListener(open)
+    }
 }

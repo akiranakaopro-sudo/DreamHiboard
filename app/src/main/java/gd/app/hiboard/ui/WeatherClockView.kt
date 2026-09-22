@@ -190,9 +190,11 @@ fun bindWeatherClock(
     )
     clock.setWeather(condition, temperatureC)
     body.addView(clock)
-    val open = android.view.View.OnClickListener { onOpen?.invoke() }
-    clock.setOnClickListener(open)
-    card.setOnClickListener(open)
+    if (onOpen != null) {
+        val open = android.view.View.OnClickListener { onOpen.invoke() }
+        clock.setOnClickListener(open)
+        card.setOnClickListener(open)
+    }
 }
 
 private fun weatherClockIcon(condition: WeatherCondition): Int = when (condition) {
