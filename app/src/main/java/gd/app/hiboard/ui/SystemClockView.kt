@@ -3,6 +3,7 @@ package gd.app.hiboard.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -21,34 +22,39 @@ class SystemClockView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
-    private val density = resources.displayMetrics.density
     private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_title)
+        color = 0xFF1A1A1A.toInt()
         textAlign = Paint.Align.CENTER
-        textSize = 13f * density
     }
-    private val hourPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+    private val hourTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF696969.toInt()
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 3.4f * density
     }
-    private val minutePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+    private val minuteTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFE4E4E4.toInt()
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 2.4f * density
+    }
+    private val handPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF2F313D.toInt()
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
     }
     private val secondPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+        color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 1.2f * density
     }
     private val hubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+        color = 0xFF2F313D.toInt()
         style = Paint.Style.FILL
     }
+    private val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.hiboard_clock_second)
+        style = Paint.Style.FILL
+    }
+    private val glyphProbe = Rect()
 
     private val tick = object : Runnable {
         override fun run() {
@@ -71,34 +77,79 @@ class SystemClockView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        if (width <= 0 || height <= 0) return
         val cx = width / 2f
         val cy = height / 2f
         val radius = min(width, height) / 2f
-        val numberRadius = radius * 0.78f
-        val metrics = numberPaint.fontMetrics
-        val textDy = -(metrics.ascent + metrics.descent) / 2f
-        for (hour in 1..12) {
-            val angle = Math.toRadians(hour * 30.0 - 90.0)
-            val x = cx + (cos(angle) * numberRadius).toFloat()
-            val y = cy + (sin(angle) * numberRadius).toFloat() + textDy
-            canvas.drawText(hour.toString(), x, y, numberPaint)
-        }
+        drawTicks(canvas, cx, cy, radius)
+        drawNumbers(canvas, cx, cy, radius)
         val now = Calendar.getInstance()
         val hands = clockHands(
             now.get(Calendar.HOUR_OF_DAY),
             now.get(Calendar.MINUTE),
             now.get(Calendar.SECOND),
         )
-        drawHand(canvas, cx, cy, hands.hourDegrees, radius * 0.46f, hourPaint)
-        drawHand(canvas, cx, cy, hands.minuteDegrees, radius * 0.68f, minutePaint)
-        drawHand(canvas, cx, cy, hands.secondDegrees, radius * 0.74f, secondPaint)
-        canvas.drawCircle(cx, cy, 3.2f * density, hubPaint)
+        val stroke = (radius * 0.063f).coerceAtLeast(1f)
+        handPaint.strokeWidth = stroke
+        secondPaint.strokeWidth = (radius * 0.016f).coerceAtLeast(1f)
+        drawHand(canvas, cx, cy, hands.hourDegrees, radius * 0.86f, radius * 0.04f, handPaint)
+        drawHand(canvas, cx, cy, hands.minuteDegrees, radius * 0.86f, radius * 0.04f, handPaint)
+        canvas.drawCircle(cx, cy, radius * 0.095f, hubPaint)
+        drawHand(canvas, cx, cy, hands.secondDegrees, radius * 0.96f, radius * 0.27f, secondPaint)
+        canvas.drawCircle(cx, cy, radius * 0.055f, pinPaint)
     }
 
-    private fun drawHand(canvas: Canvas, cx: Float, cy: Float, degrees: Float, length: Float, paint: Paint) {
+    private fun drawTicks(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
+        val outer = radius * 0.968f
+        val hourLen = radius * 0.145f
+        val minuteLen = radius * 0.055f
+        val stroke = (radius * 0.012f).coerceAtLeast(1f)
+        hourTickPaint.strokeWidth = stroke
+        minuteTickPaint.strokeWidth = stroke * 0.7f
+        for (index in 0 until 60) {
+            val angle = Math.toRadians(index * 6.0 - 90.0)
+            val cosA = cos(angle).toFloat()
+            val sinA = sin(angle).toFloat()
+            val major = index % 5 == 0
+            val length = if (major) hourLen else minuteLen
+            canvas.drawLine(
+                cx + outer * cosA,
+                cy + outer * sinA,
+                cx + (outer - length) * cosA,
+                cy + (outer - length) * sinA,
+                if (major) hourTickPaint else minuteTickPaint,
+            )
+        }
+    }
+
+    private fun drawNumbers(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
+        numberPaint.textSize = 100f
+        numberPaint.getTextBounds("8", 0, 1, glyphProbe)
+        val glyph = glyphProbe.height().toFloat().coerceAtLeast(1f)
+        numberPaint.textSize *= radius * 0.135f / glyph
+        val metrics = numberPaint.fontMetrics
+        val textDy = -(metrics.ascent + metrics.descent) / 2f
+        val numberRadius = radius * 0.76f
+        for (hour in 1..12) {
+            val angle = Math.toRadians(hour * 30.0 - 90.0)
+            val x = cx + (cos(angle) * numberRadius).toFloat()
+            val y = cy + (sin(angle) * numberRadius).toFloat() + textDy
+            canvas.drawText(hour.toString(), x, y, numberPaint)
+        }
+    }
+
+    private fun drawHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        degrees: Float,
+        length: Float,
+        tail: Float,
+        paint: Paint,
+    ) {
         canvas.save()
         canvas.rotate(degrees, cx, cy)
-        canvas.drawLine(cx, cy, cx, cy - length, paint)
+        canvas.drawLine(cx, cy + tail, cx, cy - length, paint)
         canvas.restore()
     }
 }
@@ -108,10 +159,8 @@ fun bindClockCard(
     body: LinearLayout,
     onOpen: (() -> Unit)?,
 ) {
-    val density = body.resources.displayMetrics.density
-    val pad = (8 * density).toInt()
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_calendar_card))
-    card.setContentPadding(pad, pad, pad, pad)
+    card.setContentPadding(0, 0, 0, 0)
     val view = LayoutInflater.from(body.context).inflate(R.layout.card_clock, body, true)
     if (onOpen != null) {
         val open = View.OnClickListener { onOpen.invoke() }

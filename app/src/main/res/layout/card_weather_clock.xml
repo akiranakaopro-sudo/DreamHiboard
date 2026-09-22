@@ -16,8 +16,10 @@
         android:textSize="12sp" />
 
     <LinearLayout
+        android:id="@+id/weatherClockDigits"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipChildren="false"
         android:gravity="center"
         android:orientation="horizontal">
 

@@ -65,6 +65,7 @@ class WeatherClockView @JvmOverloads constructor(
         handsView = findViewById(R.id.weatherClockHands)
         hourView.typeface = heavy
         minuteView.typeface = heavy
+        clipChildren = false
         render()
     }
 
@@ -73,13 +74,11 @@ class WeatherClockView @JvmOverloads constructor(
         val key = w * 100000 + h
         if (w == 0 || h == 0 || key == fitted) return
         fitted = key
-        fitGlyph(hourView, h * 0.30f, "8")
-        fitGlyph(minuteView, h * 0.30f, "8")
+        fitGlyph(hourView, h * 0.26f, "8")
+        fitGlyph(minuteView, h * 0.26f, "8")
         fitGlyph(dateView, h * 0.046f, "8")
         fitGlyph(labelView, h * 0.052f, "8")
-        val towardCenter = w * 0.023f
-        hourView.translationX = towardCenter
-        minuteView.translationX = -towardCenter
+        placeDigits(w, h)
         dateView.translationY = h * 0.205f
         statusView.translationY = h * 0.18f
         val icon = (h * 0.075f).toInt().coerceAtLeast(1)
@@ -87,6 +86,18 @@ class WeatherClockView @JvmOverloads constructor(
             width = icon
             height = icon
         }
+    }
+
+    private fun placeDigits(w: Int, h: Int) {
+        val textW = hourView.paint.measureText("00")
+        val handReach = min(w, h) * 0.33f
+        val inner = w / 4f - textW / 2f
+        val outward = (handReach + h * 0.03f - inner).coerceAtLeast(0f)
+        val tickReach = min(w, h) * 0.18f
+        val outerRoom = (w / 4f - textW / 2f - tickReach).coerceAtLeast(0f)
+        val shift = outward.coerceAtMost(outerRoom)
+        hourView.translationX = -shift
+        minuteView.translationX = shift
     }
 
     private fun fitGlyph(view: TextView, glyphHeight: Float, sample: String) {
