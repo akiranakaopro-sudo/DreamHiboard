@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import gd.app.hiboard.engine.CONTACT_LIMIT
 import gd.app.hiboard.engine.RankedContact
 import gd.app.hiboard.engine.contactGivenName
+import gd.app.hiboard.engine.contactPhotoUri
 import gd.app.hiboard.engine.rankContacts
 import gd.app.hiboard.model.BoardContact
 
@@ -63,6 +64,7 @@ class ContactsRepository(context: Context) {
             add(ContactsContract.Contacts._ID)
             add(ContactsContract.Contacts.LOOKUP_KEY)
             add(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY)
+            add(ContactsContract.Contacts.PHOTO_URI)
             add(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI)
             add(ContactsContract.Contacts.STARRED)
             if (includeTimes) add(ContactsContract.Contacts.TIMES_CONTACTED)
@@ -86,7 +88,8 @@ class ContactsRepository(context: Context) {
             val idCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID)
             val keyCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.LOOKUP_KEY)
             val nameCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY)
-            val photoCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI)
+            val photoCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI)
+            val thumbCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI)
             val starredCol = cursor.getColumnIndexOrThrow(ContactsContract.Contacts.STARRED)
             val timesCol = if (includeTimes) {
                 cursor.getColumnIndexOrThrow(ContactsContract.Contacts.TIMES_CONTACTED)
@@ -105,7 +108,7 @@ class ContactsRepository(context: Context) {
                     starred = cursor.getInt(starredCol) == 1,
                     timesContacted = if (timesCol >= 0) cursor.getInt(timesCol) else 0,
                     lookupUri = lookup,
-                    photoUri = cursor.getString(photoCol),
+                    photoUri = contactPhotoUri(cursor.getString(photoCol), cursor.getString(thumbCol)),
                 )
             }
         }

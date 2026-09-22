@@ -22,6 +22,11 @@ fun rankContacts(people: List<RankedContact>, limit: Int = CONTACT_LIMIT): List<
         .take(limit)
 }
 
+/** Full display photo when the contacts app has one, otherwise the thumbnail. */
+fun contactPhotoUri(displayPhoto: String?, thumbnail: String?): String? {
+    return displayPhoto?.takeIf { it.isNotBlank() } ?: thumbnail?.takeIf { it.isNotBlank() }
+}
+
 /** Oppo prints the given name under the photo. */
 fun contactGivenName(displayName: String): String {
     val trimmed = displayName.trim()

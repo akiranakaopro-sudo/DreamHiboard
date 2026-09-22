@@ -1,8 +1,11 @@
 package gd.app.hiboard.ui
 
+import android.content.ContentResolver
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.provider.ContactsContract
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewOutlineProvider
@@ -12,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.coui.appcompat.cardview.COUICardView
 import gd.app.hiboard.R
+import java.io.InputStream
 
 data class ContactFace(
     val name: String,
@@ -68,8 +72,8 @@ fun bindContactsCard(
                 avatar.setImageResource(person.avatarRes)
                 initial.visibility = View.GONE
             }
-            !person.photoUri.isNullOrBlank() -> {
-                val photo = contactBitmap(avatar, person.photoUri)
+            else -> {
+                val photo = contactBitmap(avatar, person.photoUri, person.lookupUri)
                 if (photo != null) {
                     avatar.setImageBitmap(photo)
                     initial.visibility = View.GONE
@@ -77,7 +81,6 @@ fun bindContactsCard(
                     showInitial(avatar, initial, person)
                 }
             }
-            else -> showInitial(avatar, initial, person)
         }
         item.findViewById<TextView>(R.id.contactName).text = person.name
         item.findViewById<ImageView>(R.id.contactAvatar).contentDescription = person.name
@@ -92,12 +95,36 @@ private fun showInitial(avatar: ImageView, initial: TextView, person: ContactFac
     initial.text = person.name.firstOrNull()?.uppercaseChar()?.toString().orEmpty()
 }
 
-private fun contactBitmap(view: View, photoUri: String) = try {
-    view.context.contentResolver.openInputStream(Uri.parse(photoUri))?.use { stream ->
-        BitmapFactory.decodeStream(stream)
+private fun contactBitmap(view: View, photoUri: String?, lookupUri: String?): Bitmap? {
+    val resolver = view.context.contentResolver
+    decodeUri(resolver, photoUri)?.let { return it }
+    val contact = lookupUri?.takeIf { it.isNotBlank() }?.let(Uri::parse) ?: return null
+    return try {
+        ContactsContract.Contacts.openContactPhotoInputStream(resolver, contact, true)?.use(::decodePhoto)
+    } catch (_: Exception) {
+        null
     }
-} catch (_: Exception) {
-    null
+}
+
+private fun decodeUri(resolver: ContentResolver, photoUri: String?): Bitmap? {
+    if (photoUri.isNullOrBlank()) return null
+    return try {
+        resolver.openInputStream(Uri.parse(photoUri))?.use(::decodePhoto)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+/** Contact photo streams often cannot rewind, so decode the bytes instead of the stream. */
+private fun decodePhoto(stream: InputStream): Bitmap? {
+    val bytes = stream.readBytes()
+    if (bytes.isEmpty()) return null
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    var sample = 1
+    while (bounds.outWidth / sample > 256 && bounds.outHeight / sample > 256) sample *= 2
+    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
 }
 
 private val CONTACT_FALLBACK = intArrayOf(

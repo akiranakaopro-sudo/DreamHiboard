@@ -25,4 +25,15 @@ class ContactsTest {
         assertEquals("Layla", contactGivenName("  Layla  "))
         assertEquals("王伟", contactGivenName("王伟"))
     }
+
+    @Test
+    fun displayPhotoBeatsAnEmptyThumbnail() {
+        assertEquals(
+            "content://com.android.contacts/display_photo/1",
+            contactPhotoUri("content://com.android.contacts/display_photo/1", "content://thumb"),
+        )
+        assertEquals("content://thumb", contactPhotoUri(null, "content://thumb"))
+        assertEquals("content://thumb", contactPhotoUri("  ", "content://thumb"))
+        assertEquals(null, contactPhotoUri(null, null))
+    }
 }
