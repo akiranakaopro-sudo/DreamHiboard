@@ -100,7 +100,7 @@ class HiboardView @JvmOverloads constructor(
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
-            binding.boardRoot.updatePadding(bottom = bars.bottom)
+            binding.boardScroll.updatePadding(bottom = bars.bottom)
             binding.storeListPane.updatePadding(bottom = bars.bottom)
             binding.storeDetailPane.updatePadding(bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED

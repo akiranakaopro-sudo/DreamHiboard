@@ -76,7 +76,7 @@
             android:background="?attr/couiColorBackgroundWithCard"
             android:clipChildren="true"
             android:clipToOutline="true"
-            android:clipToPadding="true"
+            android:clipToPadding="false"
             android:fillViewport="true">
 
             <LinearLayout
