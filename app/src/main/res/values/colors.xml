@@ -43,4 +43,11 @@
     <color name="hiboard_store_bg">#FFF3F4F6</color>
     <color name="hiboard_store_title">#FF1C1C1E</color>
     <color name="hiboard_store_close">#FF0076FF</color>
+    <color name="hiboard_contacts_card">#FFFFFFFF</color>
+    <color name="hiboard_contacts_name">#FF1C1C1E</color>
+    <color name="hiboard_calendar_card">#FFFFFFFF</color>
+    <color name="hiboard_calendar_title">#FF1C1C1E</color>
+    <color name="hiboard_calendar_weekday">#FF8E8E93</color>
+    <color name="hiboard_calendar_outside">#FFC7C7CC</color>
+    <color name="hiboard_calendar_today">#FF3478F6</color>
 </resources>

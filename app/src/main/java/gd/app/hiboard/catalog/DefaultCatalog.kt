@@ -71,6 +71,36 @@ object DefaultCatalog {
             engine = CardEngineId.Recorder,
             defaultSubscribed = true,
         ),
+        CardCatalogEntry(
+            id = "contacts",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Contacts",
+            description = "Favorite people in one row. Tap a person to open them.",
+            size = CardSize.FullByTwo,
+            engine = CardEngineId.Contacts,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
+            id = "calendar",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Calendar",
+            description = "This month, with today marked. Tap to open Calendar.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Calendar,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
+            id = "clock",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Clock",
+            description = "Analog clock set to the system time.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Clock,
+            defaultSubscribed = false,
+        ),
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }

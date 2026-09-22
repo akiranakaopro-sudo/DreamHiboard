@@ -56,13 +56,18 @@ class WidgetStoreTest {
     fun featuresAndWeatherShowUnlockedWidgets() {
         val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
             .flatMap { it.entries }
-        assertEquals(listOf("All notes", "Flashlight", "Recorder", "Storage"), features.map { it.name })
-        assertEquals(true, features.all { it.size.columns == 2 && it.size.rows == 2 })
+        assertEquals(listOf("All notes", "Contacts", "Flashlight", "Recorder", "Storage"), features.map { it.name })
+        assertEquals(CardSize.FullByTwo, features.first { it.name == "Contacts" }.size)
+        assertEquals(
+            true,
+            features.filter { it.name != "Contacts" }.all { it.size.columns == 2 && it.size.rows == 2 },
+        )
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
             .flatMap { it.entries }
-        assertEquals(listOf("Weather"), weather.map { it.name })
-        assertEquals(4, weather.single().size.columns)
-        assertEquals(2, weather.single().size.rows)
+        assertEquals(listOf("Calendar", "Clock", "Weather"), weather.map { it.name })
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
     }
 
     @Test
@@ -73,7 +78,7 @@ class WidgetStoreTest {
         )
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
         assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
-        assertEquals(emptyList<String>(), DefaultCatalog.defaultRecommendedIds())
+        assertEquals(listOf("contacts", "calendar", "clock"), DefaultCatalog.defaultRecommendedIds())
     }
 
     @Test

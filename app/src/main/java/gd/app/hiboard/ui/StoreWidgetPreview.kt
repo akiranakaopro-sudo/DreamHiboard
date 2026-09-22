@@ -15,6 +15,7 @@ import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStorageUsage
+import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
@@ -53,6 +54,9 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body, density)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body, density)
         CardEngineId.RecentApps -> Unit
+        CardEngineId.Contacts -> bindContactsPreview(inflater, card, body)
+        CardEngineId.Calendar -> bindCalendarCard(card, body, monthPageToday(), onOpen = null)
+        CardEngineId.Clock -> bindClockCard(card, body, onOpen = null)
     }
     freezePreview(card)
     return card
@@ -134,6 +138,23 @@ private fun bindFlashlightPreview(
         setTextColor(labelColor)
         text = context.getString(R.string.flashlight_off)
     }
+}
+
+private fun bindContactsPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
+    bindContactsCard(
+        inflater,
+        card,
+        body,
+        people = listOf(
+            ContactFace("Sophia", avatarRes = R.drawable.avatar_sophia),
+            ContactFace("Jim", avatarRes = R.drawable.avatar_jim),
+            ContactFace("Carlos", avatarRes = R.drawable.avatar_carlos),
+            ContactFace("Layla", avatarRes = R.drawable.avatar_layla),
+        ),
+        message = null,
+        onPerson = null,
+        onCard = null,
+    )
 }
 
 private fun freezePreview(root: View) {

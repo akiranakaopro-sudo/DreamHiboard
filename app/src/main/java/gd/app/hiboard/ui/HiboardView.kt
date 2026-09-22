@@ -114,6 +114,11 @@ class HiboardView @JvmOverloads constructor(
             recorderLive = viewModel::recorderLive,
             onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
+            onOpenContact = { launchIntent(this, viewModel.openContact(it)) },
+            onOpenContacts = { launchIntent(this, viewModel.openContactsApp()) },
+            onAllowContacts = { requestContacts() },
+            onOpenCalendar = { launchIntent(this, viewModel.openCalendar()) },
+            onOpenClock = { launchIntent(this, viewModel.openClock()) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,
         )
@@ -268,6 +273,16 @@ class HiboardView @JvmOverloads constructor(
             }
             RecorderSendResult.Sent, RecorderSendResult.Failed -> Unit
         }
+    }
+
+    private fun requestContacts() {
+        val activity = context.findActivity() ?: return
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_CONTACTS)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        activity.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), CONTACTS_PERMISSION)
     }
 
     private fun render(
@@ -942,6 +957,9 @@ class HiboardView @JvmOverloads constructor(
                 context.getColor(R.color.hiboard_flashlight_off),
             )
             CardEngineId.RecentApps -> Triple(R.drawable.ic_search_dark, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Contacts -> Triple(R.drawable.ic_contact, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Calendar -> Triple(R.drawable.ic_calendar, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Clock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
         }
     }
 
@@ -1000,6 +1018,7 @@ class HiboardView @JvmOverloads constructor(
     private companion object {
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
+        const val CONTACTS_PERMISSION = 44
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
         const val STORE_DISMISS_FRACTION = 0.18f

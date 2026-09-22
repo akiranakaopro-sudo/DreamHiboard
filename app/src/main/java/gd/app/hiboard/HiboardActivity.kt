@@ -78,7 +78,12 @@ class HiboardActivity : AppCompatActivity() {
         val card = data.getQueryParameter("card") ?: data.getQueryParameter("id")
         val host = data.host.orEmpty()
         viewModel.applyDeeplink(
-            cardId = card ?: host.takeIf { it in setOf("weather", "notes", "recent", "flashlight", "storage", "recorder") },
+            cardId = card ?: host.takeIf {
+                it in setOf(
+                    "weather", "notes", "recent", "flashlight", "storage", "recorder",
+                    "contacts", "calendar", "clock",
+                )
+            },
             edit = host == "edit" || data.getBooleanQueryParameter("edit", false),
             store = host == "store" || host == "subscribe",
         )

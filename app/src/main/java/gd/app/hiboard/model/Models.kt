@@ -28,6 +28,9 @@ enum class CardEngineId {
     Flashlight,
     Storage,
     Recorder,
+    Contacts,
+    Calendar,
+    Clock,
 }
 
 enum class RecorderUiState {
@@ -82,6 +85,12 @@ data class ShortcutApp(
     val activityName: String?,
 )
 
+data class BoardContact(
+    val name: String,
+    val lookupUri: String,
+    val photoUri: String? = null,
+)
+
 data class WeatherDayContent(
     val label: String = "",
     val condition: String = "",
@@ -106,6 +115,9 @@ data class CardContent(
     val recorderElapsedMs: Long = 0L,
     val recorderBound: Boolean = false,
     val recentApps: List<ShortcutApp> = emptyList(),
+    val contacts: List<BoardContact> = emptyList(),
+    val contactsPermitted: Boolean = false,
+    val contactsReady: Boolean = false,
 )
 
 data class GridPlacement(

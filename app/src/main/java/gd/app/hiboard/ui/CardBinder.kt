@@ -17,6 +17,7 @@ import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderStatus
 import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.WeatherSnapshot
+import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStorageUsage
 import gd.app.hiboard.engine.recorderPrimaryCommand
@@ -36,6 +37,11 @@ class CardBinder(
     private val recorderLive: () -> RecorderStatus,
     private val onOpenRecorder: () -> Unit,
     private val onOpenApp: (ShortcutApp) -> Unit,
+    private val onOpenContact: (String) -> Unit,
+    private val onOpenContacts: () -> Unit,
+    private val onAllowContacts: () -> Unit,
+    private val onOpenCalendar: () -> Unit,
+    private val onOpenClock: () -> Unit,
     private val onRemove: (String) -> Unit,
     private val onAdd: (String) -> Unit,
 ) {
@@ -51,6 +57,9 @@ class CardBinder(
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
             CardEngineId.Recorder -> bindRecorder(inflater, root, body, state)
+            CardEngineId.Contacts -> bindContacts(inflater, root, body, state)
+            CardEngineId.Calendar -> bindCalendar(root, body)
+            CardEngineId.Clock -> bindClock(root, body)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -311,6 +320,48 @@ class CardBinder(
         save.setOnClickListener { button ->
             button.post { onRecorderCommand(RecorderCommand.Save) }
         }
+    }
+
+    private fun bindContacts(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val card = root as? COUICardView ?: return
+        val permitted = state.content.contactsPermitted
+        val people = state.content.contacts.map { person ->
+            ContactFace(person.name, photoUri = person.photoUri, lookupUri = person.lookupUri)
+        }
+        when {
+            permitted && people.isNotEmpty() -> bindContactsCard(
+                inflater, card, body, people, message = null,
+                onPerson = { face -> face.lookupUri?.let(onOpenContact) },
+                onCard = null,
+            )
+            !permitted -> bindContactsCard(
+                inflater, card, body, emptyList(),
+                message = body.context.getString(R.string.contacts_allow),
+                onPerson = null,
+                onCard = onAllowContacts,
+            )
+            else -> bindContactsCard(
+                inflater, card, body, emptyList(),
+                message = body.context.getString(R.string.contacts_empty),
+                onPerson = null,
+                onCard = onOpenContacts,
+            )
+        }
+    }
+
+    private fun bindCalendar(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindCalendarCard(card, body, monthPageToday(), onOpenCalendar)
+    }
+
+    private fun bindClock(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindClockCard(card, body, onOpenClock)
     }
 }
 

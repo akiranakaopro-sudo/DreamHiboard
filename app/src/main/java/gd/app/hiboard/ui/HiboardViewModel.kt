@@ -302,6 +302,14 @@ class HiboardViewModel(
         return intent
     }
 
+    fun openContact(lookupUri: String): Intent? = engines.openContact(lookupUri)
+
+    fun openContactsApp(): Intent = engines.openContactsApp()
+
+    fun openCalendar(): Intent = engines.openCalendar()
+
+    fun openClock(): Intent? = engines.openClock()
+
     private fun sortByCatalog(cards: List<CardInstance>, catalogIds: List<String>): List<CardInstance> {
         val byId = cards.associateBy { it.catalogId }
         val ordered = catalogIds.mapNotNull(byId::get)

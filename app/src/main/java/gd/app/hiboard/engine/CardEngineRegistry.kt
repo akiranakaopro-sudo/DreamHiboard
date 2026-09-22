@@ -2,7 +2,9 @@ package gd.app.hiboard.engine
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import gd.app.hiboard.data.ContactsRepository
 import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
 import gd.app.hiboard.data.WeatherStore
@@ -24,6 +26,7 @@ class CardEngineRegistry(context: Context) {
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
     private val recorder = RecorderClient(appContext)
+    private val contacts = ContactsRepository(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
         CardEngineId.Weather to CardEngine {
             val latest = weather.current().resolved()
@@ -67,6 +70,16 @@ class CardEngineRegistry(context: Context) {
                 recorderBound = true,
             )
         },
+        CardEngineId.Contacts to CardEngine {
+            val loaded = contacts.load()
+            CardContent(
+                contacts = loaded.people,
+                contactsPermitted = loaded.permitted,
+                contactsReady = true,
+            )
+        },
+        CardEngineId.Calendar to CardEngine { CardContent() },
+        CardEngineId.Clock to CardEngine { CardContent() },
     )
 
     fun compose(action: CardAction): CardContent {
@@ -137,6 +150,31 @@ class CardEngineRegistry(context: Context) {
 
     fun openRecorder(): Intent? = recorder.openRecorder()
 
+    fun openContact(lookupUri: String): Intent? = contacts.open(lookupUri)
+
+    fun openContactsApp(): Intent = contacts.openApp()
+
+    fun openCalendar(): Intent {
+        val launch = appContext.packageManager.getLaunchIntentForPackage("gd.app.calendar")
+        if (launch != null) return launch
+        val calendar = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR)
+        if (appContext.packageManager.resolveActivity(calendar, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+            return calendar
+        }
+        return Intent(Intent.ACTION_VIEW, Uri.parse("content://com.android.calendar/time"))
+    }
+
+    fun openClock(): Intent? {
+        val packages = listOf("com.android.deskclock", "com.coloros.alarmclock", "com.oplus.alarmclock")
+        packages.forEach { name ->
+            appContext.packageManager.getLaunchIntentForPackage(name)?.let { return it }
+        }
+        val alarm = Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS)
+        return alarm.takeIf {
+            appContext.packageManager.resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
+        }
+    }
+
     fun syncRecorder() = recorder.sync()
 
     private fun merge(a: CardContent, b: CardContent): CardContent = CardContent(
@@ -156,5 +194,8 @@ class CardEngineRegistry(context: Context) {
         recorderElapsedMs = if (b.recorderBound) b.recorderElapsedMs else a.recorderElapsedMs,
         recorderBound = a.recorderBound || b.recorderBound,
         recentApps = b.recentApps.ifEmpty { a.recentApps },
+        contacts = if (b.contactsReady) b.contacts else a.contacts,
+        contactsPermitted = if (b.contactsReady) b.contactsPermitted else a.contactsPermitted,
+        contactsReady = a.contactsReady || b.contactsReady,
     )
 }
