@@ -61,6 +61,7 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
             val weather = WeatherSnapshot.DEFAULT.resolved()
             bindWeatherClock(card, body, weather.condition, weather.temperatureC, onOpen = null)
         }
+        CardEngineId.LocalTime -> bindLocalTimeClock(card, body, onOpen = null)
     }
     freezePreview(card)
     return card

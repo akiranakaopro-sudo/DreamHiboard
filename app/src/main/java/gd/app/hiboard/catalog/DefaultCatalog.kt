@@ -111,6 +111,16 @@ object DefaultCatalog {
             engine = CardEngineId.WeatherClock,
             defaultSubscribed = false,
         ),
+        CardCatalogEntry(
+            id = "localtime",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Local time clock",
+            description = "Hour over minute, set to the system time.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.LocalTime,
+            defaultSubscribed = false,
+        ),
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }

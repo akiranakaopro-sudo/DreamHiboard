@@ -61,6 +61,7 @@ class CardBinder(
             CardEngineId.Calendar -> bindCalendar(root, body)
             CardEngineId.Clock -> bindClock(root, body)
             CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
+            CardEngineId.LocalTime -> bindLocalTime(root, body)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -377,6 +378,11 @@ class CardBinder(
             state.content.weatherTempC
         }
         bindWeatherClock(card, body, condition, temperature, onOpenClock)
+    }
+
+    private fun bindLocalTime(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindLocalTimeClock(card, body, onOpenClock)
     }
 }
 
