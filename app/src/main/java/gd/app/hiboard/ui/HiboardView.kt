@@ -495,9 +495,13 @@ class HiboardView @JvmOverloads constructor(
             binding.storePager.clipToPadding = false
             binding.storePager.adapter = it
             binding.storePager.post {
-                (binding.storePager.getChildAt(0) as? ViewGroup)?.apply {
+                (binding.storePager.getChildAt(0) as? RecyclerView)?.apply {
                     clipChildren = false
                     clipToPadding = false
+                    val slop = ViewConfiguration.get(context).scaledTouchSlop * 6
+                    val field = RecyclerView::class.java.getDeclaredField("mTouchSlop")
+                    field.isAccessible = true
+                    if (field.getInt(this) < slop) field.setInt(this, slop)
                 }
             }
         }

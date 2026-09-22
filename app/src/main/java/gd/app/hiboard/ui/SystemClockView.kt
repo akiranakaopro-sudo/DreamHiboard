@@ -3,7 +3,9 @@ package gd.app.hiboard.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -33,6 +35,7 @@ class SystemClockView @JvmOverloads constructor(
     private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF333333.toInt()
         textAlign = Paint.Align.CENTER
+        typeface = Typeface.create("sans-serif", Typeface.BOLD)
     }
     private val hourTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF696969.toInt()
@@ -44,11 +47,11 @@ class SystemClockView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
-    private val handPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val handFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF2F313D.toInt()
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
+        style = Paint.Style.FILL
     }
+    private val handPath = Path()
     private val secondPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.STROKE
@@ -100,10 +103,11 @@ class SystemClockView @JvmOverloads constructor(
             now.get(Calendar.MINUTE),
             now.get(Calendar.SECOND),
         )
-        handPaint.strokeWidth = (face * 0.074f).coerceAtLeast(1f)
-        drawHand(canvas, cx, cy, hands.hourDegrees, face * 0.60f, face * 0.02f, handPaint)
-        handPaint.strokeWidth = (face * 0.058f).coerceAtLeast(1f)
-        drawHand(canvas, cx, cy, hands.minuteDegrees, face * 0.80f, face * 0.02f, handPaint)
+        val shadow = face * 0.04f
+        handFill.setShadowLayer(shadow, face * 0.012f, face * 0.02f, 0x33000000)
+        drawTaperedHand(canvas, cx, cy, hands.hourDegrees, face * 0.56f, face * 0.078f, face * 0.046f)
+        drawTaperedHand(canvas, cx, cy, hands.minuteDegrees, face * 0.78f, face * 0.062f, face * 0.036f)
+        handFill.clearShadowLayer()
         canvas.drawCircle(cx, cy, face * 0.082f, hubPaint)
         secondPaint.strokeWidth = (face * 0.014f).coerceAtLeast(1f)
         drawHand(canvas, cx, cy, hands.secondDegrees, face * 0.92f, face * 0.16f, secondPaint)
@@ -147,6 +151,30 @@ class SystemClockView @JvmOverloads constructor(
             val y = cy + (sin(angle) * numberRadius).toFloat() + textDy
             canvas.drawText(hour.toString(), x, y, numberPaint)
         }
+    }
+
+    private fun drawTaperedHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        degrees: Float,
+        length: Float,
+        baseWidth: Float,
+        tipWidth: Float,
+    ) {
+        canvas.save()
+        canvas.rotate(degrees, cx, cy)
+        val baseY = cy + length * 0.04f
+        val tipY = cy - length
+        val tipR = tipWidth / 2f
+        handPath.rewind()
+        handPath.moveTo(cx - baseWidth / 2f, baseY)
+        handPath.lineTo(cx - tipR, tipY)
+        handPath.quadTo(cx, tipY - tipR, cx + tipR, tipY)
+        handPath.lineTo(cx + baseWidth / 2f, baseY)
+        handPath.close()
+        canvas.drawPath(handPath, handFill)
+        canvas.restore()
     }
 
     private fun drawHand(
