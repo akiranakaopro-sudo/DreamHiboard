@@ -22,8 +22,16 @@ class SystemClockView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
+    private val facePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.hiboard_clock_face)
+        style = Paint.Style.FILL
+    }
+    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD5D8DE.toInt()
+        style = Paint.Style.STROKE
+    }
     private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF1A1A1A.toInt()
+        color = 0xFF333333.toInt()
         textAlign = Paint.Align.CENTER
     }
     private val hourTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -80,29 +88,32 @@ class SystemClockView @JvmOverloads constructor(
         if (width <= 0 || height <= 0) return
         val cx = width / 2f
         val cy = height / 2f
-        val radius = min(width, height) / 2f
-        drawTicks(canvas, cx, cy, radius)
-        drawNumbers(canvas, cx, cy, radius)
+        val face = min(width, height) / 2f * 0.82f
+        rimPaint.strokeWidth = (face * 0.012f).coerceAtLeast(1f)
+        canvas.drawCircle(cx, cy, face, facePaint)
+        canvas.drawCircle(cx, cy, face, rimPaint)
+        drawTicks(canvas, cx, cy, face)
+        drawNumbers(canvas, cx, cy, face)
         val now = Calendar.getInstance()
         val hands = clockHands(
             now.get(Calendar.HOUR_OF_DAY),
             now.get(Calendar.MINUTE),
             now.get(Calendar.SECOND),
         )
-        val stroke = (radius * 0.063f).coerceAtLeast(1f)
-        handPaint.strokeWidth = stroke
-        secondPaint.strokeWidth = (radius * 0.016f).coerceAtLeast(1f)
-        drawHand(canvas, cx, cy, hands.hourDegrees, radius * 0.86f, radius * 0.04f, handPaint)
-        drawHand(canvas, cx, cy, hands.minuteDegrees, radius * 0.86f, radius * 0.04f, handPaint)
-        canvas.drawCircle(cx, cy, radius * 0.095f, hubPaint)
-        drawHand(canvas, cx, cy, hands.secondDegrees, radius * 0.96f, radius * 0.27f, secondPaint)
-        canvas.drawCircle(cx, cy, radius * 0.055f, pinPaint)
+        handPaint.strokeWidth = (face * 0.074f).coerceAtLeast(1f)
+        drawHand(canvas, cx, cy, hands.hourDegrees, face * 0.60f, face * 0.02f, handPaint)
+        handPaint.strokeWidth = (face * 0.058f).coerceAtLeast(1f)
+        drawHand(canvas, cx, cy, hands.minuteDegrees, face * 0.80f, face * 0.02f, handPaint)
+        canvas.drawCircle(cx, cy, face * 0.082f, hubPaint)
+        secondPaint.strokeWidth = (face * 0.014f).coerceAtLeast(1f)
+        drawHand(canvas, cx, cy, hands.secondDegrees, face * 0.92f, face * 0.16f, secondPaint)
+        canvas.drawCircle(cx, cy, face * 0.051f, pinPaint)
     }
 
     private fun drawTicks(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
-        val outer = radius * 0.968f
-        val hourLen = radius * 0.145f
-        val minuteLen = radius * 0.055f
+        val outer = radius * 0.93f
+        val hourLen = radius * 0.105f
+        val minuteLen = radius * 0.042f
         val stroke = (radius * 0.012f).coerceAtLeast(1f)
         hourTickPaint.strokeWidth = stroke
         minuteTickPaint.strokeWidth = stroke * 0.7f
@@ -126,10 +137,10 @@ class SystemClockView @JvmOverloads constructor(
         numberPaint.textSize = 100f
         numberPaint.getTextBounds("8", 0, 1, glyphProbe)
         val glyph = glyphProbe.height().toFloat().coerceAtLeast(1f)
-        numberPaint.textSize *= radius * 0.135f / glyph
+        numberPaint.textSize *= radius * 0.115f / glyph
         val metrics = numberPaint.fontMetrics
         val textDy = -(metrics.ascent + metrics.descent) / 2f
-        val numberRadius = radius * 0.76f
+        val numberRadius = radius * 0.73f
         for (hour in 1..12) {
             val angle = Math.toRadians(hour * 30.0 - 90.0)
             val x = cx + (cos(angle) * numberRadius).toFloat()
@@ -159,7 +170,7 @@ fun bindClockCard(
     body: LinearLayout,
     onOpen: (() -> Unit)?,
 ) {
-    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_calendar_card))
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_clock_card))
     card.setContentPadding(0, 0, 0, 0)
     val view = LayoutInflater.from(body.context).inflate(R.layout.card_clock, body, true)
     if (onOpen != null) {
