@@ -50,4 +50,5 @@
     <color name="hiboard_calendar_weekday">#FF8E8E93</color>
     <color name="hiboard_calendar_outside">#FFC7C7CC</color>
     <color name="hiboard_calendar_today">#FF3478F6</color>
+    <color name="hiboard_clock_second">#FF0066FF</color>
 </resources>

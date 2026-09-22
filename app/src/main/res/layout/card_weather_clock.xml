@@ -11,10 +11,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="14dp"
         android:includeFontPadding="false"
         android:textColor="@color/hiboard_calendar_title"
-        android:textSize="14sp" />
+        android:textSize="12sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,9 +28,8 @@
             android:layout_weight="1"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:textColor="@color/hiboard_calendar_title"
-            android:textSize="52sp"
-            android:textStyle="bold" />
+            android:textColor="@android:color/black"
+            android:textSize="52sp" />
 
         <TextView
             android:id="@+id/weatherClockMinute"
@@ -40,16 +38,15 @@
             android:layout_weight="1"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:textColor="@color/hiboard_calendar_title"
-            android:textSize="52sp"
-            android:textStyle="bold" />
+            android:textColor="@android:color/black"
+            android:textSize="52sp" />
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/weatherClockStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="36dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 

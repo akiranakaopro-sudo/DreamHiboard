@@ -122,7 +122,7 @@ class LocalTimeFace @JvmOverloads constructor(
             val dx = sin(angle).toFloat()
             val dy = (-cos(angle)).toFloat()
             val major = index % 5 == 0
-            val outer = perimeterPoint(cx, cy, inset, corner, dx, dy)
+            val outer = clockFacePoint(width, height, cx, cy, inset, corner, dx, dy)
             val length = if (major) majorLen else minorLen
             canvas.drawLine(
                 outer[0],
@@ -132,53 +132,6 @@ class LocalTimeFace @JvmOverloads constructor(
                 if (major) majorPaint else minorPaint,
             )
         }
-    }
-
-    private fun perimeterPoint(
-        cx: Float,
-        cy: Float,
-        inset: Float,
-        radius: Float,
-        dx: Float,
-        dy: Float,
-    ): FloatArray {
-        val left = inset
-        val top = inset
-        val right = width - inset
-        val bottom = height - inset
-        val rad = radius.coerceAtMost(min(right - left, bottom - top) / 2f)
-        if (dy < -1e-4f) {
-            val t = (top - cy) / dy
-            val x = cx + dx * t
-            if (x in left + rad..right - rad) return floatArrayOf(x, top)
-        }
-        if (dy > 1e-4f) {
-            val t = (bottom - cy) / dy
-            val x = cx + dx * t
-            if (x in left + rad..right - rad) return floatArrayOf(x, bottom)
-        }
-        if (dx > 1e-4f) {
-            val t = (right - cx) / dx
-            val y = cy + dy * t
-            if (y in top + rad..bottom - rad) return floatArrayOf(right, y)
-        }
-        if (dx < -1e-4f) {
-            val t = (left - cx) / dx
-            val y = cy + dy * t
-            if (y in top + rad..bottom - rad) return floatArrayOf(left, y)
-        }
-        val ccx = if (dx >= 0f) right - rad else left + rad
-        val ccy = if (dy >= 0f) bottom - rad else top + rad
-        val ox = cx - ccx
-        val oy = cy - ccy
-        val b = 2f * (ox * dx + oy * dy)
-        val c = ox * ox + oy * oy - rad * rad
-        val disc = b * b - 4f * c
-        if (disc > 0f && rad > 0f) {
-            val t = (-b + sqrt(disc)) / 2f
-            return floatArrayOf(cx + dx * t, cy + dy * t)
-        }
-        return floatArrayOf(cx + dx * (right - left) / 2f, cy + dy * (bottom - top) / 2f)
     }
 
     private fun drawDigits(canvas: Canvas) {
@@ -196,6 +149,56 @@ class LocalTimeFace @JvmOverloads constructor(
         canvas.drawText(hour, cx, hourBaseline, textPaint)
         canvas.drawText(minute, cx, minuteBaseline, textPaint)
     }
+}
+
+/** Where a ray from the center meets a rounded-rect clock face. `dx, dy` point outward. */
+internal fun clockFacePoint(
+    width: Int,
+    height: Int,
+    cx: Float,
+    cy: Float,
+    inset: Float,
+    radius: Float,
+    dx: Float,
+    dy: Float,
+): FloatArray {
+    val left = inset
+    val top = inset
+    val right = width - inset
+    val bottom = height - inset
+    val rad = radius.coerceAtMost(min(right - left, bottom - top) / 2f)
+    if (dy < -1e-4f) {
+        val t = (top - cy) / dy
+        val x = cx + dx * t
+        if (x in left + rad..right - rad) return floatArrayOf(x, top)
+    }
+    if (dy > 1e-4f) {
+        val t = (bottom - cy) / dy
+        val x = cx + dx * t
+        if (x in left + rad..right - rad) return floatArrayOf(x, bottom)
+    }
+    if (dx > 1e-4f) {
+        val t = (right - cx) / dx
+        val y = cy + dy * t
+        if (y in top + rad..bottom - rad) return floatArrayOf(right, y)
+    }
+    if (dx < -1e-4f) {
+        val t = (left - cx) / dx
+        val y = cy + dy * t
+        if (y in top + rad..bottom - rad) return floatArrayOf(left, y)
+    }
+    val ccx = if (dx >= 0f) right - rad else left + rad
+    val ccy = if (dy >= 0f) bottom - rad else top + rad
+    val ox = cx - ccx
+    val oy = cy - ccy
+    val b = 2f * (ox * dx + oy * dy)
+    val c = ox * ox + oy * oy - rad * rad
+    val disc = b * b - 4f * c
+    if (disc > 0f && rad > 0f) {
+        val t = (-b + sqrt(disc)) / 2f
+        return floatArrayOf(cx + dx * t, cy + dy * t)
+    }
+    return floatArrayOf(cx + dx * (right - left) / 2f, cy + dy * (bottom - top) / 2f)
 }
 
 fun bindLocalTimeClock(

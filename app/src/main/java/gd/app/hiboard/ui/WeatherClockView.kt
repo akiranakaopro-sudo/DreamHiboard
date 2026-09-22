@@ -2,8 +2,15 @@ package gd.app.hiboard.ui
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -31,8 +38,12 @@ class WeatherClockView @JvmOverloads constructor(
     private val minuteView: TextView
     private val iconView: ImageView
     private val labelView: TextView
+    private val statusView: LinearLayout
     private val ticks: WeatherClockTicks
     private val handsView: WeatherClockHands
+    private val heavy = Typeface.create("sans-serif-medium", Typeface.BOLD)
+    private val glyphProbe = Rect()
+    private var fitted = 0
 
     private val tick = object : Runnable {
         override fun run() {
@@ -49,9 +60,43 @@ class WeatherClockView @JvmOverloads constructor(
         minuteView = findViewById(R.id.weatherClockMinute)
         iconView = findViewById(R.id.weatherClockIcon)
         labelView = findViewById(R.id.weatherClockLabel)
+        statusView = findViewById(R.id.weatherClockStatus)
         ticks = findViewById(R.id.weatherClockTicks)
         handsView = findViewById(R.id.weatherClockHands)
+        hourView.typeface = heavy
+        minuteView.typeface = heavy
         render()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        val key = w * 100000 + h
+        if (w == 0 || h == 0 || key == fitted) return
+        fitted = key
+        fitGlyph(hourView, h * 0.30f, "8")
+        fitGlyph(minuteView, h * 0.30f, "8")
+        fitGlyph(dateView, h * 0.046f, "8")
+        fitGlyph(labelView, h * 0.052f, "8")
+        val towardCenter = w * 0.023f
+        hourView.translationX = towardCenter
+        minuteView.translationX = -towardCenter
+        dateView.translationY = h * 0.205f
+        statusView.translationY = h * 0.18f
+        val icon = (h * 0.075f).toInt().coerceAtLeast(1)
+        iconView.layoutParams = iconView.layoutParams.apply {
+            width = icon
+            height = icon
+        }
+    }
+
+    private fun fitGlyph(view: TextView, glyphHeight: Float, sample: String) {
+        val paint = view.paint
+        val previous = paint.textSize
+        paint.textSize = 100f
+        paint.getTextBounds(sample, 0, sample.length, glyphProbe)
+        val glyph = glyphProbe.height().toFloat().coerceAtLeast(1f)
+        paint.textSize = previous
+        view.setTextSize(TypedValue.COMPLEX_UNIT_PX, 100f * glyphHeight / glyph)
     }
 
     fun setWeather(condition: WeatherCondition, temperatureC: Int) {
@@ -72,11 +117,13 @@ class WeatherClockView @JvmOverloads constructor(
 
     private fun render() {
         val now = Calendar.getInstance()
-        dateView.text = weatherClockDate(
-            now.get(Calendar.YEAR),
-            now.get(Calendar.MONTH),
-            now.get(Calendar.DAY_OF_MONTH),
-            Locale.getDefault(),
+        colorDate(
+            weatherClockDate(
+                now.get(Calendar.YEAR),
+                now.get(Calendar.MONTH),
+                now.get(Calendar.DAY_OF_MONTH),
+                Locale.getDefault(),
+            ),
         )
         hourView.text = String.format(Locale.US, "%02d", now.get(Calendar.HOUR_OF_DAY))
         minuteView.text = String.format(Locale.US, "%02d", now.get(Calendar.MINUTE))
@@ -88,6 +135,18 @@ class WeatherClockView @JvmOverloads constructor(
         ticks.invalidate()
         handsView.invalidate()
     }
+
+    private fun colorDate(text: String) {
+        val gap = text.lastIndexOf(' ')
+        if (gap <= 0) {
+            dateView.text = text
+            return
+        }
+        val span = SpannableString(text)
+        val accent = context.getColor(R.color.hiboard_clock_second)
+        span.setSpan(ForegroundColorSpan(accent), gap + 1, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        dateView.text = span
+    }
 }
 
 class WeatherClockTicks @JvmOverloads constructor(
@@ -96,29 +155,42 @@ class WeatherClockTicks @JvmOverloads constructor(
 ) : android.view.View(context, attrs) {
 
     private val density = resources.displayMetrics.density
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_weekday)
-        strokeWidth = 1.2f * density
+    private val majorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+    }
+    private val minorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFC8C8C8.toInt()
+        style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
 
     override fun onDraw(canvas: Canvas) {
+        if (width <= 0 || height <= 0) return
+        val unit = min(width, height).toFloat()
+        val inset = unit * 0.057f
+        val majorLen = unit * 0.120f
+        val minorLen = unit * 0.044f
+        val stroke = (unit * 0.006f).coerceAtLeast(1f)
+        majorPaint.strokeWidth = stroke
+        minorPaint.strokeWidth = stroke
+        val corner = (16f * density - inset).coerceAtLeast(0f)
         val cx = width / 2f
         val cy = height / 2f
-        val inset = 8f * density
-        val rx = width / 2f - inset
-        val ry = height / 2f - inset
         for (index in 0 until 60) {
-            val angle = Math.toRadians(index * 6.0 - 90.0)
-            val cosA = cos(angle).toFloat()
-            val sinA = sin(angle).toFloat()
-            val scale = if (index % 5 == 0) 0.88f else 0.94f
+            val angle = Math.toRadians(index * 6.0)
+            val dx = sin(angle).toFloat()
+            val dy = (-cos(angle)).toFloat()
+            val major = index % 5 == 0
+            val outer = clockFacePoint(width, height, cx, cy, inset, corner, dx, dy)
+            val length = if (major) majorLen else minorLen
             canvas.drawLine(
-                cx + rx * scale * cosA,
-                cy + ry * scale * sinA,
-                cx + rx * cosA,
-                cy + ry * sinA,
-                paint,
+                outer[0],
+                outer[1],
+                outer[0] - dx * length,
+                outer[1] - dy * length,
+                if (major) majorPaint else minorPaint,
             )
         }
     }
@@ -132,26 +204,20 @@ class WeatherClockHands @JvmOverloads constructor(
     var hands: ClockHands = clockHands(0, 0, 0)
 
     private val density = resources.displayMetrics.density
-    private val hourPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_title)
+    private val handPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 3.2f * density
-    }
-    private val minutePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_title)
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeWidth = 2.4f * density
+        strokeWidth = 3.4f * density
     }
     private val secondPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+        color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 1.3f * density
+        strokeWidth = 1.2f * density
     }
     private val hubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hiboard_calendar_today)
+        color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.FILL
     }
 
@@ -159,16 +225,24 @@ class WeatherClockHands @JvmOverloads constructor(
         val cx = width / 2f
         val cy = height / 2f
         val reach = min(width, height) / 2f
-        drawHand(canvas, cx, cy, hands.hourDegrees, reach * 0.34f, hourPaint)
-        drawHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.48f, minutePaint)
-        drawHand(canvas, cx, cy, hands.secondDegrees, reach * 0.62f, secondPaint)
-        canvas.drawCircle(cx, cy, 3.4f * density, hubPaint)
+        drawHand(canvas, cx, cy, hands.hourDegrees, reach * 0.66f, reach * 0.05f, handPaint)
+        drawHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.66f, reach * 0.05f, handPaint)
+        drawHand(canvas, cx, cy, hands.secondDegrees, reach * 0.73f, reach * 0.18f, secondPaint)
+        canvas.drawCircle(cx, cy, 4f * density, hubPaint)
     }
 
-    private fun drawHand(canvas: Canvas, cx: Float, cy: Float, degrees: Float, length: Float, paint: Paint) {
+    private fun drawHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        degrees: Float,
+        length: Float,
+        tail: Float,
+        paint: Paint,
+    ) {
         canvas.save()
         canvas.rotate(degrees, cx, cy)
-        canvas.drawLine(cx, cy, cx, cy - length, paint)
+        canvas.drawLine(cx, cy + tail, cx, cy - length, paint)
         canvas.restore()
     }
 }
