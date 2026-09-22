@@ -57,6 +57,10 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         CardEngineId.Contacts -> bindContactsPreview(inflater, card, body)
         CardEngineId.Calendar -> bindCalendarCard(card, body, monthPageToday(), onOpen = null)
         CardEngineId.Clock -> bindClockCard(card, body, onOpen = null)
+        CardEngineId.WeatherClock -> {
+            val weather = WeatherSnapshot.DEFAULT.resolved()
+            bindWeatherClock(card, body, weather.condition, weather.temperatureC, onOpen = null)
+        }
     }
     freezePreview(card)
     return card

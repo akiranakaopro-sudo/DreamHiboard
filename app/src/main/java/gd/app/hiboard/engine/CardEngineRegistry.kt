@@ -80,6 +80,7 @@ class CardEngineRegistry(context: Context) {
         },
         CardEngineId.Calendar to CardEngine { CardContent() },
         CardEngineId.Clock to CardEngine { CardContent() },
+        CardEngineId.WeatherClock to CardEngine { CardContent() },
     )
 
     fun compose(action: CardAction): CardContent {

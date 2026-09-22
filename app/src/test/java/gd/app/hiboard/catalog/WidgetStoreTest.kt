@@ -64,10 +64,11 @@ class WidgetStoreTest {
         )
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
             .flatMap { it.entries }
-        assertEquals(listOf("Calendar", "Clock", "Weather"), weather.map { it.name })
+        assertEquals(listOf("Calendar", "Clock", "Weather", "Weather clock"), weather.map { it.name })
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
         assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather clock" }.size)
     }
 
     @Test
@@ -78,7 +79,7 @@ class WidgetStoreTest {
         )
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
         assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
-        assertEquals(listOf("contacts", "calendar", "clock"), DefaultCatalog.defaultRecommendedIds())
+        assertEquals(listOf("contacts", "calendar", "clock", "weatherclock"), DefaultCatalog.defaultRecommendedIds())
     }
 
     @Test

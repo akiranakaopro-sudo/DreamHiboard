@@ -31,4 +31,9 @@ class CalendarMonthTest {
         assertEquals(5, page.weeks.size)
         assertTrue(page.weeks[0][1].today)
     }
+
+    @Test
+    fun weatherClockDateUsesChineseWeekday() {
+        assertEquals("12月25日 周三", weatherClockDate(2024, Calendar.DECEMBER, 25, Locale.CHINA))
+    }
 }

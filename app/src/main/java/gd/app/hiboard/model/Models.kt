@@ -31,6 +31,7 @@ enum class CardEngineId {
     Contacts,
     Calendar,
     Clock,
+    WeatherClock,
 }
 
 enum class RecorderUiState {

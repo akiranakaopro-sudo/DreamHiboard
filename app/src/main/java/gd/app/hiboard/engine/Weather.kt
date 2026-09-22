@@ -26,6 +26,19 @@ enum class WeatherCondition {
             Night -> "Clear"
         }
 
+    fun label(locale: java.util.Locale = java.util.Locale.getDefault()): String {
+        if (locale.language != "zh") return displayName
+        return when (this) {
+            Sunny -> "晴"
+            Cloudy -> "多云"
+            Rain -> "雨"
+            Thunder -> "雷阵雨"
+            Snow -> "雪"
+            Fog -> "雾"
+            Night -> "晴"
+        }
+    }
+
     companion object {
         fun from(raw: String?): WeatherCondition {
             val key = raw.orEmpty().trim().lowercase().replace(' ', '_')

@@ -960,6 +960,7 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.Contacts -> Triple(R.drawable.ic_contact, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.Calendar -> Triple(R.drawable.ic_calendar, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.Clock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.WeatherClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
         }
     }
 

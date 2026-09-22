@@ -18,10 +18,10 @@ import gd.app.hiboard.engine.RecorderStatus
 import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.monthPageToday
+import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStorageUsage
 import gd.app.hiboard.engine.recorderPrimaryCommand
-import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.RecorderUiState
@@ -60,6 +60,7 @@ class CardBinder(
             CardEngineId.Contacts -> bindContacts(inflater, root, body, state)
             CardEngineId.Calendar -> bindCalendar(root, body)
             CardEngineId.Clock -> bindClock(root, body)
+            CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -362,6 +363,20 @@ class CardBinder(
     private fun bindClock(root: View, body: LinearLayout) {
         val card = root as? COUICardView ?: return
         bindClockCard(card, body, onOpenClock)
+    }
+
+    private fun bindWeatherClockCard(root: View, body: LinearLayout, state: HiboardUiState) {
+        val card = root as? COUICardView ?: return
+        val fallback = WeatherSnapshot.DEFAULT.resolved()
+        val condition = WeatherCondition.from(
+            state.content.weatherCondition.ifBlank { state.content.weatherSummary }.ifBlank { fallback.condition.json },
+        )
+        val temperature = if (state.content.weatherSummary.isBlank() && state.content.weatherCondition.isBlank()) {
+            fallback.temperatureC
+        } else {
+            state.content.weatherTempC
+        }
+        bindWeatherClock(card, body, condition, temperature, onOpenClock)
     }
 }
 

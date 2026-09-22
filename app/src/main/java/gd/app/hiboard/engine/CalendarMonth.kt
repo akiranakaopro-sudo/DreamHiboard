@@ -81,6 +81,18 @@ fun calendarTitle(year: Int, month: Int, day: Int, locale: Locale): String {
     return SimpleDateFormat("MMM d", locale).format(cursor.time)
 }
 
+fun weatherClockDate(year: Int, month: Int, day: Int, locale: Locale = Locale.getDefault()): String {
+    val cursor = Calendar.getInstance(locale)
+    cursor.clear()
+    cursor.set(year, month, day)
+    if (locale.language == "zh") {
+        val weeks = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
+        val week = weeks[cursor.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY]
+        return "${month + 1}月${day}日 $week"
+    }
+    return SimpleDateFormat("MMM d EEE", locale).format(cursor.time)
+}
+
 fun weekdayLabels(locale: Locale): List<String> {
     if (locale.language == "zh") return listOf("日", "一", "二", "三", "四", "五", "六")
     val symbols = DateFormatSymbols.getInstance(locale).shortWeekdays
