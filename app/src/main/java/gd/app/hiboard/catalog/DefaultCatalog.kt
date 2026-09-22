@@ -82,6 +82,16 @@ object DefaultCatalog {
             defaultSubscribed = false,
         ),
         CardCatalogEntry(
+            id = "music",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "Music",
+            description = "Cover, progress, and playback for the current track.",
+            size = CardSize.FullByTwo,
+            engine = CardEngineId.Music,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
             id = "calendar",
             groupId = GROUP_WEATHER,
             groupTitle = "Weather",

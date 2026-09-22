@@ -62,6 +62,7 @@ class CardBinder(
             CardEngineId.Clock -> bindClock(root, body)
             CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
             CardEngineId.LocalTime -> bindLocalTime(root, body)
+            CardEngineId.Music -> bindMusic(root, body)
         }
         if (state.editMode && card.canEdit) {
             badge.visibility = View.VISIBLE
@@ -383,6 +384,11 @@ class CardBinder(
     private fun bindLocalTime(root: View, body: LinearLayout) {
         val card = root as? COUICardView ?: return
         bindLocalTimeClock(card, body, onOpenClock)
+    }
+
+    private fun bindMusic(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindMusicCard(card, body, live = true)
     }
 }
 
