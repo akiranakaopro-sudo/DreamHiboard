@@ -42,6 +42,9 @@ import com.coui.appcompat.poplist.PopupListItem
 import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.WidgetStoreCategory
+import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
 import gd.app.hiboard.catalog.widgetStoreTabs
@@ -70,6 +73,9 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
     private var storeDetailOpen = false
+    private var openedDetailId: String? = null
+    private var storeDetailPick: String? = null
+    private var detailMemberKey: String? = null
     private var storePeekAnimator: ValueAnimator? = null
     private var storeSheetDragging = false
     private var storeSheetDragDownY = 0f
@@ -605,7 +611,7 @@ class HiboardView @JvmOverloads constructor(
         list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
         indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
-        val sections = widgetStoreSections(catalog, query, groupId)
+        val sections = widgetStoreCategories(catalog, query, groupId)
         bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
         if (sections.isEmpty()) {
             val empty = TextView(context).apply {
@@ -623,9 +629,9 @@ class HiboardView @JvmOverloads constructor(
             header.text = section.letter
             header.tag = "section-${section.letter}"
             list.addView(header)
-            section.entries.forEachIndexed { entryIndex, entry ->
-                list.addView(widgetRow(inflater, list, entry, viewModel))
-                if (entryIndex < section.entries.lastIndex) {
+            section.categories.forEachIndexed { entryIndex, category ->
+                list.addView(widgetRow(inflater, list, category, viewModel))
+                if (entryIndex < section.categories.lastIndex) {
                     list.addView(rowDivider())
                 }
             }
@@ -635,17 +641,23 @@ class HiboardView @JvmOverloads constructor(
     private fun widgetRow(
         inflater: LayoutInflater,
         parent: LinearLayout,
-        entry: CardCatalogEntry,
+        category: WidgetStoreCategory,
         viewModel: HiboardViewModel,
     ): View {
+        val entry = category.entries.first()
         val row = inflater.inflate(R.layout.item_widget_row, parent, false)
         val icon = row.findViewById<ImageView>(R.id.widgetIcon)
         val look = widgetIcon(entry.engine)
         icon.setImageResource(look.first)
         icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
         icon.backgroundTintList = ColorStateList.valueOf(look.third)
-        row.findViewById<TextView>(R.id.widgetName).text = entry.name
-        row.findViewById<TextView>(R.id.widgetCount).text = context.getString(R.string.store_widget_one)
+        row.findViewById<TextView>(R.id.widgetName).text = category.name
+        val count = category.entries.size
+        row.findViewById<TextView>(R.id.widgetCount).text = if (count == 1) {
+            context.getString(R.string.store_widget_one)
+        } else {
+            context.getString(R.string.store_widget_many, count)
+        }
         row.setOnClickListener { viewModel.openStoreDetail(entry.id) }
         return row
     }
@@ -675,19 +687,39 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel) {
-        val entry = DefaultCatalog.byId(state.storeDetailId.orEmpty()) ?: return
-        val added = state.board.subscribed.any { it.catalogId == entry.id }
-        binding.storeDetailTitle.text = entry.groupTitle
-        binding.storeDetailHeadline.text = entry.name
-        binding.storeDetailDesc.text = entry.description
+        val focus = DefaultCatalog.byId(state.storeDetailId.orEmpty())
+        if (focus == null) {
+            openedDetailId = null
+            storeDetailPick = null
+            detailMemberKey = null
+            return
+        }
+        val members = state.catalog.filter { !it.locked && it.listCategory() == focus.listCategory() }
+        if (members.isEmpty()) return
+        if (state.storeDetailId != openedDetailId) {
+            openedDetailId = state.storeDetailId
+            storeDetailPick = state.storeDetailId
+        }
+        val picked = members.firstOrNull { it.id == storeDetailPick } ?: members.first()
+        storeDetailPick = picked.id
+        val added = state.board.subscribed.any { it.catalogId == picked.id }
+        binding.storeDetailTitle.text = picked.groupTitle
+        binding.storeDetailHeadline.text = picked.listCategory()
+        binding.storeDetailDesc.text = picked.description
         binding.storeDetailAdd.text = context.getString(
             if (added) R.string.store_added else R.string.store_add_to_board,
         )
         binding.storeDetailAdd.isEnabled = !added
         binding.storeDetailAdd.setOnClickListener {
-            if (!added) viewModel.pinFromStore(entry.id)
+            if (!added) viewModel.pinFromStore(picked.id)
         }
-        fillStoreDetailPreview(entry)
+        val memberKey = members.joinToString(",") { it.id }
+        val host = binding.storeDetailPreview
+        if (memberKey != detailMemberKey || host.childCount == 0) {
+            detailMemberKey = memberKey
+            if (members.size == 1) fillStoreDetailPreview(members.first()) else fillStoreDetailChoices(members)
+        }
+        if (members.size > 1) markDetailPick(host, picked.id)
     }
 
     private fun animateStoreDetail(showDetail: Boolean) {
@@ -810,6 +842,70 @@ class HiboardView @JvmOverloads constructor(
             host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
         }
         if (host.width > 0) addPreview() else host.post { addPreview() }
+    }
+
+    private fun fillStoreDetailChoices(members: List<CardCatalogEntry>) {
+        val host = binding.storeDetailPreview
+        host.removeAllViews()
+        fun addChoices() {
+            if (!host.isAttachedToWindow) return
+            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
+                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
+                    .coerceAtLeast(1)
+            host.clipChildren = true
+            host.clipToPadding = true
+            host.removeAllViews()
+            val scroll = ScrollView(context).apply {
+                isFillViewport = true
+                clipChildren = true
+                clipToPadding = true
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+            }
+            val column = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                clipChildren = false
+                clipToPadding = false
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            val density = resources.displayMetrics.density
+            members.forEach { entry ->
+                val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
+                val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, column, false)
+                block.tag = entry.id
+                block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
+                val preview = block.findViewById<FrameLayout>(R.id.widgetPreview)
+                preview.addView(createStoreWidgetPreview(preview, entry, cardW, cardH))
+                block.setOnClickListener {
+                    storeDetailPick = entry.id
+                    val vm = viewModel ?: return@setOnClickListener
+                    bindStoreDetail(vm.state.value, vm)
+                }
+                column.addView(block)
+            }
+            scroll.addView(column)
+            host.addView(scroll)
+            markDetailPick(host, storeDetailPick)
+        }
+        if (host.width > 0) addChoices() else host.post { addChoices() }
+    }
+
+    private fun markDetailPick(host: ViewGroup, pickedId: String?) {
+        val scroll = host.getChildAt(0) as? ScrollView ?: return
+        val column = scroll.getChildAt(0) as? LinearLayout ?: return
+        for (index in 0 until column.childCount) {
+            val block = column.getChildAt(index)
+            val selected = block.tag == pickedId
+            block.setBackgroundColor(if (selected) 0x140066FF.toInt() else Color.TRANSPARENT)
+            block.findViewById<TextView>(R.id.widgetPreviewName)?.setTextColor(
+                if (selected) 0xFF0066FF.toInt() else context.getColor(R.color.hiboard_store_title),
+            )
+        }
     }
 
     private fun fillStoreGallery(

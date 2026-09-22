@@ -110,6 +110,7 @@ object DefaultCatalog {
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Clock,
             defaultSubscribed = false,
+            storeCategory = "Clock",
         ),
         CardCatalogEntry(
             id = "weatherclock",
@@ -120,6 +121,7 @@ object DefaultCatalog {
             size = CardSize.FullByTwo,
             engine = CardEngineId.WeatherClock,
             defaultSubscribed = false,
+            storeCategory = "Clock",
         ),
         CardCatalogEntry(
             id = "localtime",
@@ -130,6 +132,7 @@ object DefaultCatalog {
             size = CardSize.TwoByTwo,
             engine = CardEngineId.LocalTime,
             defaultSubscribed = false,
+            storeCategory = "Clock",
         ),
     )
 

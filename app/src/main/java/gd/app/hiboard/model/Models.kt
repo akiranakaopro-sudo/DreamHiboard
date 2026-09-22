@@ -62,6 +62,7 @@ data class CardCatalogEntry(
     val defaultSubscribed: Boolean,
     val resizable: Boolean = false,
     val locked: Boolean = false,
+    val storeCategory: String = "",
 )
 
 /** Placed instance — ColorOS `CardInfo`. */

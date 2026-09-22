@@ -1,5 +1,6 @@
 package gd.app.hiboard.catalog
 
+import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
@@ -105,6 +106,24 @@ class WidgetStoreTest {
         assertEquals(1, widgetStoreTabIndex(DefaultCatalog.GROUP_FEATURES))
         assertEquals(2, widgetStoreTabIndex(DefaultCatalog.GROUP_WEATHER))
         assertEquals(0, widgetStoreTabIndex("missing"))
+    }
+
+    @Test
+    fun clockWidgetsShareOneCategory() {
+        val categories = widgetStoreCategories(DefaultCatalog.entries).flatMap { it.categories }
+        assertEquals(
+            false,
+            categories.any { it.name == "Local time clock" || it.name == "Weather clock" },
+        )
+        val clock = categories.first { it.name == "Clock" }
+        assertEquals(listOf("clock", "weatherclock", "localtime"), clock.entries.map { it.id })
+        assertEquals(
+            listOf("localtime"),
+            widgetStoreCategories(DefaultCatalog.entries, query = "local time")
+                .flatMap { it.categories }
+                .flatMap { it.entries }
+                .map { it.id },
+        )
     }
 
     @Test
