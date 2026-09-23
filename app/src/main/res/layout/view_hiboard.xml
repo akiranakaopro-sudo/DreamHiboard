@@ -282,7 +282,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clickable="true"
-            android:clipChildren="false"
+            android:clipChildren="true"
+            android:clipToPadding="true"
             android:focusable="true"
             android:orientation="vertical"
             android:visibility="gone">
@@ -351,8 +352,8 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_weight="1"
-                android:clipChildren="false"
-                android:clipToPadding="false"
+                android:clipChildren="true"
+                android:clipToPadding="true"
                 android:padding="12dp" />
 
             <com.coui.appcompat.indicator.COUIPageIndicator

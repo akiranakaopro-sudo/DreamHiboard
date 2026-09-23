@@ -865,24 +865,24 @@ class HiboardView @JvmOverloads constructor(
             val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
                 ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
                     .coerceAtLeast(1)
-            host.clipChildren = false
-            host.clipToPadding = false
+            host.clipChildren = true
+            host.clipToPadding = true
             host.removeAllViews()
             val pager = ViewPager2(context).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
-                clipChildren = false
-                clipToPadding = false
+                clipChildren = true
+                clipToPadding = true
                 offscreenPageLimit = 1
                 adapter = DetailPreviewAdapter(members, boardWidth)
             }
             host.addView(pager)
             pager.post {
                 (pager.getChildAt(0) as? RecyclerView)?.apply {
-                    clipChildren = false
-                    clipToPadding = false
+                    clipChildren = true
+                    clipToPadding = true
                 }
             }
             val indicator = binding.storeDetailIndicator
@@ -1089,8 +1089,8 @@ class HiboardView @JvmOverloads constructor(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 )
-                clipChildren = false
-                clipToPadding = false
+                clipChildren = true
+                clipToPadding = true
             }
             return Holder(page)
         }
