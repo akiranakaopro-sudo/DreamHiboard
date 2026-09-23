@@ -466,6 +466,23 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun unionCardsKeepsOnScreenWidgetsAndSavedWidgets() {
+        val clock = card("clock", CardSize.TwoByTwo)
+        val local = card("localtime", CardSize.TwoByTwo)
+        val contacts = card("contacts", CardSize.FullByTwo)
+        val storage = card("storage", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.FullByTwo)
+        val merged = unionCards(
+            listOf(clock, local, contacts),
+            listOf(clock, storage, weather),
+        )
+        assertEquals(
+            listOf("clock", "localtime", "contacts", "storage", "weather"),
+            merged.map { it.catalogId },
+        )
+    }
+
+    @Test
     fun closeHalfRowGapsPullsLaterTwoByTwoIntoTheHole() {
         val clock = card("clock", CardSize.TwoByTwo)
         val weather = card("weather", CardSize.FullByTwo)

@@ -499,6 +499,20 @@ fun closeHalfRowGaps(cards: List<CardInstance>, columns: Int = 4): List<CardInst
     return placed
 }
 
+/**
+ * Keep [primary] order, then append any [extras] it does not already contain.
+ * An add persists the cards on screen and the cards already saved, so a stale
+ * save cannot drop a widget the other list still has.
+ */
+fun unionCards(primary: List<CardInstance>, extras: List<CardInstance>): List<CardInstance> {
+    val seen = primary.mapTo(mutableSetOf()) { it.catalogId }
+    val merged = primary.toMutableList()
+    extras.forEach { card ->
+        if (seen.add(card.catalogId)) merged += card
+    }
+    return merged
+}
+
 /** Drop a new 2x2 into the first leftover half-row instead of appending past it. */
 fun insertFillingEmptyTwoByTwo(
     cards: List<CardInstance>,
