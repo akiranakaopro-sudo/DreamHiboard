@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- COUI panel ids (from decoded dump consolidation) -->
-<resources>
-    <item name="coordinator" type="id" />
-    <item name="design_bottom_sheet" type="id" />
-    <item name="panel_outside" type="id" />
-    <item name="touch_outside" type="id" />
-</resources>

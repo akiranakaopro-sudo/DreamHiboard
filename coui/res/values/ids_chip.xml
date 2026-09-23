@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- COUI chip ids (from decoded dump consolidation) -->
-<resources>
-    <item name="coui_chip_group_collapse_button" type="id" />
-    <item name="coui_chip_group_expand_button" type="id" />
-</resources>

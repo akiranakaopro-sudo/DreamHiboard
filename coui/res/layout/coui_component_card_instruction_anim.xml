@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content"
-  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- Leapy modified 2026-07-26: Decode card-instruction JSON with upstream Lottie. -->
-    <com.airbnb.lottie.LottieAnimationView android:id="@id/anim_view" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="fitXY" app:lottie_autoPlay="true" app:lottie_loop="true" />
-    <TextView android:textAppearance="?couiTextAppearanceBody" android:textColor="?couiColorSecondNeutral" android:layout_gravity="center_horizontal" android:id="@id/anim_title" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dp" android:textAlignment="center" />
-</LinearLayout>

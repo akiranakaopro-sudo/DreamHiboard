@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- COUI panel colors (from decoded dump consolidation) -->
-<resources>
-    <color name="coui_panel_bar_view_color">#33000000</color>
-    <color name="coui_panel_drag_view_color">#29000000</color>
-    <color name="coui_panel_drag_view_color_dark">#585858</color>
-    <color name="coui_panel_drag_view_color_light">#29000000</color>
-    <color name="coui_panel_follow_hand_spot_shadow_color">#d0000000</color>
-</resources>

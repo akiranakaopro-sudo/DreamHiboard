@@ -26,4 +26,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Hiboard"
 include(":app")
-include(":coui")
