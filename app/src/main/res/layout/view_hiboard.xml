@@ -247,10 +247,12 @@
                     android:background="@color/hiboard_store_bg"
                     android:visibility="gone">
 
-                    <com.coui.appcompat.scrollview.COUIScrollView
+                    <gd.app.hiboard.ui.SpringScrollView
                         android:id="@+id/storeScroll"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
                         android:fillViewport="true">
 
                         <LinearLayout
@@ -260,7 +262,7 @@
                             android:orientation="vertical"
                             android:paddingEnd="36dp"
                             android:paddingBottom="24dp" />
-                    </com.coui.appcompat.scrollview.COUIScrollView>
+                    </gd.app.hiboard.ui.SpringScrollView>
 
                     <LinearLayout
                         android:id="@+id/storeIndex"
