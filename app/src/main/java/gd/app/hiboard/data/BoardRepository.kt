@@ -3,6 +3,7 @@ package gd.app.hiboard.data
 import android.content.Context
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -11,6 +12,7 @@ import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.ui.grid.closeHalfRowGaps
 import gd.app.hiboard.ui.grid.insertFillingEmptyTwoByTwo
 import gd.app.hiboard.ui.grid.pinLockedCards
 import java.util.UUID
@@ -55,8 +57,8 @@ class BoardRepository(context: Context) {
     suspend fun unsubscribe(catalogId: String) {
         if (DefaultCatalog.byId(catalogId)?.locked == true) return
         dataStore.edit { prefs ->
-            val current = prefs.subscribedIds()
-            prefs[KEY_SUBSCRIBED] = current.filterNot { it == catalogId }.joinToString(",")
+            val current = prefs.subscribedIds().filterNot { it == catalogId }
+            prefs[KEY_SUBSCRIBED] = packedSubscribedIds(current).joinToString(",")
             val recommended = prefs.recommendedIds()
             if (catalogId !in recommended && DefaultCatalog.byId(catalogId) != null) {
                 prefs[KEY_RECOMMENDED] = (recommended + catalogId).joinToString(",")
@@ -85,6 +87,24 @@ class BoardRepository(context: Context) {
     suspend fun move(catalogId: String, from: CardArea, to: CardArea) {
         if (from == to) return
         if (to == CardArea.Subscribe) subscribe(catalogId) else unsubscribe(catalogId)
+    }
+
+    /**
+     * Boards saved before removal reflow still have a hole beside every
+     * leftover 2x2. Close those once, then leave a later drag order alone.
+     */
+    suspend fun closeStoredHalfRowGaps() {
+        dataStore.edit { prefs ->
+            if (prefs[KEY_GAPS_CLOSED] == true) return@edit
+            prefs[KEY_SUBSCRIBED] = packedSubscribedIds(prefs.subscribedIds()).joinToString(",")
+            prefs[KEY_GAPS_CLOSED] = true
+            prefs.markBoardStored()
+        }
+    }
+
+    private fun packedSubscribedIds(ids: List<String>): List<String> {
+        val cards = instantiate(ids, CardArea.Subscribe)
+        return pinLockedCards(closeHalfRowGaps(cards)).map { it.catalogId }
     }
 
     private fun instantiate(ids: List<String>, area: CardArea): List<CardInstance> {
@@ -128,5 +148,6 @@ class BoardRepository(context: Context) {
         val KEY_SUBSCRIBED = stringPreferencesKey("subscribed")
         val KEY_RECOMMENDED = stringPreferencesKey("recommended")
         val KEY_LAYOUT_VERSION = intPreferencesKey("board_layout_version")
+        val KEY_GAPS_CLOSED = booleanPreferencesKey("half_row_gaps_closed")
     }
 }

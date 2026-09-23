@@ -466,6 +466,38 @@ class PackedCardGridTest {
     }
 
     @Test
+    fun closeHalfRowGapsPullsLaterTwoByTwoIntoTheHole() {
+        val clock = card("clock", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.FullByTwo)
+        val recorder = card("recorder", CardSize.TwoByTwo)
+        val music = card("music", CardSize.FullByTwo)
+        val closed = closeHalfRowGaps(listOf(clock, weather, recorder, music))
+        assertEquals(listOf("clock", "recorder", "weather", "music"), closed.map { it.catalogId })
+        assertTrue(emptyAddSlots(packCards(closed)).isEmpty())
+    }
+
+    @Test
+    fun closeHalfRowGapsFillsEveryHoleBeforeLeavingOneSeat() {
+        val a = card("a", CardSize.TwoByTwo)
+        val full = card("full", CardSize.FullByTwo)
+        val b = card("b", CardSize.TwoByTwo)
+        val full2 = card("full2", CardSize.FullByTwo)
+        val c = card("c", CardSize.TwoByTwo)
+        val closed = closeHalfRowGaps(listOf(a, full, b, full2, c))
+        assertEquals(listOf("a", "b", "full", "full2", "c"), closed.map { it.catalogId })
+        assertEquals(1, emptyAddSlots(packCards(closed)).size)
+    }
+
+    @Test
+    fun closeHalfRowGapsLeavesAPackedRowAlone() {
+        val clock = card("clock", CardSize.TwoByTwo)
+        val recorder = card("recorder", CardSize.TwoByTwo)
+        val weather = card("weather", CardSize.FullByTwo)
+        val closed = closeHalfRowGaps(listOf(clock, recorder, weather))
+        assertEquals(listOf("clock", "recorder", "weather"), closed.map { it.catalogId })
+    }
+
+    @Test
     fun addedTwoByTwoFillsTheEmptySeatBesideAHalfCard() {
         val notes = card("notes", CardSize.TwoByTwo)
         val advice = card("advice", CardSize.FullByTwo)

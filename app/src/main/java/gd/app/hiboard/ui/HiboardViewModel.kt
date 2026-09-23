@@ -53,6 +53,7 @@ class HiboardViewModel(
 
     init {
         viewModelScope.launch {
+            repository.closeStoredHalfRowGaps()
             repository.snapshot.collect { board ->
                 _state.update { it.copy(board = board, boardReady = true) }
             }
