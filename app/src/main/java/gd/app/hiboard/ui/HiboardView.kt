@@ -865,17 +865,26 @@ class HiboardView @JvmOverloads constructor(
             val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
                 ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
                     .coerceAtLeast(1)
-            host.clipChildren = true
+            host.clipChildren = false
+            host.clipToPadding = false
             host.removeAllViews()
             val pager = ViewPager2(context).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
+                clipChildren = false
+                clipToPadding = false
                 offscreenPageLimit = 1
-                adapter = DetailPreviewAdapter(members, boardWidth, resources.displayMetrics.density)
+                adapter = DetailPreviewAdapter(members, boardWidth)
             }
             host.addView(pager)
+            pager.post {
+                (pager.getChildAt(0) as? RecyclerView)?.apply {
+                    clipChildren = false
+                    clipToPadding = false
+                }
+            }
             val indicator = binding.storeDetailIndicator
             indicator.setDotsCount(members.size)
             centerDetailIndicator(members.size)
@@ -1073,7 +1082,6 @@ class HiboardView @JvmOverloads constructor(
     private class DetailPreviewAdapter(
         private val members: List<CardCatalogEntry>,
         private val boardWidth: Int,
-        private val density: Float,
     ) : RecyclerView.Adapter<DetailPreviewAdapter.Holder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val page = FrameLayout(parent.context).apply {
@@ -1081,6 +1089,8 @@ class HiboardView @JvmOverloads constructor(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 )
+                clipChildren = false
+                clipToPadding = false
             }
             return Holder(page)
         }
@@ -1089,7 +1099,7 @@ class HiboardView @JvmOverloads constructor(
             val page = holder.page
             page.removeAllViews()
             val entry = members[position]
-            val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
+            val (cardW, cardH) = storePreviewDims(entry, boardWidth, page.resources.displayMetrics.density)
             page.addView(createStoreWidgetPreview(page, entry, cardW, cardH))
         }
 
