@@ -7,6 +7,18 @@ data class WidgetStoreSection(
     val entries: List<CardCatalogEntry>,
 )
 
+data class WidgetStoreCategory(
+    val name: String,
+    val entries: List<CardCatalogEntry>,
+)
+
+data class WidgetStoreCategorySection(
+    val letter: String,
+    val categories: List<WidgetStoreCategory>,
+)
+
+fun CardCatalogEntry.listCategory(): String = storeCategory.ifBlank { name }
+
 fun widgetStoreLetter(name: String): String {
     val ch = name.trim().firstOrNull() ?: return "#"
     return if (ch.isLetter()) ch.uppercaseChar().toString() else "#"
@@ -30,6 +42,29 @@ fun widgetStoreSections(
         .groupBy { widgetStoreLetter(it.name) }
         .toSortedMap()
         .map { WidgetStoreSection(it.key, it.value) }
+}
+
+fun widgetStoreCategories(
+    catalog: List<CardCatalogEntry>,
+    query: String = "",
+    groupId: String? = null,
+): List<WidgetStoreCategorySection> {
+    val needle = query.trim()
+    val pool = catalog.filter { !it.locked }
+        .filter { groupId == null || needle.isNotBlank() || it.groupId == groupId }
+    val rows = pool.filter { entry ->
+        needle.isBlank() ||
+            entry.listCategory().contains(needle, ignoreCase = true) ||
+            entry.name.contains(needle, ignoreCase = true) ||
+            entry.description.contains(needle, ignoreCase = true)
+    }
+        .groupBy { it.listCategory() }
+        .map { (name, entries) -> WidgetStoreCategory(name, entries) }
+        .sortedBy { it.name.lowercase() }
+    return rows
+        .groupBy { widgetStoreLetter(it.name) }
+        .toSortedMap()
+        .map { WidgetStoreCategorySection(it.key, it.value) }
 }
 
 fun widgetStoreTabs(): List<Pair<String?, String>> {

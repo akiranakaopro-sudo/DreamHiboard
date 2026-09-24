@@ -1,5 +1,6 @@
 package gd.app.hiboard.catalog
 
+import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
@@ -56,13 +57,28 @@ class WidgetStoreTest {
     fun featuresAndWeatherShowUnlockedWidgets() {
         val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
             .flatMap { it.entries }
-        assertEquals(listOf("All notes", "Flashlight", "Recorder", "Storage"), features.map { it.name })
-        assertEquals(true, features.all { it.size.columns == 2 && it.size.rows == 2 })
+        assertEquals(
+            listOf("All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
+            features.map { it.name },
+        )
+        assertEquals(CardSize.FullByTwo, features.first { it.name == "Contacts" }.size)
+        assertEquals(CardSize.FullByTwo, features.first { it.name == "Music" }.size)
+        assertEquals(
+            true,
+            features.filter { it.name != "Contacts" && it.name != "Music" }
+                .all { it.size.columns == 2 && it.size.rows == 2 },
+        )
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
             .flatMap { it.entries }
-        assertEquals(listOf("Weather"), weather.map { it.name })
-        assertEquals(4, weather.single().size.columns)
-        assertEquals(2, weather.single().size.rows)
+        assertEquals(
+            listOf("Calendar", "Clock", "Local time clock", "Weather", "Weather clock"),
+            weather.map { it.name },
+        )
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Local time clock" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather clock" }.size)
     }
 
     @Test
@@ -73,7 +89,10 @@ class WidgetStoreTest {
         )
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
         assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
-        assertEquals(emptyList<String>(), DefaultCatalog.defaultRecommendedIds())
+        assertEquals(
+            listOf("contacts", "music", "calendar", "clock", "weatherclock", "localtime"),
+            DefaultCatalog.defaultRecommendedIds(),
+        )
     }
 
     @Test
@@ -87,6 +106,24 @@ class WidgetStoreTest {
         assertEquals(1, widgetStoreTabIndex(DefaultCatalog.GROUP_FEATURES))
         assertEquals(2, widgetStoreTabIndex(DefaultCatalog.GROUP_WEATHER))
         assertEquals(0, widgetStoreTabIndex("missing"))
+    }
+
+    @Test
+    fun clockWidgetsShareOneCategory() {
+        val categories = widgetStoreCategories(DefaultCatalog.entries).flatMap { it.categories }
+        assertEquals(
+            false,
+            categories.any { it.name == "Local time clock" || it.name == "Weather clock" },
+        )
+        val clock = categories.first { it.name == "Clock" }
+        assertEquals(listOf("clock", "weatherclock", "localtime"), clock.entries.map { it.id })
+        assertEquals(
+            listOf("localtime"),
+            widgetStoreCategories(DefaultCatalog.entries, query = "local time")
+                .flatMap { it.categories }
+                .flatMap { it.entries }
+                .map { it.id },
+        )
     }
 
     @Test

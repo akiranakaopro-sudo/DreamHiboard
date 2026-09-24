@@ -28,6 +28,12 @@ enum class CardEngineId {
     Flashlight,
     Storage,
     Recorder,
+    Contacts,
+    Calendar,
+    Clock,
+    WeatherClock,
+    LocalTime,
+    Music,
 }
 
 enum class RecorderUiState {
@@ -56,6 +62,7 @@ data class CardCatalogEntry(
     val defaultSubscribed: Boolean,
     val resizable: Boolean = false,
     val locked: Boolean = false,
+    val storeCategory: String = "",
 )
 
 /** Placed instance — ColorOS `CardInfo`. */
@@ -82,6 +89,12 @@ data class ShortcutApp(
     val activityName: String?,
 )
 
+data class BoardContact(
+    val name: String,
+    val lookupUri: String,
+    val photoUri: String? = null,
+)
+
 data class WeatherDayContent(
     val label: String = "",
     val condition: String = "",
@@ -106,6 +119,9 @@ data class CardContent(
     val recorderElapsedMs: Long = 0L,
     val recorderBound: Boolean = false,
     val recentApps: List<ShortcutApp> = emptyList(),
+    val contacts: List<BoardContact> = emptyList(),
+    val contactsPermitted: Boolean = false,
+    val contactsReady: Boolean = false,
 )
 
 data class GridPlacement(

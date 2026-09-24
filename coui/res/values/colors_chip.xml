@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- COUI chip colors (from decoded dump consolidation) -->
-<resources>
-    <color name="chip_checked_text_disable_color">#8AFFFFFF</color>
-    <color name="chip_unchecked_text_disable_color">#42000000</color>
-</resources>

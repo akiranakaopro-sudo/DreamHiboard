@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 data class HiboardUiState(
@@ -53,6 +54,7 @@ class HiboardViewModel(
 
     init {
         viewModelScope.launch {
+            repository.closeStoredHalfRowGaps()
             repository.snapshot.collect { board ->
                 _state.update { it.copy(board = board, boardReady = true) }
             }
@@ -186,7 +188,7 @@ class HiboardViewModel(
 
     fun pinFromStore(catalogId: String) {
         val entry = DefaultCatalog.byId(catalogId) ?: return
-        _state.update { state ->
+        val keepIds = _state.updateAndGet { state ->
             val subscribed = if (state.board.subscribed.any { it.catalogId == catalogId }) {
                 state.board.subscribed
             } else {
@@ -213,20 +215,31 @@ class HiboardViewModel(
                 storeSearchOpen = false,
                 revealCatalogId = catalogId,
             )
-        }
-        subscribe(catalogId)
+        }.board.subscribed.map { it.catalogId }
+        subscribe(catalogId, keepIds)
     }
 
     fun consumeReveal() {
         _state.update { if (it.revealCatalogId == null) it else it.copy(revealCatalogId = null) }
     }
 
-    fun subscribe(catalogId: String) {
-        viewModelScope.launch { repository.subscribe(catalogId) }
+    fun subscribe(catalogId: String, keepIds: List<String>? = null) {
+        val shown = keepIds ?: _state.value.board.subscribed.map { it.catalogId }
+        viewModelScope.launch { repository.subscribe(catalogId, shown) }
     }
 
     fun unsubscribe(catalogId: String) {
-        viewModelScope.launch { repository.unsubscribe(catalogId) }
+        val keepIds = _state.value.board.subscribed
+            .map { it.catalogId }
+            .filterNot { it == catalogId }
+        _state.update { state ->
+            state.copy(
+                board = state.board.copy(
+                    subscribed = state.board.subscribed.filterNot { it.catalogId == catalogId },
+                ),
+            )
+        }
+        viewModelScope.launch { repository.unsubscribe(catalogId, keepIds) }
     }
 
     fun enterEdit() {
@@ -250,7 +263,12 @@ class HiboardViewModel(
             }
             state.copy(board = board)
         }
-        viewModelScope.launch { repository.reorder(area, catalogIds) }
+        val keepIds = if (area == CardArea.Subscribe) {
+            _state.value.board.subscribed.map { it.catalogId }
+        } else {
+            emptyList()
+        }
+        viewModelScope.launch { repository.reorder(area, catalogIds, keepIds) }
     }
 
     fun consumeDeeplink() {
@@ -301,6 +319,14 @@ class HiboardViewModel(
         _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
         return intent
     }
+
+    fun openContact(lookupUri: String): Intent? = engines.openContact(lookupUri)
+
+    fun openContactsApp(): Intent = engines.openContactsApp()
+
+    fun openCalendar(): Intent = engines.openCalendar()
+
+    fun openClock(): Intent? = engines.openClock()
 
     private fun sortByCatalog(cards: List<CardInstance>, catalogIds: List<String>): List<CardInstance> {
         val byId = cards.associateBy { it.catalogId }

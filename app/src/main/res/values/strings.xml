@@ -45,4 +45,17 @@
     <string name="recorder_save">Save recording</string>
     <string name="recorder_flag_new">Mark %d</string>
     <string name="recorder_saved">Saved</string>
+    <string name="contacts_label">Contacts</string>
+    <string name="contacts_allow">Allow contacts</string>
+    <string name="contacts_empty">No contacts</string>
+    <string name="calendar_label">Calendar</string>
+    <string name="clock_label">Clock</string>
+    <string name="music_cover">Album cover</string>
+    <string name="music_source">Music source</string>
+    <string name="music_playlist">Playlist</string>
+    <string name="music_previous">Previous</string>
+    <string name="music_play">Play</string>
+    <string name="music_pause">Pause</string>
+    <string name="music_next">Next</string>
+    <string name="music_favorite">Favorite</string>
 </resources>

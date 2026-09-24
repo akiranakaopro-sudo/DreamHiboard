@@ -476,6 +476,43 @@ fun emptyAddSlots(placements: List<GridPlacement>, columns: Int = 4): List<GridP
     return slots
 }
 
+/**
+ * After a card is removed, pull later 2x2 cards up into the empty seats.
+ * A full-width card cannot sit in that seat, so without this each removed
+ * partner leaves its own Add cards tile.
+ */
+fun closeHalfRowGaps(cards: List<CardInstance>, columns: Int = 4): List<CardInstance> {
+    if (cards.size < 2) return cards
+    val remaining = cards.toMutableList()
+    val placed = mutableListOf<CardInstance>()
+    while (remaining.isNotEmpty()) {
+        val hole = emptyAddSlots(packCards(placed, columns), columns).firstOrNull()
+        val filler = if (hole == null) {
+            -1
+        } else {
+            remaining.indexOfFirst { card ->
+                card.canDrag && card.size.columns == 2 && card.size.rows == 2
+            }
+        }
+        placed += if (filler >= 0) remaining.removeAt(filler) else remaining.removeAt(0)
+    }
+    return placed
+}
+
+/**
+ * Keep [primary] order, then append any [extras] it does not already contain.
+ * An add persists the cards on screen and the cards already saved, so a stale
+ * save cannot drop a widget the other list still has.
+ */
+fun unionCards(primary: List<CardInstance>, extras: List<CardInstance>): List<CardInstance> {
+    val seen = primary.mapTo(mutableSetOf()) { it.catalogId }
+    val merged = primary.toMutableList()
+    extras.forEach { card ->
+        if (seen.add(card.catalogId)) merged += card
+    }
+    return merged
+}
+
 /** Drop a new 2x2 into the first leftover half-row instead of appending past it. */
 fun insertFillingEmptyTwoByTwo(
     cards: List<CardInstance>,

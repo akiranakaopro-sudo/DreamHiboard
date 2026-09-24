@@ -1,5 +1,0 @@
-# Leapy note 2026-08-08: Kept for reference. This Soong tree does not accept
-# consumer_proguard_files / optimize.consumer_proguard_flags_files on
-# android_library. Active keep lives in MtkSettings/proguard-coui.flags and
-# COUIThemeOverlay's sCouiViewInflaterClass hard reference.
--keep class com.coui.appcompat.theme.COUIComponentsViewInflater { *; }

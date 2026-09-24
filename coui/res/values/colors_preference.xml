@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- COUI preference colors (monolith feature-split) -->
-<resources>
-    <color name="coui_preference_title_color_disabled">#26000000</color>
-</resources>

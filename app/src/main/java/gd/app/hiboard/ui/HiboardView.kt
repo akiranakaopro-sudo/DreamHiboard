@@ -42,6 +42,9 @@ import com.coui.appcompat.poplist.PopupListItem
 import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.WidgetStoreCategory
+import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
 import gd.app.hiboard.catalog.widgetStoreTabs
@@ -71,6 +74,9 @@ class HiboardView @JvmOverloads constructor(
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
     private var storeDetailOpen = false
+    private var openedDetailId: String? = null
+    private var storeDetailPick: String? = null
+    private var detailMemberKey: String? = null
     private var storePeekAnimator: ValueAnimator? = null
     private var storeSheetDragging = false
     private var storeSheetDragDownY = 0f
@@ -122,7 +128,7 @@ class HiboardView @JvmOverloads constructor(
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
-            binding.boardRoot.updatePadding(bottom = bars.bottom)
+            binding.boardScroll.updatePadding(bottom = bars.bottom)
             binding.storeListPane.updatePadding(bottom = bars.bottom)
             binding.storeDetailPane.updatePadding(bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
@@ -147,6 +153,11 @@ class HiboardView @JvmOverloads constructor(
             recorderLive = viewModel::recorderLive,
             onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
             onOpenApp = { launchIntent(this, viewModel.openApp(it)) },
+            onOpenContact = { launchIntent(this, viewModel.openContact(it)) },
+            onOpenContacts = { launchIntent(this, viewModel.openContactsApp()) },
+            onAllowContacts = { requestContacts() },
+            onOpenCalendar = { launchIntent(this, viewModel.openCalendar()) },
+            onOpenClock = { launchIntent(this, viewModel.openClock()) },
             onRemove = viewModel::unsubscribe,
             onAdd = viewModel::subscribe,
         )
@@ -364,6 +375,16 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    private fun requestContacts() {
+        val activity = context.findActivity() ?: return
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_CONTACTS)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        activity.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), CONTACTS_PERMISSION)
+    }
+
     private fun render(
         state: HiboardUiState,
         viewModel: HiboardViewModel,
@@ -568,9 +589,13 @@ class HiboardView @JvmOverloads constructor(
             binding.storePager.clipToPadding = false
             binding.storePager.adapter = it
             binding.storePager.post {
-                (binding.storePager.getChildAt(0) as? ViewGroup)?.apply {
+                (binding.storePager.getChildAt(0) as? RecyclerView)?.apply {
                     clipChildren = false
                     clipToPadding = false
+                    val slop = ViewConfiguration.get(context).scaledTouchSlop * 6
+                    val field = RecyclerView::class.java.getDeclaredField("mTouchSlop")
+                    field.isAccessible = true
+                    if (field.getInt(this) < slop) field.setInt(this, slop)
                 }
             }
         }
@@ -684,7 +709,7 @@ class HiboardView @JvmOverloads constructor(
         list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
         indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
-        val sections = widgetStoreSections(catalog, query, groupId)
+        val sections = widgetStoreCategories(catalog, query, groupId)
         bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
         if (sections.isEmpty()) {
             val empty = TextView(context).apply {
@@ -702,9 +727,9 @@ class HiboardView @JvmOverloads constructor(
             header.text = section.letter
             header.tag = "section-${section.letter}"
             list.addView(header)
-            section.entries.forEachIndexed { entryIndex, entry ->
-                list.addView(widgetRow(inflater, list, entry, viewModel))
-                if (entryIndex < section.entries.lastIndex) {
+            section.categories.forEachIndexed { entryIndex, category ->
+                list.addView(widgetRow(inflater, list, category, viewModel))
+                if (entryIndex < section.categories.lastIndex) {
                     list.addView(rowDivider())
                 }
             }
@@ -714,17 +739,23 @@ class HiboardView @JvmOverloads constructor(
     private fun widgetRow(
         inflater: LayoutInflater,
         parent: LinearLayout,
-        entry: CardCatalogEntry,
+        category: WidgetStoreCategory,
         viewModel: HiboardViewModel,
     ): View {
+        val entry = category.entries.first()
         val row = inflater.inflate(R.layout.item_widget_row, parent, false)
         val icon = row.findViewById<ImageView>(R.id.widgetIcon)
         val look = widgetIcon(entry.engine)
         icon.setImageResource(look.first)
         icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
         icon.backgroundTintList = ColorStateList.valueOf(look.third)
-        row.findViewById<TextView>(R.id.widgetName).text = entry.name
-        row.findViewById<TextView>(R.id.widgetCount).text = context.getString(R.string.store_widget_one)
+        row.findViewById<TextView>(R.id.widgetName).text = category.name
+        val count = category.entries.size
+        row.findViewById<TextView>(R.id.widgetCount).text = if (count == 1) {
+            context.getString(R.string.store_widget_one)
+        } else {
+            context.getString(R.string.store_widget_many, count)
+        }
         row.setOnClickListener { viewModel.openStoreDetail(entry.id) }
         return row
     }
@@ -754,8 +785,38 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStoreDetail(state: HiboardUiState, viewModel: HiboardViewModel) {
-        val entry = DefaultCatalog.byId(state.storeDetailId.orEmpty()) ?: return
-        val added = state.board.subscribed.any { it.catalogId == entry.id }
+        val focus = DefaultCatalog.byId(state.storeDetailId.orEmpty())
+        if (focus == null) {
+            openedDetailId = null
+            storeDetailPick = null
+            detailMemberKey = null
+            binding.storeDetailIndicator.isVisible = false
+            return
+        }
+        val members = state.catalog.filter { !it.locked && it.listCategory() == focus.listCategory() }
+        if (members.isEmpty()) return
+        if (state.storeDetailId != openedDetailId) {
+            openedDetailId = state.storeDetailId
+            storeDetailPick = state.storeDetailId
+        }
+        val picked = members.firstOrNull { it.id == storeDetailPick } ?: members.first()
+        storeDetailPick = picked.id
+        applyDetailSelection(picked, viewModel)
+        binding.storeDetailIndicator.isVisible = members.size > 1
+        val memberKey = members.joinToString(",") { it.id }
+        val host = binding.storeDetailPreview
+        if (memberKey != detailMemberKey || host.childCount == 0) {
+            detailMemberKey = memberKey
+            if (members.size == 1) {
+                fillStoreDetailPreview(members.first())
+            } else {
+                fillStoreDetailPager(members, members.indexOf(picked).coerceAtLeast(0))
+            }
+        }
+    }
+
+    private fun applyDetailSelection(entry: CardCatalogEntry, viewModel: HiboardViewModel) {
+        val added = viewModel.state.value.board.subscribed.any { it.catalogId == entry.id }
         binding.storeDetailTitle.text = entry.groupTitle
         binding.storeDetailHeadline.text = entry.name
         binding.storeDetailDesc.text = entry.description
@@ -766,7 +827,6 @@ class HiboardView @JvmOverloads constructor(
         binding.storeDetailAdd.setOnClickListener {
             if (!added) viewModel.pinFromStore(entry.id)
         }
-        fillStoreDetailPreview(entry)
     }
 
     private fun animateStoreDetail(showDetail: Boolean) {
@@ -889,6 +949,74 @@ class HiboardView @JvmOverloads constructor(
             host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
         }
         if (host.width > 0) addPreview() else host.post { addPreview() }
+    }
+
+    private fun fillStoreDetailPager(members: List<CardCatalogEntry>, index: Int) {
+        val host = binding.storeDetailPreview
+        host.removeAllViews()
+        fun addPager() {
+            if (!host.isAttachedToWindow) return
+            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
+                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
+                    .coerceAtLeast(1)
+            host.clipChildren = true
+            host.clipToPadding = true
+            host.removeAllViews()
+            val pager = ViewPager2(context).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+                clipChildren = true
+                clipToPadding = true
+                offscreenPageLimit = 1
+                adapter = DetailPreviewAdapter(members, boardWidth)
+            }
+            host.addView(pager)
+            pager.post {
+                (pager.getChildAt(0) as? RecyclerView)?.apply {
+                    clipChildren = true
+                    clipToPadding = true
+                }
+            }
+            val indicator = binding.storeDetailIndicator
+            indicator.setDotsCount(members.size)
+            centerDetailIndicator(members.size)
+            indicator.setCurrentPosition(index)
+            indicator.setIsClickable(true)
+            indicator.setOnDotClickListener { dot -> pager.setCurrentItem(dot, true) }
+            pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+                    indicator.setCurrentPosition(position, positionOffset)
+                }
+
+                override fun onPageSelected(position: Int) {
+                    val entry = members.getOrNull(position) ?: return
+                    storeDetailPick = entry.id
+                    val vm = viewModel ?: return
+                    applyDetailSelection(entry, vm)
+                }
+            })
+            pager.setCurrentItem(index, false)
+        }
+        if (host.width > 0) addPager() else host.post { addPager() }
+    }
+
+    /** COUI measures a full slot after the last dot, so the ink sits left of the view. */
+    private fun centerDetailIndicator(count: Int) {
+        val indicator = binding.storeDetailIndicator
+        indicator.post {
+            if (count <= 1) {
+                indicator.translationX = 0f
+                return@post
+            }
+            val density = resources.displayMetrics.density
+            val dot = 6f * density
+            val interval = 12f * density
+            val content = dot + interval * (count - 1)
+            val shift = (indicator.width - content) / 2f
+            indicator.translationX = if (indicator.layoutDirection == View.LAYOUT_DIRECTION_RTL) -shift else shift
+        }
     }
 
     private fun fillStoreGallery(
@@ -1036,7 +1164,42 @@ class HiboardView @JvmOverloads constructor(
                 context.getColor(R.color.hiboard_flashlight_off),
             )
             CardEngineId.RecentApps -> Triple(R.drawable.ic_search_dark, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Contacts -> Triple(R.drawable.ic_contact, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Calendar -> Triple(R.drawable.ic_calendar, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Clock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.WeatherClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.LocalTime -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.Music -> Triple(R.drawable.ic_music_note, Color.WHITE, 0xFFA48462.toInt())
         }
+    }
+
+    private class DetailPreviewAdapter(
+        private val members: List<CardCatalogEntry>,
+        private val boardWidth: Int,
+    ) : RecyclerView.Adapter<DetailPreviewAdapter.Holder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val page = FrameLayout(parent.context).apply {
+                layoutParams = RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
+                clipChildren = true
+                clipToPadding = true
+            }
+            return Holder(page)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            val page = holder.page
+            page.removeAllViews()
+            val entry = members[position]
+            val (cardW, cardH) = storePreviewDims(entry, boardWidth, page.resources.displayMetrics.density)
+            page.addView(createStoreWidgetPreview(page, entry, cardW, cardH))
+        }
+
+        override fun getItemCount(): Int = members.size
+
+        class Holder(val page: FrameLayout) : RecyclerView.ViewHolder(page)
     }
 
     private inner class StorePagerAdapter : RecyclerView.Adapter<StorePagerAdapter.Holder>() {
@@ -1094,6 +1257,7 @@ class HiboardView @JvmOverloads constructor(
     private companion object {
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
+        const val CONTACTS_PERMISSION = 44
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
         const val STORE_DISMISS_FRACTION = 0.18f
