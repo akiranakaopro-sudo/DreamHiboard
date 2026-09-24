@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Opaque at full open (Oppo Assist). Mid-swipe alpha set in binder. -->
     <color name="hiboard_background">#8397CC</color>
     <color name="hiboard_chrome">#FFFFFFFF</color>
     <color name="hiboard_chrome_hint">#C8D1E9</color>

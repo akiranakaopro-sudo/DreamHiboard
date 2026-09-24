@@ -26,6 +26,11 @@ class HiboardActivity : AppCompatActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        // Launcher-only wake after force-stop: un-STOP the package then leave.
+        if (intent?.getBooleanExtra(EXTRA_WAKE_ONLY, false) == true) {
+            finish()
+            return
+        }
         val view = HiboardView(this)
         view.bind(viewModel, this)
         setContentView(view)
@@ -55,6 +60,10 @@ class HiboardActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_WAKE_ONLY, false)) {
+            finish()
+            return
+        }
         applyDeeplink(intent)
     }
 
@@ -82,5 +91,10 @@ class HiboardActivity : AppCompatActivity() {
             edit = host == "edit" || data.getBooleanQueryParameter("edit", false),
             store = host == "store" || host == "subscribe",
         )
+    }
+
+    companion object {
+        /** Launcher sets this to un-STOP the package without showing UI. */
+        const val EXTRA_WAKE_ONLY = "gd.app.hiboard.extra.WAKE_ONLY"
     }
 }

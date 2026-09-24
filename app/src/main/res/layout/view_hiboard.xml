@@ -3,20 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/couiColorBackgroundWithCard"
+    android:background="@android:color/transparent"
     android:fitsSystemWindows="false">
 
     <LinearLayout
         android:id="@+id/boardRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/transparent"
         android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/boardHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/couiColorBackgroundWithCard"
+            android:background="@android:color/transparent"
             android:elevation="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -74,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="?attr/couiColorBackgroundWithCard"
+            android:background="@android:color/transparent"
             android:clipChildren="true"
             android:clipToOutline="true"
             android:clipToPadding="true"

@@ -91,12 +91,18 @@ class HiboardView @JvmOverloads constructor(
     /** Set by overlay host when glance is fully open and can be dragged closed. */
     var closeGestureEnabled: Boolean = false
 
+    /** Seed progress when close-drag begins (may be mid-settle if touchable early). */
+    fun seedCloseProgress(p: Float) {
+        closeProgressAtDown = p.coerceIn(0f, 1f)
+    }
+
     private val touchSlop =
         ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private var downX = 0f
     private var downY = 0f
     private var downTime = 0L
     private var draggingClose = false
+    private var closeProgressAtDown = 1f
     private var lastDragX = 0f
     private var lastDragTime = 0L
     private var velocityX = 0f
@@ -202,22 +208,20 @@ class HiboardView @JvmOverloads constructor(
                 lastDragTime = ev.eventTime
                 velocityX = 0f
                 draggingClose = false
+                // closeProgressAtDown seeded by host via seedCloseProgress(); default 1.
             }
             MotionEvent.ACTION_MOVE -> {
                 if (draggingClose) return true
                 val dx = ev.x - downX
                 val dy = ev.y - downY
-                // Horizontal swipe-left to close, not vertical scroll.
-                if (dx < -touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                // Either horizontal direction: left closes, right can reopen mid-drag.
+                if (abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.2f) {
                     draggingClose = true
                     parent?.requestDisallowInterceptTouchEvent(true)
                     onCloseScrollBegin?.invoke()
                     return true
                 }
             }
-            // Do not clear draggingClose here — UP/CANCEL are delivered to onTouchEvent
-            // after intercept; clearing early skips onCloseScrollEnd and leaves the binder
-            // stuck mid-close (black frost strip + exit shake).
         }
         return super.onInterceptTouchEvent(ev)
     }
@@ -229,9 +233,9 @@ class HiboardView @JvmOverloads constructor(
         when (ev.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
                 updateCloseVelocity(ev)
-                val pulled = (downX - ev.x).coerceAtLeast(0f)
                 val width = width.coerceAtLeast(1).toFloat()
-                val progress = (1f - pulled / width).coerceIn(0f, 1f)
+                // Same formula as launcher finger-drive: right opens, left closes.
+                val progress = (closeProgressAtDown + (ev.x - downX) / width).coerceIn(0f, 1f)
                 onCloseScroll?.invoke(progress)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
