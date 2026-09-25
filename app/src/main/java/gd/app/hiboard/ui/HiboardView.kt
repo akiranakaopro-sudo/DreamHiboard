@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -211,7 +213,10 @@ class HiboardView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        if (!closeGestureEnabled) {
+        // Store sheet owns horizontal swipes (tab pager / dismiss). Letting the
+        // glance close-gesture run here steals them and slides the whole overlay
+        // off — looks like "switching home" under the add-widget panel.
+        if (!closeGestureEnabled || storeSheetOpen) {
             draggingClose = false
             return super.onInterceptTouchEvent(ev)
         }
@@ -246,7 +251,8 @@ class HiboardView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(ev: MotionEvent): Boolean {
-        if (!draggingClose) {
+        if (!draggingClose || storeSheetOpen) {
+            if (storeSheetOpen) draggingClose = false
             return super.onTouchEvent(ev)
         }
         when (ev.actionMasked) {
@@ -345,7 +351,15 @@ class HiboardView @JvmOverloads constructor(
         cardMenu = popup
         fun present() {
             if (cardMenu !== popup || !anchor.isAttachedToWindow || anchor.windowToken == null) return
-            popup.show(anchor)
+            // Host is TYPE_APPLICATION_PANEL (launcher overlay). Default popup type
+            // TYPE_APPLICATION cannot attach to that token → BadTokenException.
+            popup.windowLayoutType = WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL
+            try {
+                popup.show(anchor)
+            } catch (e: WindowManager.BadTokenException) {
+                Log.w(TAG, "card menu show failed (overlay token)", e)
+                if (cardMenu === popup) cardMenu = null
+            }
         }
         if (anchor.windowToken != null) {
             present()
@@ -362,11 +376,21 @@ class HiboardView @JvmOverloads constructor(
             entry.size.rows,
         )
         val body = listOf(entry.description, sizeLine).filter { it.isNotBlank() }.joinToString("\n")
-        COUIAlertDialogBuilder(context)
+        val dialog = COUIAlertDialogBuilder(context)
             .setTitle(entry.name)
             .setMessage(body)
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .create()
+        // Same overlay-token constraint as the card menu popup.
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL)
+        windowToken?.let { token ->
+            dialog.window?.attributes = dialog.window?.attributes?.also { it.token = token }
+        }
+        try {
+            dialog.show()
+        } catch (e: WindowManager.BadTokenException) {
+            Log.w(TAG, "widget details dialog failed (overlay token)", e)
+        }
     }
 
     private fun dismissCardMenu() {
@@ -567,6 +591,11 @@ class HiboardView @JvmOverloads constructor(
         if (show == storeSheetOpen) return
         storeSheetOpen = show
         storeSheetDragging = false
+        if (show && draggingClose) {
+            // Abort glance close so the store can take the gesture stream.
+            onCloseScrollEnd?.invoke(0f)
+            draggingClose = false
+        }
         sheet.animate().cancel()
         storePeekAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
@@ -1294,6 +1323,7 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private companion object {
+        const val TAG = "HiboardView"
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
         const val CONTACTS_PERMISSION = 44
