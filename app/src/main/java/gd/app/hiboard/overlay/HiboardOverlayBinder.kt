@@ -93,6 +93,13 @@ class HiboardOverlayBinder(
      */
     private var windowParked = true
     /**
+     * After [warmOverlayOffscreen], keep the window at x=0 with the surface
+     * shown and hide via plate alpha + content translation only. Re-parking or
+     * INVISIBLE→VISIBLE on open pays a system hitch Oppo's in-process Assist
+     * never hits mid-gesture.
+     */
+    private var hideInPlace = false
+    /**
      * Oppo fixed Assist plate (DecorView / blur bg). Opaque #8397cc color;
      * translucency via [View.setAlpha] — NOT ColorDrawable.setAlpha (that flips
      * window opaque↔translucent composition and blinks while dragging).
@@ -465,6 +472,11 @@ class HiboardOverlayBinder(
             applyProgress(resumeProgress, fromUser = acceptingUserScroll)
             notifyStatus(OverlayContract.STATUS_CONNECTED)
             Log.i(TAG, "overlay window attached width=$windowWidth p=$resumeProgress")
+            // Oppo keeps Assist warm after WindowServer attach. Paying first
+            // inflate/render/surface off-screen avoids the first-swipe hitch.
+            if (resumeProgress <= 0f) {
+                mainHandler.post { warmOverlayOffscreen() }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add overlay window", e)
             controller.destroy()
@@ -475,6 +487,7 @@ class HiboardOverlayBinder(
             storeSlide = null
             attached = false
             windowParked = true
+            hideInPlace = false
             notifyStatus(0)
         }
     }
@@ -493,6 +506,7 @@ class HiboardOverlayBinder(
         windowInteractive = false
         overscrollLayersOn = false
         windowParked = true
+        hideInPlace = false
         mainHandler.removeCallbacks(applyPendingProgressRunnable)
         lastNotifiedProgress = -1f
         try {
@@ -602,6 +616,7 @@ class HiboardOverlayBinder(
         windowInteractive = false
         overscrollLayersOn = false
         windowParked = true
+        hideInPlace = false
         plateView = null
         contentSlide = null
         storeSlide = null
@@ -630,6 +645,34 @@ class HiboardOverlayBinder(
         hostController?.enter()
         if (resumed) {
             ensureContentResumed()
+        }
+    }
+
+    /**
+     * First-swipe hitch fix: enter + compose, unpark, then keep the surface
+     * shown. Oppo Assist never toggles window visibility on open — only alpha /
+     * scroll. Our INVISIBLE→VISIBLE was still a SurfaceFlinger show hitch after
+     * hideInPlace removed the park cost.
+     */
+    private fun warmOverlayOffscreen() {
+        if (!attached || progress > 0.001f) return
+        val view = hostView ?: return
+        ensureEntered()
+        // Unpark first so the costly updateViewLayout happens before any swipe.
+        syncWindowParked(false)
+        hideInPlace = true
+        // Resting closed: surface shown, plate clear, content off-screen, no touch.
+        setPlateAlpha(0f)
+        val w = windowWidth.toFloat().coerceAtLeast(1f)
+        contentSlide?.translationX = -w
+        storeSlide?.translationX = -w
+        view.alpha = 1f
+        view.visibility = View.VISIBLE
+        syncTouchable(false)
+        view.post {
+            if (!attached || progress > 0.001f) return@post
+            view.invalidate()
+            Log.i(TAG, "overlay warmed (surface kept visible)")
         }
     }
 
@@ -775,8 +818,13 @@ class HiboardOverlayBinder(
             setPlateAlpha(0f)
             contentSlide?.translationX = -w
             storeSlide?.translationX = -w
-            view.visibility = View.INVISIBLE
-            syncWindowParked(true)
+            if (hideInPlace) {
+                // Keep surface shown — only alpha/translation change on next open.
+                view.visibility = View.VISIBLE
+            } else {
+                view.visibility = View.INVISIBLE
+                syncWindowParked(true)
+            }
         } else if (visual <= 1f) {
             // Finger path: do not flip LAYER_TYPE (crossing 1.0 blinked solid↔clear).
             if (!fromUser) syncOverscrollLayers(false)
@@ -784,7 +832,9 @@ class HiboardOverlayBinder(
             contentSlide?.translationX = contentX
             storeSlide?.translationX = contentX
             setPlateAlpha(visual.coerceIn(0f, 1f))
-            syncWindowParked(false)
+            if (!hideInPlace) {
+                syncWindowParked(false)
+            }
             view.visibility = View.VISIBLE
         } else {
             if (!fromUser) syncOverscrollLayers(true)
@@ -792,7 +842,9 @@ class HiboardOverlayBinder(
             contentSlide?.translationX = slideX
             storeSlide?.translationX = slideX
             setPlateAlpha(1f)
-            syncWindowParked(false)
+            if (!hideInPlace) {
+                syncWindowParked(false)
+            }
             view.visibility = View.VISIBLE
         }
 
@@ -801,7 +853,9 @@ class HiboardOverlayBinder(
         syncCloseGestureEnabled(panelInteractive)
 
         if (!fromUser && visual <= 0f) {
-            clearContentEntered()
+            // Pause live engines only — keep contentEntered so the next open
+            // skips ensureEntered/first render (Oppo Assist stays warm while bound).
+            ensureContentPaused()
             syncOverscrollLayers(false)
         }
         if (visual >= 1f && resumed) {
@@ -937,7 +991,7 @@ class HiboardOverlayBinder(
             settleTarget = -1f
             syncOverscrollLayers(false)
             if (target <= 0f) {
-                clearContentEntered()
+                ensureContentPaused()
             } else if (target >= 1f && resumed) {
                 ensureContentResumed()
             }
@@ -1007,7 +1061,7 @@ class HiboardOverlayBinder(
                 applyProgress(if (abs(end - target) < 0.02f) target else end, fromUser = false)
                 syncOverscrollLayers(false)
                 if (target <= 0f) {
-                    clearContentEntered()
+                    ensureContentPaused()
                 } else if (resumed) {
                     ensureContentResumed()
                 }
@@ -1073,18 +1127,18 @@ class HiboardOverlayBinder(
         private const val SETTLE_BOUNCE = 0.0f
         private const val SETTLE_RESPONSE = 0.4f
         /** Faster settle when finger left with a real fling — still capped for visibility. */
-        private const val SETTLE_RESPONSE_FLING = 0.32f
+        private const val SETTLE_RESPONSE_FLING = 0.36f
         /** Close settle — readable opaque-sheet slide (Oppo scrollOut). */
         private const val SETTLE_RESPONSE_CLOSE = 0.42f
         /** Softer ease when releasing past-open rubber-band. */
         private const val SETTLE_RESPONSE_OVERSCROLL = 0.45f
         /** progress/s floor so a quick flick is not eaten by lag. */
-        private const val FLING_MIN_START_VELOCITY = 1.8f
+        private const val FLING_MIN_START_VELOCITY = 1.4f
         /**
-         * progress/s ceiling so close/open from ~1.0 always reads as a slide
-         * (uncapped flings finished in a few frames ≈ "no animation").
+         * progress/s ceiling — was 2.6 (felt like a stun snap after finger-up).
+         * Oppo Assist settle stays readable; keep under ~2.
          */
-        private const val FLING_MAX_START_VELOCITY = 2.6f
+        private const val FLING_MAX_START_VELOCITY = 1.9f
         private const val FLING_MIN_CLOSE_VELOCITY = 1.0f
         private const val FLING_MAX_CLOSE_VELOCITY = 1.7f
 
