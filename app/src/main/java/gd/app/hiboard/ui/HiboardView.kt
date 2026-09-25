@@ -119,6 +119,10 @@ class HiboardView @JvmOverloads constructor(
     private var lastDragX = 0f
     private var lastDragTime = 0L
     private var velocityX = 0f
+    /** Most negative px/s this close gesture (finger-up often reads ~0). */
+    private var peakCloseVelocityX = 0f
+    /** Most positive px/s — swipe-right reopen while closing. */
+    private var peakOpenVelocityX = 0f
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
@@ -221,42 +225,31 @@ class HiboardView @JvmOverloads constructor(
             return super.onInterceptTouchEvent(ev)
         }
         when (ev.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                downX = ev.x
-                downY = ev.y
-                downTime = ev.eventTime
-                lastDragX = ev.x
-                lastDragTime = ev.eventTime
-                velocityX = 0f
-                draggingClose = false
-                // closeProgressAtDown seeded by host via seedCloseProgress(); default 1.
-            }
+            MotionEvent.ACTION_DOWN -> recordCloseDown(ev)
             MotionEvent.ACTION_MOVE -> {
                 if (draggingClose) return true
-                val dx = ev.x - downX
-                val dy = ev.y - downY
-                // Either horizontal direction: left closes, right can reopen mid-drag.
-                if (abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.2f) {
-                    draggingClose = true
-                    closeDragProgress = closeProgressAtDown
-                    lastDragX = ev.x
-                    lastDragTime = ev.eventTime
-                    parent?.requestDisallowInterceptTouchEvent(true)
-                    onCloseScrollBegin?.invoke()
-                    return true
-                }
+                if (tryBeginCloseDrag(ev)) return true
             }
         }
         return super.onInterceptTouchEvent(ev)
     }
 
     override fun onTouchEvent(ev: MotionEvent): Boolean {
-        if (!draggingClose || storeSheetOpen) {
+        if (!closeGestureEnabled || storeSheetOpen) {
             if (storeSheetOpen) draggingClose = false
             return super.onTouchEvent(ev)
         }
+        // Mid-close the content is translated left — most of the screen has no
+        // child under the finger. Intercept never runs for that stream; we must
+        // claim DOWN here or MOVE never arrives and swipe-right reopen is dead.
         when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                recordCloseDown(ev)
+                return true
+            }
             MotionEvent.ACTION_MOVE -> {
+                if (!draggingClose && !tryBeginCloseDrag(ev)) return true
+                if (!draggingClose) return true
                 val width = width.coerceAtLeast(1).toFloat()
                 val dx = ev.x - lastDragX
                 updateCloseVelocity(ev)
@@ -266,18 +259,63 @@ class HiboardView @JvmOverloads constructor(
                 onCloseScroll?.invoke(closeDragProgress)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                updateCloseVelocity(ev)
-                onCloseScrollEnd?.invoke(velocityX)
-                draggingClose = false
-                parent?.requestDisallowInterceptTouchEvent(false)
+                if (draggingClose) {
+                    updateCloseVelocity(ev)
+                    // Final finger direction wins — an earlier left peak must not
+                    // poison a short-quick reopen while closing (Oppo scrollOut reverse).
+                    val tip = when {
+                        velocityX > 0f -> maxOf(velocityX, peakOpenVelocityX)
+                        velocityX < 0f -> minOf(velocityX, peakCloseVelocityX)
+                        abs(peakOpenVelocityX) >= abs(peakCloseVelocityX) -> peakOpenVelocityX
+                        else -> peakCloseVelocityX
+                    }
+                    onCloseScrollEnd?.invoke(tip)
+                    draggingClose = false
+                    peakCloseVelocityX = 0f
+                    peakOpenVelocityX = 0f
+                    parent?.requestDisallowInterceptTouchEvent(false)
+                }
             }
         }
+        return true
+    }
+
+    private fun recordCloseDown(ev: MotionEvent) {
+        downX = ev.x
+        downY = ev.y
+        downTime = ev.eventTime
+        lastDragX = ev.x
+        lastDragTime = ev.eventTime
+        velocityX = 0f
+        peakCloseVelocityX = 0f
+        peakOpenVelocityX = 0f
+        draggingClose = false
+    }
+
+    /** @return true if close/reopen drag started */
+    private fun tryBeginCloseDrag(ev: MotionEvent): Boolean {
+        val dx = ev.x - downX
+        val dy = ev.y - downY
+        // Either horizontal direction: left closes, right reopens mid-close.
+        if (abs(dx) <= touchSlop || abs(dx) <= abs(dy) * 1.2f) return false
+        // Host seeds closeProgressAtDown from live progress (may be mid-settle).
+        onCloseScrollBegin?.invoke()
+        draggingClose = true
+        closeDragProgress = closeProgressAtDown
+        lastDragX = ev.x
+        lastDragTime = ev.eventTime
+        velocityX = 0f
+        peakCloseVelocityX = 0f
+        peakOpenVelocityX = 0f
+        parent?.requestDisallowInterceptTouchEvent(true)
         return true
     }
 
     private fun updateCloseVelocity(ev: MotionEvent) {
         val dt = (ev.eventTime - lastDragTime).coerceAtLeast(1L)
         velocityX = (ev.x - lastDragX) / dt * 1000f
+        if (velocityX < peakCloseVelocityX) peakCloseVelocityX = velocityX
+        if (velocityX > peakOpenVelocityX) peakOpenVelocityX = velocityX
         lastDragX = ev.x
         lastDragTime = ev.eventTime
     }

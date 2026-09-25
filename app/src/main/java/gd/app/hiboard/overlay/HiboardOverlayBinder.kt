@@ -65,8 +65,20 @@ class HiboardOverlayBinder(
     private var windowInteractive = false
     /** Estimated horizontal velocity (px/s) from recent onScroll samples. */
     private var scrollVelocityPx = 0f
+    /**
+     * Most leftward (negative) px/s seen this gesture — ACTION_UP often decelerates
+     * to ~0, which wrongly cancelled short-quick close flicks.
+     */
+    private var peakCloseVelocityPx = 0f
+    /** Most rightward (positive) px/s — interrupt-close reopen flicks. */
+    private var peakOpenVelocityPx = 0f
+    /** Finger grabbed the panel while a close settle was running — reopen easier. */
+    private var interruptedCloseSettle = false
     private var lastScrollSampleProgress = 0f
     private var lastScrollSampleTime = 0L
+    /** Gesture clock for open-from-home short-flick velocity estimate. */
+    private var sessionStartTimeMs = 0L
+    private var sessionStartProgress = 0f
     /**
      * True when this finger session started from a mostly-open panel (close /
      * reverse). Uses Oppo scrollOut keep-open threshold instead of open 0.25.
@@ -123,17 +135,28 @@ class HiboardOverlayBinder(
 
     override fun startScroll() {
         val gen = scrollGen.incrementAndGet()
+        // Panel close/reopen owns the finger — do not steal session flags (rapid
+        // left/right chatter was leaving acceptingUserScroll stuck true).
+        if (closeDragging) {
+            Log.i(TAG, "startScroll ignored — panel owns gesture gen=$gen")
+            return
+        }
         // If onScroll already auto-started this gesture, keep its sessionFromOpen.
         // Late begin+end on finger-up used to re-read progress (e.g. 0.74) and
         // wrongly mark the session as close-from-open → settle closed.
         if (!acceptingUserScroll) {
             sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS
+            markScrollSessionStart()
         }
         acceptingUserScroll = true
         scrolling = true
         mainHandler.post {
             if (gen != scrollGen.get()) return@post
-            if (closeDragging) return@post
+            if (closeDragging) {
+                acceptingUserScroll = false
+                scrolling = false
+                return@post
+            }
             cancelSettle(/* keepProgress = */ true)
             settleTarget = -1f
             scrolling = true
@@ -147,24 +170,35 @@ class HiboardOverlayBinder(
     }
 
     override fun onScroll(p: Float) {
+        if (closeDragging) return
         // Oppo launcher sends undamped |amount|/width (may be > 1). Map past-open
         // through COUI closed-form damp; finger-driven close already sends damped p.
         val visual = mapLauncherScrollToVisual(p)
+        // Post-finger workspace rubber-band must not yank an open settle to 0.
+        if (!acceptingUserScroll && settleTarget >= 1f && visual < progress) {
+            return
+        }
         // Oppo streams onScrollChange even before begin succeeds. Accept progress
         // and implicitly open the session so early finger travel is not dropped.
         if (!acceptingUserScroll) {
             if (visual <= 0f && progress <= 0f) return
             acceptingUserScroll = true
             scrolling = true
-            sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS || visual >= SESSION_FROM_OPEN_PROGRESS
+            // Session kind is fixed at finger-down progress — never from [visual].
+            // Fast open frames (visual≥0.5) used to mark fromOpen and then a
+            // weak left tip at past-open wrongly settled closed.
+            sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS
+            markScrollSessionStart()
             mainHandler.post {
-                if (closeDragging) return@post
+                if (closeDragging) {
+                    acceptingUserScroll = false
+                    scrolling = false
+                    return@post
+                }
                 cancelSettle(/* keepProgress = */ true)
                 settleTarget = -1f
                 scrolling = true
                 acceptingUserScroll = true
-                sessionFromOpen =
-                    progress >= SESSION_FROM_OPEN_PROGRESS || sessionFromOpen
                 ensureEntered()
                 if (progress < PANEL_INTERACTIVE_THRESHOLD) {
                     syncTouchable(false)
@@ -186,6 +220,17 @@ class HiboardOverlayBinder(
         if (progressApplyScheduled) return
         progressApplyScheduled = true
         mainHandler.post(applyPendingProgressRunnable)
+    }
+
+    /** Stamp gesture clock once per finger session (open or close). */
+    private fun markScrollSessionStart(force: Boolean = false) {
+        if (!force && sessionStartTimeMs != 0L) return
+        sessionStartTimeMs = android.os.SystemClock.uptimeMillis()
+        sessionStartProgress = progress
+        peakOpenVelocityPx = 0f
+        peakCloseVelocityPx = 0f
+        scrollVelocityPx = 0f
+        lastScrollSampleTime = 0L
     }
 
     /**
@@ -355,6 +400,8 @@ class HiboardOverlayBinder(
             val plate = View(appContext).apply {
                 setBackgroundColor(panelBgRgb() or 0xFF000000.toInt())
                 alpha = 0f
+                isClickable = false
+                isFocusable = false
                 // Stable alpha compositing while dragging (avoids SoftLayer blink).
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
             }
@@ -607,14 +654,19 @@ class HiboardOverlayBinder(
     }
 
     private fun beginCloseDrag() {
+        // Invalidate in-flight launcher endScroll so rapid chatter cannot settle
+        // the previous AIDL gesture after panel takeover.
+        scrollGen.incrementAndGet()
+        // Only true when interrupting a close settle — NOT an open settle.
+        // (Any-settle was biasing short-quick left at ~half back to open.)
+        interruptedCloseSettle = settleTarget == 0f
         cancelSettle(keepProgress = true)
         settleTarget = -1f
         scrolling = true
         closeDragging = true
         sessionFromOpen = true
         acceptingUserScroll = false
-        lastScrollSampleProgress = progress
-        lastScrollSampleTime = 0L
+        markScrollSessionStart(force = true)
         ensureEntered()
         syncTouchable(true)
         syncCloseGestureEnabled(true)
@@ -631,8 +683,8 @@ class HiboardOverlayBinder(
     private fun endCloseDrag(velocityX: Float) {
         closeDragging = false
         scrolling = false
-        val v = if (abs(velocityX) >= 50f) velocityX else scrollVelocityPx
-        finishScroll(v)
+        val tip = if (abs(velocityX) >= 50f) velocityX else scrollVelocityPx
+        finishScroll(tip)
     }
 
     private fun sampleScrollVelocity(p: Float) {
@@ -641,9 +693,67 @@ class HiboardOverlayBinder(
             val dt = (now - lastScrollSampleTime).coerceAtLeast(1L)
             val dPx = (p - lastScrollSampleProgress) * windowWidth.toFloat().coerceAtLeast(1f)
             scrollVelocityPx = dPx / dt * 1000f
+            if (scrollVelocityPx < peakCloseVelocityPx) {
+                peakCloseVelocityPx = scrollVelocityPx
+            }
+            if (scrollVelocityPx > peakOpenVelocityPx) {
+                peakOpenVelocityPx = scrollVelocityPx
+            }
         }
         lastScrollSampleProgress = p
         lastScrollSampleTime = now
+    }
+
+    /**
+     * Short-flick intent: tip + peaks + whole-gesture estimate.
+     * VelocityTracker / AIDL tip is often ~0 on 1–2 frame flicks — [estimateSessionVelocityPx]
+     * recovers that.
+     *
+     * Tip direction is honored for a real reverse flick, but a weak reverse tip
+     * must not erase a dominant opposite peak (open past-overscroll often ends
+     * tip≈-400 while peakOpen≫1000 — that used to flingClose and snap shut).
+     */
+    private fun effectiveFlingVelocity(tip: Float): Float {
+        val estimated = estimateSessionVelocityPx()
+        val open = maxOf(
+            peakOpenVelocityPx,
+            scrollVelocityPx.coerceAtLeast(0f),
+            estimated.coerceAtLeast(0f),
+        )
+        val close = minOf(
+            peakCloseVelocityPx,
+            scrollVelocityPx.coerceAtMost(0f),
+            estimated.coerceAtMost(0f),
+        )
+        return when {
+            tip > 0f -> {
+                val openIntent = maxOf(tip, open)
+                // Weak right tip after a dominant left peak = release noise on close.
+                if (abs(close) >= SHORT_FLING_VELOCITY && openIntent < abs(close)) {
+                    close
+                } else {
+                    openIntent
+                }
+            }
+            tip < 0f -> {
+                val closeIntent = minOf(tip, close)
+                if (open >= SHORT_FLING_VELOCITY && abs(closeIntent) < open) {
+                    open
+                } else {
+                    closeIntent
+                }
+            }
+            else -> if (abs(open) >= abs(close)) open else close
+        }
+    }
+
+    /** Signed px/s from session start → now (works with a single onScroll/drag sample). */
+    private fun estimateSessionVelocityPx(): Float {
+        if (sessionStartTimeMs <= 0L) return 0f
+        val dt = (android.os.SystemClock.uptimeMillis() - sessionStartTimeMs).coerceAtLeast(1L)
+        val dP = progress - sessionStartProgress
+        if (dP == 0f) return 0f
+        return dP * windowWidth.toFloat().coerceAtLeast(1f) / dt * 1000f
     }
 
     private fun applyProgress(p: Float, fromUser: Boolean) {
@@ -739,11 +849,14 @@ class HiboardOverlayBinder(
     /**
      * Panel takes horizontal close/reopen once it covers enough of the screen.
      * Not while launcher finger is still driving [acceptingUserScroll].
+     * Oppo: settle is interruptible — keep touch + close-gesture alive while the
+     * spring runs so swipe-right mid-close can reopen.
      */
     private fun shouldPanelBeInteractive(p: Float): Boolean {
         if (closeDragging) return true
         if (acceptingUserScroll) return false
         if (p <= 0.001f) return false
+        if (settleSpring?.isRunning == true || settleTarget >= 0f) return true
         return p >= PANEL_INTERACTIVE_THRESHOLD
     }
 
@@ -756,31 +869,48 @@ class HiboardOverlayBinder(
         if (closeDragging) return
         scrolling = false
         // Launcher VelocityTracker is often 0 on quick overscroll (begin+end same
-        // frame). Prefer a real fling; else fall back to onScroll sample.
-        val v = when {
+        // frame). Prefer tip; [effectiveFlingVelocity] fills gaps via peak + estimate.
+        val tip = when {
             velocity != null && abs(velocity) > 1f -> velocity
             else -> scrollVelocityPx
         }
-        settleVelocityPx = v
-        // Oppo:
-        // - Past-open rubber-band always springs back to 1.
-        // - Open (WIDTH_THRESHOLD): progress >= 0.25 commits open when slow.
-        // - Close from open (scrollOut): must keep progress > ~0.75 to restore;
-        //   a slow left drag past that exits instead of springing back open.
         val fromOpen = sessionFromOpen
+        val v = effectiveFlingVelocity(tip)
+        settleVelocityPx = v
+        val flingOpen = v >= SHORT_FLING_VELOCITY
+        val flingClose = v <= -SHORT_FLING_VELOCITY
+        // Oppo:
+        // - Past-open rubber-band springs back to 1 on slow release.
+        // - Clear left fling closes even above keep-open / past-open.
+        // - Clear right fling opens even under WIDTH_THRESHOLD 0.25.
+        // - Slow drag: 0.25 open / 0.75 keep-open.
         val shouldOpen = when {
-            progress > 1f -> true
+            progress > 1f && !flingClose -> true
+            flingClose -> false
+            flingOpen -> true
             abs(v) > VELOCITY_THRESHOLD -> v > 0f
+            // Finger direction wins during rapid reverse (Oppo interruptible settle).
+            fromOpen && v > 0f -> progress >= OPEN_THRESHOLD
+            fromOpen && v < 0f -> progress > KEEP_OPEN_THRESHOLD
+            // Interrupted close settle, no clear tip: reopen if still past open threshold.
+            fromOpen && interruptedCloseSettle -> progress >= OPEN_THRESHOLD
             fromOpen -> progress > KEEP_OPEN_THRESHOLD
             else -> progress >= OPEN_THRESHOLD
         }
         Log.i(
             TAG,
-            "finishScroll progress=$progress velocity=$v fromOpen=$fromOpen open=$shouldOpen",
+            "finishScroll progress=$progress tip=$tip v=$v est=${estimateSessionVelocityPx()} " +
+                "peakClose=$peakCloseVelocityPx peakOpen=$peakOpenVelocityPx " +
+                "fromOpen=$fromOpen interrupted=$interruptedCloseSettle open=$shouldOpen",
         )
         sessionFromOpen = false
+        interruptedCloseSettle = false
         scrollVelocityPx = 0f
+        peakCloseVelocityPx = 0f
+        peakOpenVelocityPx = 0f
         lastScrollSampleTime = 0L
+        sessionStartTimeMs = 0L
+        sessionStartProgress = 0f
         animateTo(if (shouldOpen) 1f else 0f, v)
     }
 
@@ -930,6 +1060,12 @@ class HiboardOverlayBinder(
         private const val PANEL_INTERACTIVE_THRESHOLD = 0.25f
         /** px/s — short quick flicks still open/close. */
         private const val VELOCITY_THRESHOLD = 250f
+        /**
+         * px/s — short-flick floor (open or close). Below system minFling often;
+         * tip is unreliable on 1–2 frame AIDL/overscroll, so [effectiveFlingVelocity]
+         * also uses whole-gesture estimate.
+         */
+        private const val SHORT_FLING_VELOCITY = 80f
         /**
          * From AssistantScreen string pool SETTLE_ANIM_SPRING_* — same convention as
          * [com.coui.appcompat.panel.COUIBottomSheetBehavior] (bounce=0, response=0.4).
