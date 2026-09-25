@@ -198,33 +198,21 @@ class CardBinder(
     ) {
         val on = state.content.flashlightOn
         val available = state.content.flashlightAvailable
-        val cardColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_on else R.color.hiboard_flashlight_off,
-        )
-        val labelColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_label_on else R.color.hiboard_flashlight_label_off,
-        )
-        val iconColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_icon_on else R.color.hiboard_flashlight_icon_off,
-        )
+        val cardColor = body.context.getColor(R.color.hiboard_flashlight_off)
         (root as? COUICardView)?.apply {
             setCardBackgroundColor(cardColor)
-            val pad = (8 * body.resources.displayMetrics.density).toInt()
-            setContentPadding(pad, pad, pad, pad)
+            setContentPadding(0, 0, 0, 0)
+            clipToOutline = true
         }
         val view = inflater.inflate(R.layout.card_flashlight, body, true)
-        view.findViewById<TextView>(R.id.flashlightLabel).setTextColor(labelColor)
-        view.findViewById<ImageView>(R.id.flashlightGlow).visibility =
-            if (on) View.VISIBLE else View.INVISIBLE
-        view.findViewById<ImageView>(R.id.flashlightIcon).imageTintList =
-            android.content.res.ColorStateList.valueOf(iconColor)
-        view.findViewById<TextView>(R.id.flashlightState).apply {
-            setTextColor(labelColor)
-            text = when {
-                !available -> context.getString(R.string.flashlight_unavailable)
-                on -> context.getString(R.string.flashlight_on)
-                else -> context.getString(R.string.flashlight_off)
-            }
+        val art = view.findViewById<ImageView>(R.id.flashlightArt)
+        art.setImageResource(if (on) R.drawable.flashlight_on else R.drawable.flashlight_off)
+        art.scaleType = ImageView.ScaleType.CENTER_CROP
+        art.alpha = if (available || on) 1f else 0.72f
+        art.contentDescription = when {
+            !available -> body.context.getString(R.string.flashlight_unavailable)
+            on -> body.context.getString(R.string.flashlight_on)
+            else -> body.context.getString(R.string.flashlight_off)
         }
         val toggle = View.OnClickListener { onToggleFlashlight() }
         view.findViewById<View>(R.id.flashlightRoot).setOnClickListener(toggle)

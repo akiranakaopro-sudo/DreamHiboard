@@ -1,6 +1,5 @@
 package gd.app.hiboard.ui
 
-import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -52,7 +51,7 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         CardEngineId.Notes -> bindNotesPreview(inflater, card, body)
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body, density)
-        CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body, density)
+        CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)
         CardEngineId.RecentApps -> Unit
         CardEngineId.Contacts -> bindContactsPreview(inflater, card, body)
         CardEngineId.Calendar -> bindCalendarCard(card, body, monthPageToday(), onOpen = null)
@@ -129,21 +128,15 @@ private fun bindFlashlightPreview(
     inflater: LayoutInflater,
     card: COUICardView,
     body: LinearLayout,
-    density: Float,
 ) {
-    val pad = (8 * density).toInt()
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_flashlight_off))
-    card.setContentPadding(pad, pad, pad, pad)
+    card.setContentPadding(0, 0, 0, 0)
+    card.clipToOutline = true
     val view = inflater.inflate(R.layout.card_flashlight, body, true)
-    val labelColor = body.context.getColor(R.color.hiboard_flashlight_label_off)
-    view.findViewById<TextView>(R.id.flashlightLabel).setTextColor(labelColor)
-    view.findViewById<ImageView>(R.id.flashlightGlow).visibility = View.INVISIBLE
-    view.findViewById<ImageView>(R.id.flashlightIcon).imageTintList =
-        ColorStateList.valueOf(body.context.getColor(R.color.hiboard_flashlight_icon_off))
-    view.findViewById<TextView>(R.id.flashlightState).apply {
-        setTextColor(labelColor)
-        text = context.getString(R.string.flashlight_off)
-    }
+    val art = view.findViewById<ImageView>(R.id.flashlightArt)
+    art.setImageResource(R.drawable.flashlight_off)
+    art.scaleType = ImageView.ScaleType.CENTER_CROP
+    art.contentDescription = body.context.getString(R.string.flashlight_off)
 }
 
 private fun bindContactsPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
