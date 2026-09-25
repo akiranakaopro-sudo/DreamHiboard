@@ -3,7 +3,7 @@ package gd.app.hiboard.overlay
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
-import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -23,7 +23,6 @@ import gd.app.hiboard.host.HiboardViewController
 import gd.app.hiboard.ui.HiboardView
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
-import kotlin.math.pow
 
 /**
  * Server-side [ILauncherOverlay] implementation.
@@ -55,6 +54,8 @@ class HiboardOverlayBinder(
     private var attached = false
     private var resumed = false
     private var contentEntered = false
+    /** True after [hostController.resume] until pause/exit — never resume every frame. */
+    private var contentResumed = false
     private var pendingProgress: Float? = null
     private var progressApplyScheduled = false
     private var lastNotifiedProgress = -1f
@@ -71,8 +72,24 @@ class HiboardOverlayBinder(
      * reverse). Uses Oppo scrollOut keep-open threshold instead of open 0.25.
      */
     private var sessionFromOpen = false
-    private var panelBg: ColorDrawable? = null
-    /** Widget/chrome layer only — slides; full-screen scrim stays fixed (Oppo Assist). */
+    private var panelBgRgbCached = 0
+    private var overscrollLayersOn = false
+    /**
+     * True while the WM window is parked off-screen ([LayoutParams.x] = -width),
+     * matching Oppo AssistantScreenWindow.updateCloseLayoutX / OverlayWindow
+     * (p < 0.01 → x = -width).
+     */
+    private var windowParked = true
+    /**
+     * Oppo fixed Assist plate (DecorView / blur bg). Opaque #8397cc color;
+     * translucency via [View.setAlpha] — NOT ColorDrawable.setAlpha (that flips
+     * window opaque↔translucent composition and blinks while dragging).
+     */
+    private var plateView: View? = null
+    /**
+     * Content layers only — Oppo slides EventProcessor via setScrollX; the
+     * plate stays fixed full-bleed under them.
+     */
     private var contentSlide: View? = null
     private var storeSlide: View? = null
     /**
@@ -130,14 +147,16 @@ class HiboardOverlayBinder(
     }
 
     override fun onScroll(p: Float) {
-        val clamped = p.coerceIn(0f, 1f)
+        // Oppo launcher sends undamped |amount|/width (may be > 1). Map past-open
+        // through COUI closed-form damp; finger-driven close already sends damped p.
+        val visual = mapLauncherScrollToVisual(p)
         // Oppo streams onScrollChange even before begin succeeds. Accept progress
         // and implicitly open the session so early finger travel is not dropped.
         if (!acceptingUserScroll) {
-            if (clamped <= 0f && progress <= 0f) return
+            if (visual <= 0f && progress <= 0f) return
             acceptingUserScroll = true
             scrolling = true
-            sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS || clamped >= SESSION_FROM_OPEN_PROGRESS
+            sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS || visual >= SESSION_FROM_OPEN_PROGRESS
             mainHandler.post {
                 if (closeDragging) return@post
                 cancelSettle(/* keepProgress = */ true)
@@ -153,20 +172,34 @@ class HiboardOverlayBinder(
                 }
             }
         }
-        sampleScrollVelocity(clamped)
-        pendingProgress = clamped
+        sampleScrollVelocity(visual)
+        pendingProgress = visual
         if (Looper.myLooper() == mainHandler.looper) {
             if (progressApplyScheduled) {
                 mainHandler.removeCallbacks(applyPendingProgressRunnable)
                 progressApplyScheduled = false
             }
             pendingProgress = null
-            applyProgress(clamped, fromUser = true)
+            applyProgress(visual, fromUser = true)
             return
         }
         if (progressApplyScheduled) return
         progressApplyScheduled = true
         mainHandler.post(applyPendingProgressRunnable)
+    }
+
+    /**
+     * Launcher open path: undamped p → visual with COUI soft past-open.
+     * Values already in (1, 1+MAX] from the panel finger path pass through.
+     */
+    private fun mapLauncherScrollToVisual(p: Float): Float {
+        val raw = p.coerceAtLeast(0f)
+        if (raw <= 1f) return raw
+        val w = windowWidth.toFloat().coerceAtLeast(1f)
+        val maxOver = w * CouiOverscroll.MAX_FRACTION
+        val undampedOver = (raw - 1f) * w
+        val visualOver = CouiOverscroll.visualFromUndamped(undampedOver, maxOver)
+        return 1f + visualOver / w
     }
 
     override fun endScroll() {
@@ -236,7 +269,7 @@ class HiboardOverlayBinder(
         mainHandler.post {
             resumed = true
             if (progress >= 1f) {
-                hostController?.resume()
+                ensureContentResumed()
             }
         }
     }
@@ -244,7 +277,7 @@ class HiboardOverlayBinder(
     override fun onPause() {
         mainHandler.post {
             resumed = false
-            hostController?.pause()
+            ensureContentPaused()
         }
     }
 
@@ -253,7 +286,7 @@ class HiboardOverlayBinder(
             if (progress > 0f) {
                 cancelSettle(keepProgress = false)
                 applyProgress(0f, fromUser = false)
-                hostController?.exit()
+                clearContentEntered()
             }
         }
     }
@@ -272,18 +305,24 @@ class HiboardOverlayBinder(
             return
         }
 
-        // Launcher may call windowAttached2 several times while the token settles.
-        // Do NOT treat "addView posted but isAttachedToWindow still false" as stale —
-        // that tore the window down in a loop and made glance look dead.
+        // Already attached: only refresh token if it changed. Do NOT updateViewLayout
+        // + STATUS_CONNECTED on every windowAttached2 — that relayout/focus-thrashed
+        // and blinked the home page under a full-bleed empty blue plate.
         if (attached && hostView != null) {
-            windowParams = buildParams(attrs)
-            try {
-                windowManager.updateViewLayout(hostView, windowParams)
-                notifyStatus(OverlayContract.STATUS_CONNECTED)
+            val existing = windowParams
+            val newToken = attrs.token
+            if (existing != null && newToken != null && existing.token != newToken) {
+                existing.token = newToken
+                try {
+                    windowManager.updateViewLayout(hostView, existing)
+                } catch (e: Exception) {
+                    Log.w(TAG, "token update failed — recreating", e)
+                    detachWindowPreservingCallback(cb)
+                }
+            }
+            if (attached && hostView != null) {
+                // Already connected — skip STATUS_CONNECTED spam.
                 return
-            } catch (e: Exception) {
-                Log.w(TAG, "updateViewLayout failed — recreating", e)
-                detachWindowPreservingCallback(cb)
             }
         } else if (attached) {
             // Flag said attached but view is gone.
@@ -303,20 +342,40 @@ class HiboardOverlayBinder(
             view.onCloseScroll = { onCloseDragProgress(it) }
             view.onCloseScrollEnd = { endCloseDrag(it) }
         }
-        // Oppo: full-screen translucent sheet stays put; only chrome/widgets slide.
+        // Oppo AssistantScreenWindow: fixed full-bleed plate + content slides
+        // (setScrollX). Park WM when closed (updateCloseLayoutX).
         contentSlide = view.findViewById(R.id.boardRoot)
         storeSlide = view.findViewById(R.id.storeRoot)
-        // Ensure no opaque layout bg fights the progress-driven ColorDrawable scrim.
         (view as? android.view.ViewGroup)?.let { root ->
             for (i in 0 until root.childCount) {
                 root.getChildAt(i)?.setBackgroundColor(Color.TRANSPARENT)
             }
+            // Plate behind chrome — solid color, alpha via View.setAlpha (Oppo
+            // BackgroundController → DecorView.setAlpha).
+            val plate = View(appContext).apply {
+                setBackgroundColor(panelBgRgb() or 0xFF000000.toInt())
+                alpha = 0f
+                // Stable alpha compositing while dragging (avoids SoftLayer blink).
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            }
+            root.addView(
+                plate,
+                0,
+                android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                ),
+            )
+            plateView = plate
         }
+        view.background = null
         view.translationX = 0f
-        view.visibility = View.VISIBLE
+        view.visibility = View.INVISIBLE
         view.alpha = 1f
-        view.isFocusable = true
-        view.isFocusableInTouchMode = true
+        contentSlide?.translationX = -appContext.resources.displayMetrics.widthPixels.toFloat()
+        storeSlide?.translationX = -appContext.resources.displayMetrics.widthPixels.toFloat()
+        view.isFocusable = false
+        view.isFocusableInTouchMode = false
         view.setOnKeyListener { _, keyCode, event ->
             if (keyCode == android.view.KeyEvent.KEYCODE_BACK &&
                 event.action == android.view.KeyEvent.ACTION_UP
@@ -333,6 +392,9 @@ class HiboardOverlayBinder(
         } else {
             appContext.resources.displayMetrics.widthPixels
         }
+        // Park before addView so the first composite frame is off-screen.
+        params.x = -windowWidth
+        windowParked = true
 
         try {
             windowManager.addView(view, params)
@@ -361,9 +423,11 @@ class HiboardOverlayBinder(
             controller.destroy()
             hostController = null
             hostView = null
+            plateView = null
             contentSlide = null
             storeSlide = null
             attached = false
+            windowParked = true
             notifyStatus(0)
         }
     }
@@ -375,10 +439,13 @@ class HiboardOverlayBinder(
         settleTarget = -1f
         progress = 0f
         contentEntered = false
+        contentResumed = false
         pendingProgress = null
         progressApplyScheduled = false
         acceptingUserScroll = false
         windowInteractive = false
+        overscrollLayersOn = false
+        windowParked = true
         mainHandler.removeCallbacks(applyPendingProgressRunnable)
         lastNotifiedProgress = -1f
         try {
@@ -388,6 +455,7 @@ class HiboardOverlayBinder(
         hostController?.destroy()
         hostController = null
         hostView = null
+        plateView = null
         contentSlide = null
         storeSlide = null
         windowParams = null
@@ -397,7 +465,8 @@ class HiboardOverlayBinder(
 
     private fun buildParams(source: WindowManager.LayoutParams): WindowManager.LayoutParams {
         val params = WindowManager.LayoutParams()
-        params.copyFrom(source)
+        // Do not copyFrom(launcher) — inherits FORCE_DRAW_STATUS_BAR_BACKGROUND and
+        // other private flags that make the panel composite like an opaque plate.
         params.width = WindowManager.LayoutParams.MATCH_PARENT
         params.height = WindowManager.LayoutParams.MATCH_PARENT
         params.x = 0
@@ -408,6 +477,13 @@ class HiboardOverlayBinder(
         params.token = source.token
         params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL
         params.flags = closedWindowFlags()
+        // Draw behind status / nav / cutout. Content pads via WindowInsets; the sheet
+        // ColorDrawable must fill the full display (mtk.png was clipped above the pill).
+        params.layoutInDisplayCutoutMode =
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            params.setFitInsetsTypes(0)
+        }
         return params
     }
 
@@ -421,7 +497,10 @@ class HiboardOverlayBinder(
     }
 
     private fun openWindowFlags(): Int {
-        return (WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        // Keep NOT_FOCUSABLE so the panel never steals focus from launcher (focus
+        // thrash HiboardOverlay ↔ CustomizeLauncher blinked the home page).
+        return (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) and
             WindowManager.LayoutParams.FLAG_DIM_BEHIND.inv()
@@ -433,15 +512,31 @@ class HiboardOverlayBinder(
         val view = hostView ?: return
         val params = windowParams ?: return
         params.flags = if (interactive) openWindowFlags() else closedWindowFlags()
+        // Preserve park x — flag-only update must not unpark the window.
         try {
             windowManager.updateViewLayout(view, params)
-            if (interactive) {
-                view.isFocusable = true
-                view.isFocusableInTouchMode = true
-                view.requestFocus()
-            }
         } catch (e: Exception) {
             Log.w(TAG, "syncTouchable failed", e)
+        }
+    }
+
+    /**
+     * Oppo OverlayWindow: `wmLp.x = if (p < 0.01) -width else 0`.
+     * Only crosses the threshold — never per-frame updateViewLayout.
+     */
+    private fun syncWindowParked(parked: Boolean) {
+        if (windowParked == parked) return
+        windowParked = parked
+        val view = hostView ?: return
+        val params = windowParams ?: return
+        val w = windowWidth.coerceAtLeast(
+            appContext.resources.displayMetrics.widthPixels,
+        )
+        params.x = if (parked) -w else 0
+        try {
+            windowManager.updateViewLayout(view, params)
+        } catch (e: Exception) {
+            Log.w(TAG, "syncWindowParked failed", e)
         }
     }
 
@@ -452,12 +547,15 @@ class HiboardOverlayBinder(
         settleTarget = -1f
         progress = 0f
         contentEntered = false
+        contentResumed = false
         pendingProgress = null
         progressApplyScheduled = false
         acceptingUserScroll = false
         sessionFromOpen = false
         windowInteractive = false
-        panelBg = null
+        overscrollLayersOn = false
+        windowParked = true
+        plateView = null
         contentSlide = null
         storeSlide = null
         mainHandler.removeCallbacks(applyPendingProgressRunnable)
@@ -480,14 +578,32 @@ class HiboardOverlayBinder(
     }
 
     private fun ensureEntered() {
-        val view = hostView ?: return
-        view.visibility = View.VISIBLE
         if (contentEntered) return
         contentEntered = true
         hostController?.enter()
         if (resumed) {
-            hostController?.resume()
+            ensureContentResumed()
         }
+    }
+
+    /** Resume card engines once when fully open — never every overscroll frame. */
+    private fun ensureContentResumed() {
+        if (contentResumed || !resumed) return
+        contentResumed = true
+        hostController?.resume()
+    }
+
+    private fun ensureContentPaused() {
+        if (!contentResumed) return
+        contentResumed = false
+        hostController?.pause()
+    }
+
+    private fun clearContentEntered() {
+        if (!contentEntered) return
+        contentEntered = false
+        contentResumed = false
+        hostController?.exit()
     }
 
     private fun beginCloseDrag() {
@@ -506,7 +622,8 @@ class HiboardOverlayBinder(
 
     private fun onCloseDragProgress(p: Float) {
         if (!closeDragging) beginCloseDrag()
-        val clamped = p.coerceIn(0f, 1f)
+        // Finger path already COUI-damped; allow soft past-open, never below 0.
+        val clamped = p.coerceAtLeast(0f).coerceAtMost(1f + CouiOverscroll.MAX_FRACTION)
         sampleScrollVelocity(clamped)
         applyProgress(clamped, fromUser = true)
     }
@@ -530,72 +647,93 @@ class HiboardOverlayBinder(
     }
 
     private fun applyProgress(p: Float, fromUser: Boolean) {
-        progress = p
+        // Allow rubber-band past open; launcher freeze callbacks stay in [0, 1].
+        val visual = p.coerceAtLeast(0f).coerceAtMost(1f + CouiOverscroll.MAX_FRACTION)
+        progress = visual
         val view = hostView ?: return
         val w = windowWidth.toFloat().coerceAtLeast(1f)
-        // Keep host fixed so the translucent sheet covers home on the right.
-        // Only board/store chrome slides in from the left (Oppo Assist).
-        view.translationX = 0f
-        val slideX = w * (p - 1f)
-        contentSlide?.translationX = slideX
-        storeSlide?.translationX = slideX
-        view.visibility = View.VISIBLE
-        updatePanelBackground(view, p)
 
-        // Oppo: launcher owns the open finger; once glance is far enough on-screen,
-        // the panel must accept swipe-left immediately (including mid open-settle).
-        val panelInteractive = shouldPanelBeInteractive(p)
+        // Oppo AssistantScreen:
+        // - Fixed full-bleed plate; alpha via View.setAlpha (BackgroundController).
+        // - Content slides (setScrollX ≈ translationX on board/store).
+        // - WM params.x parks off-screen only when closed.
+        view.translationX = 0f
+
+        if (visual <= 0.001f) {
+            // Never toggle HW layers / flags on the way out of a drag frame.
+            syncOverscrollLayers(false)
+            setPlateAlpha(0f)
+            contentSlide?.translationX = -w
+            storeSlide?.translationX = -w
+            view.visibility = View.INVISIBLE
+            syncWindowParked(true)
+        } else if (visual <= 1f) {
+            // Finger path: do not flip LAYER_TYPE (crossing 1.0 blinked solid↔clear).
+            if (!fromUser) syncOverscrollLayers(false)
+            val contentX = w * (visual - 1f)
+            contentSlide?.translationX = contentX
+            storeSlide?.translationX = contentX
+            setPlateAlpha(visual.coerceIn(0f, 1f))
+            syncWindowParked(false)
+            view.visibility = View.VISIBLE
+        } else {
+            if (!fromUser) syncOverscrollLayers(true)
+            val slideX = w * (visual - 1f)
+            contentSlide?.translationX = slideX
+            storeSlide?.translationX = slideX
+            setPlateAlpha(1f)
+            syncWindowParked(false)
+            view.visibility = View.VISIBLE
+        }
+
+        val panelInteractive = shouldPanelBeInteractive(visual)
         syncTouchable(panelInteractive)
         syncCloseGestureEnabled(panelInteractive)
 
-        if (!fromUser && p <= 0f) {
-            if (contentEntered) {
-                contentEntered = false
-                hostController?.exit()
-            }
+        if (!fromUser && visual <= 0f) {
+            clearContentEntered()
+            syncOverscrollLayers(false)
         }
-        if (p >= 1f && resumed) {
-            hostController?.resume()
+        if (visual >= 1f && resumed) {
+            ensureContentResumed()
         }
-        notifyScroll(p)
+        if (visual <= 1f) {
+            notifyScroll(visual)
+        } else if (lastNotifiedProgress < 0.999f) {
+            notifyScroll(1f)
+        }
     }
 
     /**
-     * Oppo Assist: full-screen translucent tint while dragging (workspace shows
-     * through on the right); opaque at progress=1 so home icons are hidden.
-     * Alpha must reach 0 at p=0 now that the scrim no longer translates off-screen.
+     * Oppo BackgroundController → DecorView.setAlpha(progress).
+     * Keep an opaque color on [plateView] and fade with View alpha so the window
+     * stays on the translucent composition path (ColorDrawable.setAlpha on the
+     * root flipped opaque↔translucent and blinked while dragging).
      */
-    private fun updatePanelBackground(view: View, p: Float) {
-        val rgb = panelBgRgb()
-        val bg = panelBg ?: ColorDrawable(rgb).also {
-            panelBg = it
-            view.background = it
-        }
-        if (bg.color != rgb) bg.color = rgb
-        val alpha = when {
-            p <= 0.001f -> 0
-            p >= 0.995f -> 255
-            else -> {
-                val mid = MID_SWIPE_BG_ALPHA
-                val a = if (p < 0.35f) {
-                    mid * (p / 0.35f)
-                } else {
-                    mid + (1f - mid) *
-                        ((p - 0.35f) / 0.65f).toDouble().pow(1.4).toFloat()
-                }
-                (a * 255f).toInt().coerceIn(0, 255)
-            }
-        }
-        bg.alpha = alpha
+    private fun setPlateAlpha(alpha: Float) {
+        val plate = plateView ?: return
+        val a = alpha.coerceIn(0f, 1f)
+        if (abs(plate.alpha - a) < 0.001f) return
+        plate.alpha = a
     }
 
     private fun panelBgRgb(): Int {
-        return try {
+        if (panelBgRgbCached != 0) return panelBgRgbCached
+        panelBgRgbCached = try {
             val c = ContextCompat.getColor(appContext, R.color.hiboard_background)
             Color.rgb(Color.red(c), Color.green(c), Color.blue(c))
         } catch (_: Exception) {
             Color.rgb(0x83, 0x97, 0xCC)
         }
+        return panelBgRgbCached
+    }
+
+    private fun syncOverscrollLayers(enabled: Boolean) {
+        if (overscrollLayersOn == enabled) return
+        overscrollLayersOn = enabled
+        val type = if (enabled) View.LAYER_TYPE_HARDWARE else View.LAYER_TYPE_NONE
+        contentSlide?.setLayerType(type, null)
+        storeSlide?.setLayerType(type, null)
     }
 
     /**
@@ -625,11 +763,13 @@ class HiboardOverlayBinder(
         }
         settleVelocityPx = v
         // Oppo:
+        // - Past-open rubber-band always springs back to 1.
         // - Open (WIDTH_THRESHOLD): progress >= 0.25 commits open when slow.
         // - Close from open (scrollOut): must keep progress > ~0.75 to restore;
         //   a slow left drag past that exits instead of springing back open.
         val fromOpen = sessionFromOpen
         val shouldOpen = when {
+            progress > 1f -> true
             abs(v) > VELOCITY_THRESHOLD -> v > 0f
             fromOpen -> progress > KEEP_OPEN_THRESHOLD
             else -> progress >= OPEN_THRESHOLD
@@ -665,15 +805,15 @@ class HiboardOverlayBinder(
         if (abs(start - target) < 0.001f) {
             applyProgress(target, fromUser = false)
             settleTarget = -1f
-            if (target <= 0f && contentEntered) {
-                contentEntered = false
-                hostController?.exit()
+            syncOverscrollLayers(false)
+            if (target <= 0f) {
+                clearContentEntered()
             } else if (target >= 1f && resumed) {
-                hostController?.resume()
+                ensureContentResumed()
             }
             settleVelocityPx = 0f
             lastNotifiedProgress = -1f
-            notifyScroll(target)
+            notifyScroll(target.coerceIn(0f, 1f))
             return
         }
         if (target > 0f) {
@@ -684,21 +824,30 @@ class HiboardOverlayBinder(
         // Convert px/s → progress/s for the spring.
         var startVelocity = (if (abs(velocityPx) > 1f) velocityPx else settleVelocityPx) / w
         settleVelocityPx = 0f
-        // Quick flick: keep directional velocity strong enough that soft spring
-        // + AIDL lag does not feel like a late open/exit.
         val fling = abs(velocityPx) > VELOCITY_THRESHOLD
         if (fling) {
-            val minFlingProg = FLING_MIN_START_VELOCITY
-            if (target >= 1f && startVelocity < minFlingProg) {
-                startVelocity = minFlingProg
-            } else if (target <= 0f && startVelocity > -minFlingProg) {
-                startVelocity = -minFlingProg
+            // Floor so AIDL lag does not eat intent; cap so close/open never teleports.
+            startVelocity = when {
+                // Overscroll spring-back: keep natural direction, only cap magnitude.
+                start > 1f && target >= 1f ->
+                    startVelocity.coerceIn(-FLING_MAX_START_VELOCITY, FLING_MAX_START_VELOCITY)
+                target >= 1f ->
+                    startVelocity.coerceIn(FLING_MIN_START_VELOCITY, FLING_MAX_START_VELOCITY)
+                else ->
+                    // Close: softer ceiling so the opaque sheet slide is always readable.
+                    startVelocity.coerceIn(-FLING_MAX_CLOSE_VELOCITY, -FLING_MIN_CLOSE_VELOCITY)
             }
+        } else {
+            startVelocity = startVelocity.coerceIn(-FLING_MAX_START_VELOCITY, FLING_MAX_START_VELOCITY)
         }
 
         val holder = FloatValueHolder(start)
-        // AssistantScreen SETTLE_ANIM_SPRING_*: response=0.4 idle; snappier on fling.
-        val response = if (fling) SETTLE_RESPONSE_FLING else SETTLE_RESPONSE
+        val response = when {
+            start > 1f && target >= 1f -> SETTLE_RESPONSE_OVERSCROLL
+            target <= 0f -> SETTLE_RESPONSE_CLOSE
+            fling -> SETTLE_RESPONSE_FLING
+            else -> SETTLE_RESPONSE
+        }
         val spring = COUISpringAnimation(holder).setSpring(
             COUISpringForce(target)
                 .setBounce(SETTLE_BOUNCE)
@@ -709,7 +858,10 @@ class HiboardOverlayBinder(
         spring.setMinimumVisibleChange(0.001f)
         spring.addUpdateListener(
             COUIDynamicAnimation.OnAnimationUpdateListener { _, value, _ ->
-                applyProgress(value.coerceIn(0f, 1f), fromUser = false)
+                applyProgress(
+                    value.coerceAtLeast(0f).coerceAtMost(1f + CouiOverscroll.MAX_FRACTION),
+                    fromUser = false,
+                )
             },
         )
         spring.addEndListener(
@@ -723,16 +875,14 @@ class HiboardOverlayBinder(
                 val end = value.coerceIn(0f, 1f)
                 settleTarget = -1f
                 applyProgress(if (abs(end - target) < 0.02f) target else end, fromUser = false)
+                syncOverscrollLayers(false)
                 if (target <= 0f) {
-                    if (contentEntered) {
-                        contentEntered = false
-                        hostController?.exit()
-                    }
+                    clearContentEntered()
                 } else if (resumed) {
-                    hostController?.resume()
+                    ensureContentResumed()
                 }
                 lastNotifiedProgress = -1f
-                notifyScroll(target)
+                notifyScroll(target.coerceIn(0f, 1f))
             },
         )
         settleSpring = spring
@@ -780,18 +930,27 @@ class HiboardOverlayBinder(
         private const val PANEL_INTERACTIVE_THRESHOLD = 0.25f
         /** px/s — short quick flicks still open/close. */
         private const val VELOCITY_THRESHOLD = 250f
-        /** Mid-swipe full-screen cover before ramping to opaque at p=1. */
-        private const val MID_SWIPE_BG_ALPHA = 0.72f
         /**
          * From AssistantScreen string pool SETTLE_ANIM_SPRING_* — same convention as
          * [com.coui.appcompat.panel.COUIBottomSheetBehavior] (bounce=0, response=0.4).
          */
         private const val SETTLE_BOUNCE = 0.0f
         private const val SETTLE_RESPONSE = 0.4f
-        /** Faster settle when finger left with a real fling. */
-        private const val SETTLE_RESPONSE_FLING = 0.28f
+        /** Faster settle when finger left with a real fling — still capped for visibility. */
+        private const val SETTLE_RESPONSE_FLING = 0.32f
+        /** Close settle — readable opaque-sheet slide (Oppo scrollOut). */
+        private const val SETTLE_RESPONSE_CLOSE = 0.42f
+        /** Softer ease when releasing past-open rubber-band. */
+        private const val SETTLE_RESPONSE_OVERSCROLL = 0.45f
         /** progress/s floor so a quick flick is not eaten by lag. */
-        private const val FLING_MIN_START_VELOCITY = 3.2f
+        private const val FLING_MIN_START_VELOCITY = 1.8f
+        /**
+         * progress/s ceiling so close/open from ~1.0 always reads as a slide
+         * (uncapped flings finished in a few frames ≈ "no animation").
+         */
+        private const val FLING_MAX_START_VELOCITY = 2.6f
+        private const val FLING_MIN_CLOSE_VELOCITY = 1.0f
+        private const val FLING_MAX_CLOSE_VELOCITY = 1.7f
 
         @Volatile
         var active: HiboardOverlayBinder? = null

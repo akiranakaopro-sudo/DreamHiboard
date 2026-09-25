@@ -41,6 +41,7 @@ import com.coui.appcompat.poplist.COUIPopupListWindow
 import com.coui.appcompat.poplist.PopupListItem
 import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
+import gd.app.hiboard.overlay.CouiOverscroll
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.WidgetStoreCategory
 import gd.app.hiboard.catalog.listCategory
@@ -99,7 +100,9 @@ class HiboardView @JvmOverloads constructor(
 
     /** Seed progress when close-drag begins (may be mid-settle if touchable early). */
     fun seedCloseProgress(p: Float) {
-        closeProgressAtDown = p.coerceIn(0f, 1f)
+        val max = 1f + CouiOverscroll.MAX_FRACTION
+        closeProgressAtDown = p.coerceIn(0f, max)
+        closeDragProgress = closeProgressAtDown
     }
 
     private val touchSlop =
@@ -109,6 +112,8 @@ class HiboardView @JvmOverloads constructor(
     private var downTime = 0L
     private var draggingClose = false
     private var closeProgressAtDown = 1f
+    /** Live progress while finger-driving close / past-open rubber-band. */
+    private var closeDragProgress = 1f
     private var lastDragX = 0f
     private var lastDragTime = 0L
     private var velocityX = 0f
@@ -228,6 +233,9 @@ class HiboardView @JvmOverloads constructor(
                 // Either horizontal direction: left closes, right can reopen mid-drag.
                 if (abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.2f) {
                     draggingClose = true
+                    closeDragProgress = closeProgressAtDown
+                    lastDragX = ev.x
+                    lastDragTime = ev.eventTime
                     parent?.requestDisallowInterceptTouchEvent(true)
                     onCloseScrollBegin?.invoke()
                     return true
@@ -243,11 +251,13 @@ class HiboardView @JvmOverloads constructor(
         }
         when (ev.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
-                updateCloseVelocity(ev)
                 val width = width.coerceAtLeast(1).toFloat()
-                // Same formula as launcher finger-drive: right opens, left closes.
-                val progress = (closeProgressAtDown + (ev.x - downX) / width).coerceIn(0f, 1f)
-                onCloseScroll?.invoke(progress)
+                val dx = ev.x - lastDragX
+                updateCloseVelocity(ev)
+                // Right opens / past-open rubber-band; left closes.
+                // Past 1.0 uses COUI per-delta damping (Oppo AssistSprintOverScroller).
+                closeDragProgress = advanceCloseProgress(closeDragProgress, dx, width)
+                onCloseScroll?.invoke(closeDragProgress)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 updateCloseVelocity(ev)
@@ -264,6 +274,35 @@ class HiboardView @JvmOverloads constructor(
         velocityX = (ev.x - lastDragX) / dt * 1000f
         lastDragX = ev.x
         lastDragTime = ev.eventTime
+    }
+
+    /**
+     * Advance panel progress by finger [dx].
+     * Below 1.0: 1:1 with finger. Past open: [CouiOverscroll.dampDelta].
+     */
+    private fun advanceCloseProgress(current: Float, dx: Float, width: Float): Float {
+        if (dx == 0f || width <= 0f) return current
+        var p = current
+        var remaining = dx
+        val maxOver = width * CouiOverscroll.MAX_FRACTION
+
+        if (p < 1f) {
+            if (remaining <= 0f) {
+                return (p + remaining / width).coerceAtLeast(0f)
+            }
+            val room = (1f - p) * width
+            val use = remaining.coerceAtMost(room)
+            p += use / width
+            remaining -= use
+            if (remaining == 0f) return p
+        }
+
+        var overPx = (p - 1f).coerceAtLeast(0f) * width
+        if (remaining < 0f && overPx <= 0f) {
+            return (1f + remaining / width).coerceAtLeast(0f)
+        }
+        overPx += CouiOverscroll.dampDelta(remaining, overPx, maxOver)
+        return (1f + overPx / width).coerceAtLeast(0f)
     }
 
     override fun onAttachedToWindow() {

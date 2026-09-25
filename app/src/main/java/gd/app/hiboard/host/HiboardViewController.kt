@@ -46,7 +46,7 @@ class HiboardViewController(
     fun enter() {
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
         viewModel?.onHostEvent(HostEvent.Enter)
-        hostView?.visibility = View.VISIBLE
+        // Visibility is owned by HiboardOverlayBinder.applyProgress (park / slide).
     }
 
     fun resume() {
