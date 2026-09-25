@@ -8,6 +8,7 @@ import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.CardEngineRegistry
+import gd.app.hiboard.engine.FlashlightToggle
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderSendResult
 import gd.app.hiboard.host.HostEvent
@@ -61,8 +62,15 @@ class HiboardViewModel(
         }
         onHostEvent(HostEvent.Create)
         viewModelScope.launch {
-            engines.flashlightOn.collect {
-                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+            engines.flashlightOn.collect { on ->
+                _state.update {
+                    it.copy(
+                        content = it.content.copy(
+                            flashlightOn = on,
+                            flashlightAvailable = engines.flashlightAvailable,
+                        ),
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -296,7 +304,20 @@ class HiboardViewModel(
 
     fun createNote() = engines.createNote()
 
-    fun toggleFlashlight() = engines.toggleFlashlight()
+    fun toggleFlashlight(): FlashlightToggle {
+        val result = engines.toggleFlashlight()
+        if (result == FlashlightToggle.Changed) {
+            _state.update {
+                it.copy(
+                    content = it.content.copy(
+                        flashlightOn = engines.flashlightOn.value,
+                        flashlightAvailable = engines.flashlightAvailable,
+                    ),
+                )
+            }
+        }
+        return result
+    }
 
     fun openSystemManager() = engines.openSystemManager()
 

@@ -206,17 +206,26 @@ class CardBinder(
         }
         val view = inflater.inflate(R.layout.card_flashlight, body, true)
         val art = view.findViewById<ImageView>(R.id.flashlightArt)
-        art.setImageResource(if (on) R.drawable.flashlight_on else R.drawable.flashlight_off)
-        art.scaleType = ImageView.ScaleType.CENTER_CROP
-        art.alpha = if (available || on) 1f else 0.72f
-        art.contentDescription = when {
-            !available -> body.context.getString(R.string.flashlight_unavailable)
-            on -> body.context.getString(R.string.flashlight_on)
-            else -> body.context.getString(R.string.flashlight_off)
-        }
+        // Warm both frames so the next toggle does not stall on decode.
+        art.context.getDrawable(R.drawable.flashlight_on)
+        art.context.getDrawable(R.drawable.flashlight_off)
+        applyFlashlightArt(art, on, available)
         val toggle = View.OnClickListener { onToggleFlashlight() }
         view.findViewById<View>(R.id.flashlightRoot).setOnClickListener(toggle)
         root.setOnClickListener(toggle)
+    }
+
+    companion object {
+        fun applyFlashlightArt(art: ImageView, on: Boolean, available: Boolean) {
+            art.setImageResource(if (on) R.drawable.flashlight_on else R.drawable.flashlight_off)
+            art.scaleType = ImageView.ScaleType.CENTER_CROP
+            art.alpha = if (available || on) 1f else 0.72f
+            art.contentDescription = when {
+                !available -> art.context.getString(R.string.flashlight_unavailable)
+                on -> art.context.getString(R.string.flashlight_on)
+                else -> art.context.getString(R.string.flashlight_off)
+            }
+        }
     }
 
     private fun bindStorage(

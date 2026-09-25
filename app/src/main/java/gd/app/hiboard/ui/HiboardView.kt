@@ -69,6 +69,7 @@ class HiboardView @JvmOverloads constructor(
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
+    private var lastFlashKey: Any? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
@@ -159,6 +160,7 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onDragStarted = { dismissCardMenu() }
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
+            lastFlashKey = null
             viewModel.exitEdit()
         }
 
@@ -252,7 +254,23 @@ class HiboardView @JvmOverloads constructor(
                     activity.requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION)
                 }
             }
-            FlashlightToggle.Changed, FlashlightToggle.Unavailable -> Unit
+            FlashlightToggle.Changed -> {
+                // Paint immediately; state collect will confirm without rebuilding the grid.
+                applyFlashlightArt(viewModel.state.value)
+            }
+            FlashlightToggle.Unavailable -> Unit
+        }
+    }
+
+    private fun applyFlashlightArt(state: HiboardUiState) {
+        val on = state.content.flashlightOn
+        val available = state.content.flashlightAvailable
+        lastFlashKey = on to available
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Flashlight) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val art = root.findViewById<ImageView>(R.id.flashlightArt) ?: return@forEach
+            CardBinder.applyFlashlightArt(art, on, available)
         }
     }
 
@@ -346,12 +364,21 @@ class HiboardView @JvmOverloads constructor(
         binding.recentAppsHeader.isVisible =
             state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
-        val gridKey = listOf(state.board, state.editMode, state.content)
+        val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
+        val gridKey = listOf(
+            state.board,
+            state.editMode,
+            state.content.copy(flashlightOn = false, flashlightAvailable = false),
+        )
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
+            lastFlashKey = flashKey
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
+        } else if (!dragging && flashKey != lastFlashKey) {
+            lastFlashKey = flashKey
+            applyFlashlightArt(state)
         }
         if (!state.showStore) {
             state.revealCatalogId?.let { catalogId ->

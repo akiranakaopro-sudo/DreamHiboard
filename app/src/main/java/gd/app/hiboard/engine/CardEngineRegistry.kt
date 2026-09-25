@@ -139,6 +139,8 @@ class CardEngineRegistry(context: Context) {
     }
 
     val flashlightOn = flashlight.on
+    val flashlightAvailable: Boolean
+        get() = flashlight.available
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
     val weatherSnapshot = weather.snapshot
