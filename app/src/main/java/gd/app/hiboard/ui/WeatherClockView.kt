@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.Spanned
@@ -90,7 +91,7 @@ class WeatherClockView @JvmOverloads constructor(
 
     private fun placeDigits(w: Int, h: Int) {
         val textW = hourView.paint.measureText("00")
-        val handReach = min(w, h) * 0.33f
+        val handReach = min(w, h) * 0.37f
         val inner = w / 4f - textW / 2f
         val outward = (handReach + h * 0.03f - inner).coerceAtLeast(0f)
         val tickReach = min(w, h) * 0.18f
@@ -215,45 +216,78 @@ class WeatherClockHands @JvmOverloads constructor(
     var hands: ClockHands = clockHands(0, 0, 0)
 
     private val density = resources.displayMetrics.density
-    private val handPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val handFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeWidth = 3.4f * density
+        style = Paint.Style.FILL
     }
     private val secondPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        strokeWidth = 1.2f * density
+    }
+    private val secondCollar = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.hiboard_clock_second)
+        style = Paint.Style.FILL
     }
     private val hubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.FILL
     }
+    private val hubPin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF0046CC.toInt()
+        style = Paint.Style.FILL
+    }
+    private val handRect = RectF()
 
     override fun onDraw(canvas: Canvas) {
+        if (width <= 0 || height <= 0) return
         val cx = width / 2f
         val cy = height / 2f
+        // Oppo weather-clock: capsule hands with rounded tips. Hour is clearly
+        // shorter than minute (Oppo ~0.55 vs ~0.64 of the short radius).
         val reach = min(width, height) / 2f
-        drawHand(canvas, cx, cy, hands.hourDegrees, reach * 0.66f, reach * 0.05f, handPaint)
-        drawHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.66f, reach * 0.05f, handPaint)
-        drawHand(canvas, cx, cy, hands.secondDegrees, reach * 0.73f, reach * 0.18f, secondPaint)
-        canvas.drawCircle(cx, cy, 4f * density, hubPaint)
+        drawPillHand(canvas, cx, cy, hands.hourDegrees, reach * 0.42f, reach * 0.080f)
+        drawPillHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.74f, reach * 0.062f)
+        secondPaint.strokeWidth = (reach * 0.012f).coerceAtLeast(1.2f * density)
+        drawSecond(canvas, cx, cy, hands.secondDegrees, reach * 0.84f, reach * 0.14f, reach * 0.028f)
+        canvas.drawCircle(cx, cy, reach * 0.058f, hubPaint)
+        canvas.drawCircle(cx, cy, reach * 0.022f, hubPin)
     }
 
-    private fun drawHand(
+    /** Capsule hand: constant width with fully rounded tips, like Oppo's weather clock. */
+    private fun drawPillHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        degrees: Float,
+        length: Float,
+        width: Float,
+    ) {
+        canvas.save()
+        canvas.rotate(degrees, cx, cy)
+        val half = width / 2f
+        val tipY = cy - length
+        val baseY = cy + width * 0.55f
+        handRect.set(cx - half, tipY, cx + half, baseY)
+        canvas.drawRoundRect(handRect, half, half, handFill)
+        canvas.restore()
+    }
+
+    private fun drawSecond(
         canvas: Canvas,
         cx: Float,
         cy: Float,
         degrees: Float,
         length: Float,
         tail: Float,
-        paint: Paint,
+        collar: Float,
     ) {
         canvas.save()
         canvas.rotate(degrees, cx, cy)
-        canvas.drawLine(cx, cy + tail, cx, cy - length, paint)
+        canvas.drawLine(cx, cy + tail, cx, cy - length, secondPaint)
+        // Short thicker segment just past the hub, matching Oppo's second hand.
+        handRect.set(cx - collar * 0.28f, cy - collar * 2.2f, cx + collar * 0.28f, cy - collar * 0.4f)
+        canvas.drawRoundRect(handRect, collar * 0.28f, collar * 0.28f, secondCollar)
         canvas.restore()
     }
 }
