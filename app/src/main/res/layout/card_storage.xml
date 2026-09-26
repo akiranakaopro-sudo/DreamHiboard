@@ -32,8 +32,8 @@
             <!-- Back-most decorative brush -->
             <ImageView
                 android:id="@+id/storageWatermark"
-                android:layout_width="92dp"
-                android:layout_height="76dp"
+                android:layout_width="78dp"
+                android:layout_height="64dp"
                 android:layout_gravity="center"
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
