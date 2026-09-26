@@ -136,6 +136,7 @@
             android:name=".HiboardActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Hiboard">
 
             <intent-filter>
@@ -155,6 +156,7 @@
         <activity
             android:name=".deeplink.DeeplinkActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Hiboard.Translucent">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
