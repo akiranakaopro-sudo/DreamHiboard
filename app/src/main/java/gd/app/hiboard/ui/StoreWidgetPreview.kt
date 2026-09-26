@@ -13,7 +13,8 @@ import gd.app.hiboard.R
 import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.formatRecorderTime
-import gd.app.hiboard.engine.formatStorageUsage
+import gd.app.hiboard.engine.formatStoragePair
+import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
@@ -98,10 +99,20 @@ private fun bindNotesPreview(inflater: LayoutInflater, card: COUICardView, body:
 }
 
 private fun bindStoragePreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
+    val density = body.resources.displayMetrics.density
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
+    card.setContentPadding(
+        (14 * density).toInt(),
+        (14 * density).toInt(),
+        (14 * density).toInt(),
+        (14 * density).toInt(),
+    )
     val view = inflater.inflate(R.layout.card_storage, body, true)
-    view.findViewById<StorageUsageBar>(R.id.storageBar).progress = 0.42f
-    view.findViewById<TextView>(R.id.storageUsage).text = formatStorageUsage(5_400_000_000L, 12_800_000_000L)
+    view.findViewById<StorageUsageRing>(R.id.storageRing).progress = 0.21f
+    view.findViewById<TextView>(R.id.storagePercent).text =
+        formatStoragePercent(2_900_000_000L, 12_400_000_000L)
+    view.findViewById<TextView>(R.id.storageUsage).text =
+        formatStoragePair(2_900_000_000L, 12_400_000_000L)
 }
 
 private fun bindRecorderPreview(

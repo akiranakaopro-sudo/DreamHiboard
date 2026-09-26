@@ -34,10 +34,40 @@ fun formatStorageGb(bytes: Long): String {
     }
 }
 
+fun formatStorageGbValue(bytes: Long): String {
+    val tenths = ((bytes.coerceAtLeast(0L) / 1_000_000_000.0) * 10.0).roundToInt()
+    return if (tenths % 10 == 0) {
+        "${tenths / 10}"
+    } else {
+        "${tenths / 10}.${tenths % 10}"
+    }
+}
+
 fun formatStorageUsage(usedBytes: Long, totalBytes: Long): String {
     if (totalBytes <= 0L) return "—"
     return "${formatStorageGb(usedBytes)} / ${formatStorageGb(totalBytes)}"
 }
+
+fun formatStoragePair(usedBytes: Long, totalBytes: Long): String {
+    if (totalBytes <= 0L) return "—"
+    val used = (usedBytes - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+    val total = (totalBytes - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+    return "${formatStorageGb(used)} | ${formatStorageGb(total)}"
+}
+
+fun formatStoragePercent(usedBytes: Long, totalBytes: Long): String {
+    if (totalBytes <= 0L) return "—"
+    val used = (usedBytes - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+    val total = (totalBytes - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+    if (total <= 0L) return "—"
+    val percent = ((used.toDouble() / total.toDouble()) * 100.0)
+        .roundToInt()
+        .coerceIn(0, 100)
+    return "$percent%"
+}
+
+/** Always subtract this from displayed used/total GB labels. */
+internal const val STORAGE_DISPLAY_OFFSET_BYTES = 400_000_000L
 
 internal val SYSTEM_MANAGER_PACKAGES = listOf(
     "gd.app.systemmanager",

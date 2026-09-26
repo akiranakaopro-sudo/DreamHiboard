@@ -20,7 +20,9 @@ import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
-import gd.app.hiboard.engine.formatStorageUsage
+import gd.app.hiboard.engine.STORAGE_DISPLAY_OFFSET_BYTES
+import gd.app.hiboard.engine.formatStoragePair
+import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.recorderPrimaryCommand
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
@@ -234,18 +236,31 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        (root as? COUICardView)?.setCardBackgroundColor(
-            body.context.getColor(R.color.hiboard_storage_card),
-        )
+        val density = body.resources.displayMetrics.density
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
+            setContentPadding(
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+            )
+        }
         val view = inflater.inflate(R.layout.card_storage, body, true)
         val total = state.content.storageTotalBytes
         val used = state.content.storageUsedBytes
-        view.findViewById<StorageUsageBar>(R.id.storageBar).progress =
-            if (total <= 0L) 0f else (used.toDouble() / total).toFloat().coerceIn(0f, 1f)
-        view.findViewById<TextView>(R.id.storageUsage).text = formatStorageUsage(used, total)
+        val displayUsed = (used - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+        val displayTotal = (total - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+        view.findViewById<StorageUsageRing>(R.id.storageRing).progress =
+            if (displayTotal <= 0L) {
+                0f
+            } else {
+                (displayUsed.toDouble() / displayTotal).toFloat().coerceIn(0f, 1f)
+            }
+        view.findViewById<TextView>(R.id.storagePercent).text = formatStoragePercent(used, total)
+        view.findViewById<TextView>(R.id.storageUsage).text = formatStoragePair(used, total)
         val open = View.OnClickListener { onOpenStorage() }
         view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
-        view.findViewById<View>(R.id.storageCleanup).setOnClickListener(open)
         root.setOnClickListener(open)
     }
 
