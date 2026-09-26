@@ -44,6 +44,7 @@ import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.WidgetStoreCategory
 import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.storeAppIcon
 import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
@@ -677,11 +678,7 @@ class HiboardView @JvmOverloads constructor(
     ): View {
         val entry = category.entries.first()
         val row = inflater.inflate(R.layout.item_widget_row, parent, false)
-        val icon = row.findViewById<ImageView>(R.id.widgetIcon)
-        val look = widgetIcon(entry.engine)
-        icon.setImageResource(look.first)
-        icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
-        icon.backgroundTintList = ColorStateList.valueOf(look.third)
+        bindStoreRowIcon(row.findViewById(R.id.widgetIcon), entry.engine)
         row.findViewById<TextView>(R.id.widgetName).text = category.name
         val count = category.entries.size
         row.findViewById<TextView>(R.id.widgetCount).text = if (count == 1) {
@@ -1085,7 +1082,28 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private fun widgetIcon(engine: CardEngineId): Triple<Int, Int?, Int> {
+    private fun bindStoreRowIcon(icon: ImageView, engine: CardEngineId) {
+        val appIcon = storeAppIcon(context, engine)
+        if (appIcon != null) {
+            icon.setImageDrawable(appIcon)
+            icon.imageTintList = null
+            icon.background = null
+            icon.backgroundTintList = null
+            icon.setPadding(0, 0, 0, 0)
+            icon.scaleType = ImageView.ScaleType.FIT_CENTER
+            return
+        }
+        val pad = (10f * resources.displayMetrics.density).roundToInt()
+        icon.setPadding(pad, pad, pad, pad)
+        icon.setBackgroundResource(R.drawable.bg_widget_icon)
+        icon.scaleType = ImageView.ScaleType.CENTER_INSIDE
+        val look = widgetIconFallback(engine)
+        icon.setImageResource(look.first)
+        icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
+        icon.backgroundTintList = ColorStateList.valueOf(look.third)
+    }
+
+    private fun widgetIconFallback(engine: CardEngineId): Triple<Int, Int?, Int> {
         return when (engine) {
             CardEngineId.Weather -> Triple(R.drawable.ic_weather_sunny, null, 0xFFD6ECFF.toInt())
             CardEngineId.Notes -> Triple(R.drawable.ic_notes_mark, null, context.getColor(R.color.hiboard_notes_card))
