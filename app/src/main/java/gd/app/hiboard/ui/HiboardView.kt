@@ -1121,6 +1121,7 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.WeatherClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.LocalTime -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.RomanClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.WeatherDial -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.Music -> Triple(R.drawable.ic_music_note, Color.WHITE, 0xFFA48462.toInt())
         }
     }

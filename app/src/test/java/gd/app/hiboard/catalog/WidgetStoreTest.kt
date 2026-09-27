@@ -80,6 +80,7 @@ class WidgetStoreTest {
                 "Today's weather",
                 "Weather",
                 "Weather clock",
+                "Weather dial clock",
             ),
             weather.map { it.name },
         )
@@ -89,6 +90,7 @@ class WidgetStoreTest {
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Local time clock" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Roman numeral clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Weather dial clock" }.size)
         assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
         assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather clock" }.size)
     }
@@ -112,6 +114,7 @@ class WidgetStoreTest {
                 "weatherclocksquare",
                 "localtime",
                 "romanclock",
+                "weatherdial",
             ),
             DefaultCatalog.defaultRecommendedIds(),
         )
@@ -139,7 +142,7 @@ class WidgetStoreTest {
         )
         val clock = categories.first { it.name == "Clock" }
         assertEquals(
-            listOf("clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock"),
+            listOf("clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock", "weatherdial"),
             clock.entries.map { it.id },
         )
         assertEquals(

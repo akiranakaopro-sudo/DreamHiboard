@@ -167,6 +167,17 @@ object DefaultCatalog {
             defaultSubscribed = false,
             storeCategory = "Clock",
         ),
+        CardCatalogEntry(
+            id = "weatherdial",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Weather dial clock",
+            description = "Analog clock with today's weather under the hands.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.WeatherDial,
+            defaultSubscribed = false,
+            storeCategory = "Clock",
+        ),
     )
 
     fun byId(id: String): CardCatalogEntry? = entries.firstOrNull { it.id == id }

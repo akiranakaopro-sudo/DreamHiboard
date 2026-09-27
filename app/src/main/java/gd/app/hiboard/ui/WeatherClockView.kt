@@ -407,7 +407,7 @@ fun bindWeatherClock(
     }
 }
 
-private fun weatherClockIcon(condition: WeatherCondition): Int = when (condition) {
+internal fun weatherClockIcon(condition: WeatherCondition): Int = when (condition) {
     WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
     WeatherCondition.Cloudy -> R.drawable.ic_weather_cloudy
     WeatherCondition.Rain -> R.drawable.ic_weather_rain

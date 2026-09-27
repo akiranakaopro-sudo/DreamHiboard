@@ -30,6 +30,7 @@ internal fun storeAppPackages(engine: CardEngineId): List<String> = when (engine
     CardEngineId.WeatherClock,
     CardEngineId.LocalTime,
     CardEngineId.RomanClock,
+    CardEngineId.WeatherDial,
     -> listOf(
         "com.coloros.alarmclock",
         "com.oplus.alarmclock",
@@ -80,6 +81,7 @@ private fun storeAppIntent(engine: CardEngineId): Intent? = when (engine) {
     CardEngineId.WeatherClock,
     CardEngineId.LocalTime,
     CardEngineId.RomanClock,
+    CardEngineId.WeatherDial,
     -> Intent(AlarmClock.ACTION_SHOW_ALARMS)
     else -> null
 }

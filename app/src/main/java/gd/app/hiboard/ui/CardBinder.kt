@@ -70,6 +70,7 @@ class CardBinder(
             CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
             CardEngineId.LocalTime -> bindLocalTime(root, body)
             CardEngineId.RomanClock -> bindRomanClockCard(root, body)
+            CardEngineId.WeatherDial -> bindWeatherDialCard(root, body, state)
             CardEngineId.Music -> bindMusic(root, body)
         }
         if (state.editMode && card.canEdit) {
@@ -405,6 +406,17 @@ class CardBinder(
 
     private fun bindWeatherClockCard(root: View, body: LinearLayout, state: HiboardUiState) {
         val card = root as? COUICardView ?: return
+        val (condition, temperature) = clockWeather(state)
+        bindWeatherClock(card, body, condition, temperature, onOpenClock)
+    }
+
+    private fun bindWeatherDialCard(root: View, body: LinearLayout, state: HiboardUiState) {
+        val card = root as? COUICardView ?: return
+        val (condition, temperature) = clockWeather(state)
+        bindWeatherDialClock(card, body, condition, temperature, onOpenClock)
+    }
+
+    private fun clockWeather(state: HiboardUiState): Pair<WeatherCondition, Int> {
         val fallback = WeatherSnapshot.DEFAULT.resolved()
         val condition = WeatherCondition.from(
             state.content.weatherCondition.ifBlank { state.content.weatherSummary }.ifBlank { fallback.condition.json },
@@ -414,7 +426,7 @@ class CardBinder(
         } else {
             state.content.weatherTempC
         }
-        bindWeatherClock(card, body, condition, temperature, onOpenClock)
+        return condition to temperature
     }
 
     private fun bindLocalTime(root: View, body: LinearLayout) {
