@@ -32,6 +32,17 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "weathersquare",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Today's weather",
+            description = "Current temperature, condition, and today's low and high in a 2×2 card.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Weather,
+            defaultSubscribed = false,
+            storeCategory = "Weather",
+        ),
+        CardCatalogEntry(
             id = "storage",
             groupId = GROUP_FEATURES,
             groupTitle = "Features",

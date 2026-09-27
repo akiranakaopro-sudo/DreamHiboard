@@ -19,6 +19,7 @@ import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
+import gd.app.hiboard.model.CardSize
 import kotlin.math.roundToInt
 
 fun storePreviewDims(entry: CardCatalogEntry, boardWidth: Int, density: Float): Pair<Int, Int> {
@@ -48,7 +49,22 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         card.outlineAmbientShadowColor = 0x29000000.toInt()
     }
     when (entry.engine) {
-        CardEngineId.Weather -> bindWeatherPreview(inflater, card, body)
+        CardEngineId.Weather -> if (entry.size == CardSize.TwoByTwo) {
+            val weather = WeatherSnapshot.DEFAULT.resolved()
+            val today = weather.days.first()
+            bindWeatherSquare(
+                card = card,
+                body = body,
+                location = weather.location,
+                condition = weather.condition,
+                summary = weather.condition.displayName,
+                temperatureC = weather.temperatureC,
+                lowC = today.lowC,
+                highC = today.highC,
+            )
+        } else {
+            bindWeatherPreview(inflater, card, body)
+        }
         CardEngineId.Notes -> bindNotesPreview(inflater, card, body)
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body, density)
@@ -176,7 +192,7 @@ private fun freezePreview(root: View) {
     }
 }
 
-private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
+internal fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
     WeatherCondition.Sunny -> R.drawable.bg_weather_sunny
     WeatherCondition.Cloudy -> R.drawable.bg_weather_cloudy
     WeatherCondition.Rain -> R.drawable.bg_weather_rain
@@ -186,7 +202,7 @@ private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condi
     WeatherCondition.Night -> R.drawable.bg_weather_night
 }
 
-private fun weatherIconRes(condition: WeatherCondition): Int = when (condition) {
+internal fun weatherIconRes(condition: WeatherCondition): Int = when (condition) {
     WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
     WeatherCondition.Cloudy -> R.drawable.ic_weather_cloudy
     WeatherCondition.Rain -> R.drawable.ic_weather_rain

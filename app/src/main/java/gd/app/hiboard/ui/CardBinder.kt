@@ -26,6 +26,7 @@ import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.recorderPrimaryCommand
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.CardSize
 import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
@@ -53,7 +54,11 @@ class CardBinder(
         val body = root.findViewById<LinearLayout>(R.id.cardBody)
         val badge = root.findViewById<TextView>(R.id.cardBadge)
         when (card.engine) {
-            CardEngineId.Weather -> bindWeather(inflater, root, body, state)
+            CardEngineId.Weather -> if (card.size == CardSize.TwoByTwo) {
+                bindWeatherSquareCard(root, body, state)
+            } else {
+                bindWeather(inflater, root, body, state)
+            }
             CardEngineId.Notes -> bindNotes(inflater, root, body, state)
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
@@ -113,6 +118,24 @@ class CardBinder(
             item.findViewById<TextView>(R.id.weatherDayRange).text = "${day.lowC}° / ${day.highC}°"
             forecast.addView(item)
         }
+    }
+
+    private fun bindWeatherSquareCard(root: View, body: LinearLayout, state: HiboardUiState) {
+        val card = root as? COUICardView ?: return
+        val content = state.content
+        val condition = WeatherCondition.from(content.weatherCondition.ifBlank { content.weatherSummary })
+        val today = content.weatherDays.firstOrNull()
+        val fallback = WeatherSnapshot.DEFAULT.days.first()
+        bindWeatherSquare(
+            card = card,
+            body = body,
+            location = content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location },
+            condition = condition,
+            summary = content.weatherSummary.ifBlank { condition.displayName },
+            temperatureC = content.weatherTempC,
+            lowC = today?.lowC ?: fallback.lowC,
+            highC = today?.highC ?: fallback.highC,
+        )
     }
 
     private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
