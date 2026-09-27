@@ -13,6 +13,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -24,7 +25,6 @@ import gd.app.hiboard.engine.ClockHands
 import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.clockHands
 import gd.app.hiboard.engine.compactClockDate
-import gd.app.hiboard.engine.weatherClockDate
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.cos
@@ -45,6 +45,7 @@ class WeatherClockView @JvmOverloads constructor(
     private val ticks: WeatherClockTicks
     private val handsView: WeatherClockHands
     private val heavy = Typeface.create("sans-serif-medium", Typeface.BOLD)
+    private val medium = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val glyphProbe = Rect()
     private var fitted = 0
     private var square = false
@@ -88,7 +89,19 @@ class WeatherClockView @JvmOverloads constructor(
         square = w < h * 1.4f
         handsView.square = square
         handsView.invalidate()
-        dateView.typeface = if (square) heavy else Typeface.DEFAULT
+        ticks.wide = !square
+        ticks.invalidate()
+        dateView.typeface = if (square) heavy else medium
+        labelView.typeface = if (square) Typeface.DEFAULT else medium
+        val digitColor = if (square) Color.BLACK else WIDE_TEXT
+        hourView.setTextColor(digitColor)
+        minuteView.setTextColor(digitColor)
+        if (!square) {
+            dateView.setTextColor(WIDE_TEXT)
+            labelView.setTextColor(WIDE_TEXT)
+        }
+        (dateView.layoutParams as LayoutParams).gravity =
+            if (square) Gravity.TOP or Gravity.CENTER_HORIZONTAL else Gravity.CENTER
         if (square) {
             fitGlyph(hourView, h * 0.18f, "8")
             fitGlyph(minuteView, h * 0.18f, "8")
@@ -102,33 +115,23 @@ class WeatherClockView @JvmOverloads constructor(
             dateView.translationY = h * 0.25f
             statusView.translationY = h * 0.215f
         } else {
-            fitGlyph(hourView, h * 0.26f, "8")
-            fitGlyph(minuteView, h * 0.26f, "8")
-            fitGlyph(dateView, h * 0.046f, "8")
-            fitGlyph(labelView, h * 0.052f, "8")
-            placeDigits(w, h)
-            dateView.translationY = h * 0.205f
-            statusView.translationY = h * 0.18f
+            fitGlyph(hourView, h * 0.29f, "8")
+            fitGlyph(minuteView, h * 0.29f, "8")
+            fitGlyph(dateView, h * 0.064f, "8")
+            fitGlyph(labelView, h * 0.062f, "8")
+            val inward = w * 0.25f - w * 0.236f
+            hourView.translationX = inward
+            minuteView.translationX = -inward
+            dateView.translationY = -h * 0.245f
+            statusView.translationY = h * 0.245f
         }
         renderWeather()
         render()
-        val icon = (h * if (square) 0.09f else 0.075f).toInt().coerceAtLeast(1)
+        val icon = (h * if (square) 0.09f else 0.1f).toInt().coerceAtLeast(1)
         iconView.layoutParams = iconView.layoutParams.apply {
             width = icon
             height = icon
         }
-    }
-
-    private fun placeDigits(w: Int, h: Int) {
-        val textW = hourView.paint.measureText("00")
-        val handReach = min(w, h) * 0.37f
-        val inner = w / 4f - textW / 2f
-        val outward = (handReach + h * 0.03f - inner).coerceAtLeast(0f)
-        val tickReach = min(w, h) * 0.18f
-        val outerRoom = (w / 4f - textW / 2f - tickReach).coerceAtLeast(0f)
-        val shift = outward.coerceAtMost(outerRoom)
-        hourView.translationX = -shift
-        minuteView.translationX = shift
     }
 
     private fun fitGlyph(view: TextView, glyphHeight: Float, sample: String) {
@@ -168,13 +171,7 @@ class WeatherClockView @JvmOverloads constructor(
         val year = now.get(Calendar.YEAR)
         val month = now.get(Calendar.MONTH)
         val day = now.get(Calendar.DAY_OF_MONTH)
-        colorDate(
-            if (square) {
-                compactClockDate(year, month, day, Locale.getDefault())
-            } else {
-                weatherClockDate(year, month, day, Locale.getDefault())
-            },
-        )
+        colorDate(compactClockDate(year, month, day, Locale.getDefault()))
         hourView.text = String.format(Locale.US, "%02d", now.get(Calendar.HOUR_OF_DAY))
         minuteView.text = String.format(Locale.US, "%02d", now.get(Calendar.MINUTE))
         handsView.hands = clockHands(
@@ -215,9 +212,20 @@ class WeatherClockTicks @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
+    private val wideMinorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD2D2D2.toInt()
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    var wide = false
 
     override fun onDraw(canvas: Canvas) {
         if (width <= 0 || height <= 0) return
+        if (wide) {
+            drawWide(canvas)
+            return
+        }
         val unit = min(width, height).toFloat()
         val inset = unit * 0.057f
         val majorLen = unit * 0.120f
@@ -244,6 +252,32 @@ class WeatherClockTicks @JvmOverloads constructor(
             )
         }
     }
+
+    /** Ticks run from the outer rounded rect to an inner one, so corner ticks come out longer. */
+    private fun drawWide(canvas: Canvas) {
+        val unit = min(width, height).toFloat()
+        val inset = unit * 0.05f
+        val majorDepth = unit * 0.128f
+        val minorDepth = unit * 0.064f
+        val stroke = (unit * 0.0065f).coerceAtLeast(1f)
+        majorPaint.strokeWidth = stroke
+        wideMinorPaint.strokeWidth = stroke
+        val corner = (16f * density - inset).coerceAtLeast(0f)
+        val cx = width / 2f
+        val cy = height / 2f
+        for (index in 0 until 60) {
+            val angle = Math.toRadians(index * 6.0)
+            val dx = sin(angle).toFloat()
+            val dy = (-cos(angle)).toFloat()
+            val major = index % 5 == 0
+            val depth = if (major) majorDepth else minorDepth
+            val outer = clockFacePoint(width, height, cx, cy, inset, corner, dx, dy)
+            val inner = clockFacePoint(
+                width, height, cx, cy, inset + depth, (corner - depth).coerceAtLeast(0f), dx, dy,
+            )
+            canvas.drawLine(outer[0], outer[1], inner[0], inner[1], if (major) majorPaint else wideMinorPaint)
+        }
+    }
 }
 
 class WeatherClockHands @JvmOverloads constructor(
@@ -260,10 +294,6 @@ class WeatherClockHands @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
     private val handPath = Path()
-    private val handFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
-        style = Paint.Style.FILL
-    }
     private val secondPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.STROKE
@@ -287,18 +317,29 @@ class WeatherClockHands @JvmOverloads constructor(
         if (width <= 0 || height <= 0) return
         val cx = width / 2f
         val cy = height / 2f
-        // Oppo weather-clock: capsule hands with rounded tips. Hour is clearly
-        // shorter than minute (Oppo ~0.55 vs ~0.64 of the short radius).
         val reach = min(width, height) / 2f
         if (square) {
             drawSquareFace(canvas, cx, cy, reach)
-            return
+        } else {
+            drawWideFace(canvas, cx, cy, reach)
         }
-        drawPillHand(canvas, cx, cy, hands.hourDegrees, reach * 0.42f, reach * 0.080f)
-        drawPillHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.74f, reach * 0.062f)
+    }
+
+    private fun drawWideFace(canvas: Canvas, cx: Float, cy: Float, reach: Float) {
+        necked.setShadowLayer(reach * 0.03f, reach * 0.008f, reach * 0.016f, 0x33000000)
+        drawNeckedHand(canvas, cx, cy, hands.hourDegrees, reach * 0.52f, reach * 0.068f, reach)
+        drawNeckedHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.68f, reach * 0.068f, reach)
+        necked.clearShadowLayer()
         secondPaint.strokeWidth = (reach * 0.012f).coerceAtLeast(1.2f * density)
-        drawSecond(canvas, cx, cy, hands.secondDegrees, reach * 0.84f, reach * 0.14f, reach * 0.028f)
-        canvas.drawCircle(cx, cy, reach * 0.058f, hubPaint)
+        canvas.save()
+        canvas.rotate(hands.secondDegrees, cx, cy)
+        canvas.drawLine(cx, cy + reach * 0.08f, cx, cy - reach * 0.74f, secondPaint)
+        val half = reach * 0.014f
+        handRect.set(cx - half, cy + reach * 0.05f, cx + half, cy + reach * 0.17f)
+        canvas.drawRoundRect(handRect, half, half, secondCollar)
+        canvas.restore()
+        canvas.drawCircle(cx, cy, reach * 0.065f, necked)
+        canvas.drawCircle(cx, cy, reach * 0.045f, hubPaint)
         canvas.drawCircle(cx, cy, reach * 0.022f, hubPin)
     }
 
@@ -345,25 +386,6 @@ class WeatherClockHands @JvmOverloads constructor(
         canvas.restore()
     }
 
-    /** Capsule hand: constant width with fully rounded tips, like Oppo's weather clock. */
-    private fun drawPillHand(
-        canvas: Canvas,
-        cx: Float,
-        cy: Float,
-        degrees: Float,
-        length: Float,
-        width: Float,
-    ) {
-        canvas.save()
-        canvas.rotate(degrees, cx, cy)
-        val half = width / 2f
-        val tipY = cy - length
-        val baseY = cy + width * 0.55f
-        handRect.set(cx - half, tipY, cx + half, baseY)
-        canvas.drawRoundRect(handRect, half, half, handFill)
-        canvas.restore()
-    }
-
     private fun drawSecond(
         canvas: Canvas,
         cx: Float,
@@ -390,7 +412,7 @@ fun bindWeatherClock(
     temperatureC: Int,
     onOpen: (() -> Unit)?,
 ) {
-    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_calendar_card))
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_clock_card))
     card.setContentPadding(0, 0, 0, 0)
     card.clipToOutline = true
     val clock = WeatherClockView(body.context)
@@ -406,6 +428,8 @@ fun bindWeatherClock(
         card.setOnClickListener(open)
     }
 }
+
+private const val WIDE_TEXT = 0xFF303030.toInt()
 
 internal fun weatherClockIcon(condition: WeatherCondition): Int = when (condition) {
     WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
