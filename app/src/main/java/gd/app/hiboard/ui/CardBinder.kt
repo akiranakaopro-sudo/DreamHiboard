@@ -69,6 +69,7 @@ class CardBinder(
             CardEngineId.Clock -> bindClock(root, body)
             CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
             CardEngineId.LocalTime -> bindLocalTime(root, body)
+            CardEngineId.RomanClock -> bindRomanClockCard(root, body)
             CardEngineId.Music -> bindMusic(root, body)
         }
         if (state.editMode && card.canEdit) {
@@ -419,6 +420,11 @@ class CardBinder(
     private fun bindLocalTime(root: View, body: LinearLayout) {
         val card = root as? COUICardView ?: return
         bindLocalTimeClock(card, body, onOpenClock)
+    }
+
+    private fun bindRomanClockCard(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindRomanClock(card, body, onOpenClock)
     }
 
     private fun bindMusic(root: View, body: LinearLayout) {

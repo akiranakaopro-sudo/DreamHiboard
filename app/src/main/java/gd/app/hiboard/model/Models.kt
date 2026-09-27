@@ -33,6 +33,7 @@ enum class CardEngineId {
     Clock,
     WeatherClock,
     LocalTime,
+    RomanClock,
     Music,
 }
 

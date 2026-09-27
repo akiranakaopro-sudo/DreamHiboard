@@ -78,6 +78,7 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
             bindWeatherClock(card, body, weather.condition, weather.temperatureC, onOpen = null)
         }
         CardEngineId.LocalTime -> bindLocalTimeClock(card, body, onOpen = null)
+        CardEngineId.RomanClock -> bindRomanClock(card, body, onOpen = null)
         CardEngineId.Music -> bindMusicCard(card, body, live = false)
     }
     freezePreview(card)
