@@ -93,6 +93,27 @@ fun weatherClockDate(year: Int, month: Int, day: Int, locale: Locale = Locale.ge
     return SimpleDateFormat("MMM d EEE", locale).format(cursor.time)
 }
 
+/** "Sep 27th, Sun" for the 2×2 weather clock; Chinese keeps [weatherClockDate]. */
+fun compactClockDate(year: Int, month: Int, day: Int, locale: Locale = Locale.getDefault()): String {
+    if (locale.language == "zh") return weatherClockDate(year, month, day, locale)
+    val cursor = Calendar.getInstance(locale)
+    cursor.clear()
+    cursor.set(year, month, day)
+    val monthName = SimpleDateFormat("MMM", locale).format(cursor.time)
+    val weekday = SimpleDateFormat("EEE", locale).format(cursor.time)
+    return "$monthName $day${ordinalSuffix(day)}, $weekday"
+}
+
+private fun ordinalSuffix(day: Int): String {
+    if (day % 100 in 11..13) return "th"
+    return when (day % 10) {
+        1 -> "st"
+        2 -> "nd"
+        3 -> "rd"
+        else -> "th"
+    }
+}
+
 fun weekdayLabels(locale: Locale): List<String> {
     if (locale.language == "zh") return listOf("日", "一", "二", "三", "四", "五", "六")
     val symbols = DateFormatSymbols.getInstance(locale).shortWeekdays

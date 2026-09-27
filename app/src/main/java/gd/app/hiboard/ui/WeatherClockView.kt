@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
@@ -22,6 +23,7 @@ import gd.app.hiboard.R
 import gd.app.hiboard.engine.ClockHands
 import gd.app.hiboard.engine.WeatherCondition
 import gd.app.hiboard.engine.clockHands
+import gd.app.hiboard.engine.compactClockDate
 import gd.app.hiboard.engine.weatherClockDate
 import java.util.Calendar
 import java.util.Locale
@@ -45,6 +47,9 @@ class WeatherClockView @JvmOverloads constructor(
     private val heavy = Typeface.create("sans-serif-medium", Typeface.BOLD)
     private val glyphProbe = Rect()
     private var fitted = 0
+    private var square = false
+    private var condition = WeatherCondition.Sunny
+    private var temperatureC = 0
 
     private val tick = object : Runnable {
         override fun run() {
@@ -70,19 +75,44 @@ class WeatherClockView @JvmOverloads constructor(
         render()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        // Size-dependent text and icon sizes must be applied before children measure.
+        configure(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    }
+
+    private fun configure(w: Int, h: Int) {
         val key = w * 100000 + h
         if (w == 0 || h == 0 || key == fitted) return
         fitted = key
-        fitGlyph(hourView, h * 0.26f, "8")
-        fitGlyph(minuteView, h * 0.26f, "8")
-        fitGlyph(dateView, h * 0.046f, "8")
-        fitGlyph(labelView, h * 0.052f, "8")
-        placeDigits(w, h)
-        dateView.translationY = h * 0.205f
-        statusView.translationY = h * 0.18f
-        val icon = (h * 0.075f).toInt().coerceAtLeast(1)
+        square = w < h * 1.4f
+        handsView.square = square
+        handsView.invalidate()
+        dateView.typeface = if (square) heavy else Typeface.DEFAULT
+        if (square) {
+            fitGlyph(hourView, h * 0.18f, "8")
+            fitGlyph(minuteView, h * 0.18f, "8")
+            fitGlyph(dateView, h * 0.062f, "8")
+            fitGlyph(labelView, h * 0.064f, "8")
+            val textW = hourView.paint.measureText("00")
+            val innerEdge = w * 0.5f - w * 0.055f
+            val inward = innerEdge - textW / 2f - w / 4f
+            hourView.translationX = inward
+            minuteView.translationX = -inward
+            dateView.translationY = h * 0.25f
+            statusView.translationY = h * 0.215f
+        } else {
+            fitGlyph(hourView, h * 0.26f, "8")
+            fitGlyph(minuteView, h * 0.26f, "8")
+            fitGlyph(dateView, h * 0.046f, "8")
+            fitGlyph(labelView, h * 0.052f, "8")
+            placeDigits(w, h)
+            dateView.translationY = h * 0.205f
+            statusView.translationY = h * 0.18f
+        }
+        renderWeather()
+        render()
+        val icon = (h * if (square) 0.09f else 0.075f).toInt().coerceAtLeast(1)
         iconView.layoutParams = iconView.layoutParams.apply {
             width = icon
             height = icon
@@ -112,8 +142,14 @@ class WeatherClockView @JvmOverloads constructor(
     }
 
     fun setWeather(condition: WeatherCondition, temperatureC: Int) {
+        this.condition = condition
+        this.temperatureC = temperatureC
+        renderWeather()
+    }
+
+    private fun renderWeather() {
         iconView.setImageResource(weatherClockIcon(condition))
-        labelView.text = "${condition.label()} $temperatureC°"
+        labelView.text = if (square) "$temperatureC°" else "${condition.label()} $temperatureC°"
     }
 
     override fun onAttachedToWindow() {
@@ -129,13 +165,15 @@ class WeatherClockView @JvmOverloads constructor(
 
     private fun render() {
         val now = Calendar.getInstance()
+        val year = now.get(Calendar.YEAR)
+        val month = now.get(Calendar.MONTH)
+        val day = now.get(Calendar.DAY_OF_MONTH)
         colorDate(
-            weatherClockDate(
-                now.get(Calendar.YEAR),
-                now.get(Calendar.MONTH),
-                now.get(Calendar.DAY_OF_MONTH),
-                Locale.getDefault(),
-            ),
+            if (square) {
+                compactClockDate(year, month, day, Locale.getDefault())
+            } else {
+                weatherClockDate(year, month, day, Locale.getDefault())
+            },
         )
         hourView.text = String.format(Locale.US, "%02d", now.get(Calendar.HOUR_OF_DAY))
         minuteView.text = String.format(Locale.US, "%02d", now.get(Calendar.MINUTE))
@@ -214,8 +252,14 @@ class WeatherClockHands @JvmOverloads constructor(
 ) : android.view.View(context, attrs) {
 
     var hands: ClockHands = clockHands(0, 0, 0)
+    var square = false
 
     private val density = resources.displayMetrics.density
+    private val necked = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF2B2D38.toInt()
+        style = Paint.Style.FILL
+    }
+    private val handPath = Path()
     private val handFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         style = Paint.Style.FILL
@@ -246,12 +290,59 @@ class WeatherClockHands @JvmOverloads constructor(
         // Oppo weather-clock: capsule hands with rounded tips. Hour is clearly
         // shorter than minute (Oppo ~0.55 vs ~0.64 of the short radius).
         val reach = min(width, height) / 2f
+        if (square) {
+            drawSquareFace(canvas, cx, cy, reach)
+            return
+        }
         drawPillHand(canvas, cx, cy, hands.hourDegrees, reach * 0.42f, reach * 0.080f)
         drawPillHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.74f, reach * 0.062f)
         secondPaint.strokeWidth = (reach * 0.012f).coerceAtLeast(1.2f * density)
         drawSecond(canvas, cx, cy, hands.secondDegrees, reach * 0.84f, reach * 0.14f, reach * 0.028f)
         canvas.drawCircle(cx, cy, reach * 0.058f, hubPaint)
         canvas.drawCircle(cx, cy, reach * 0.022f, hubPin)
+    }
+
+    private fun drawSquareFace(canvas: Canvas, cx: Float, cy: Float, reach: Float) {
+        necked.setShadowLayer(reach * 0.03f, reach * 0.008f, reach * 0.016f, 0x33000000)
+        drawNeckedHand(canvas, cx, cy, hands.hourDegrees, reach * 0.44f, reach * 0.068f, reach)
+        drawNeckedHand(canvas, cx, cy, hands.minuteDegrees, reach * 0.60f, reach * 0.068f, reach)
+        necked.clearShadowLayer()
+        secondPaint.strokeWidth = (reach * 0.012f).coerceAtLeast(1.2f * density)
+        drawSecond(canvas, cx, cy, hands.secondDegrees, reach * 0.84f, reach * 0.14f, reach * 0.028f)
+        canvas.drawCircle(cx, cy, reach * 0.063f, necked)
+        canvas.drawCircle(cx, cy, reach * 0.045f, hubPaint)
+        canvas.drawCircle(cx, cy, reach * 0.022f, hubPin)
+    }
+
+    /** Thin neck out of the hub, short taper, then a thick body with a rounded tip. */
+    private fun drawNeckedHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        degrees: Float,
+        length: Float,
+        bodyWidth: Float,
+        reach: Float,
+    ) {
+        val neckHalf = reach * 0.012f
+        val bodyHalf = bodyWidth / 2f
+        val neckEnd = cy - reach * 0.10f
+        val bodyStart = neckEnd - bodyWidth * 0.6f
+        val tipY = cy - length
+        handPath.reset()
+        handPath.moveTo(cx - neckHalf, cy)
+        handPath.lineTo(cx - neckHalf, neckEnd)
+        handPath.lineTo(cx - bodyHalf, bodyStart)
+        handPath.lineTo(cx - bodyHalf, tipY + bodyHalf)
+        handPath.arcTo(cx - bodyHalf, tipY, cx + bodyHalf, tipY + bodyWidth, 180f, 180f, false)
+        handPath.lineTo(cx + bodyHalf, bodyStart)
+        handPath.lineTo(cx + neckHalf, neckEnd)
+        handPath.lineTo(cx + neckHalf, cy)
+        handPath.close()
+        canvas.save()
+        canvas.rotate(degrees, cx, cy)
+        canvas.drawPath(handPath, necked)
+        canvas.restore()
     }
 
     /** Capsule hand: constant width with fully rounded tips, like Oppo's weather clock. */

@@ -71,9 +71,18 @@ class WidgetStoreTest {
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
             .flatMap { it.entries }
         assertEquals(
-            listOf("Calendar", "Clock", "Local time clock", "Today's weather", "Weather", "Weather clock"),
+            listOf(
+                "Calendar",
+                "Clock",
+                "Compact weather clock",
+                "Local time clock",
+                "Today's weather",
+                "Weather",
+                "Weather clock",
+            ),
             weather.map { it.name },
         )
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Compact weather clock" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Today's weather" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
@@ -91,7 +100,16 @@ class WidgetStoreTest {
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
         assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
         assertEquals(
-            listOf("weathersquare", "contacts", "music", "calendar", "clock", "weatherclock", "localtime"),
+            listOf(
+                "weathersquare",
+                "contacts",
+                "music",
+                "calendar",
+                "clock",
+                "weatherclock",
+                "weatherclocksquare",
+                "localtime",
+            ),
             DefaultCatalog.defaultRecommendedIds(),
         )
     }
@@ -117,7 +135,10 @@ class WidgetStoreTest {
             categories.any { it.name == "Local time clock" || it.name == "Weather clock" },
         )
         val clock = categories.first { it.name == "Clock" }
-        assertEquals(listOf("clock", "weatherclock", "localtime"), clock.entries.map { it.id })
+        assertEquals(
+            listOf("clock", "weatherclock", "weatherclocksquare", "localtime"),
+            clock.entries.map { it.id },
+        )
         assertEquals(
             listOf("localtime"),
             widgetStoreCategories(DefaultCatalog.entries, query = "local time")

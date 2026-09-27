@@ -135,6 +135,17 @@ object DefaultCatalog {
             storeCategory = "Clock",
         ),
         CardCatalogEntry(
+            id = "weatherclocksquare",
+            groupId = GROUP_WEATHER,
+            groupTitle = "Weather",
+            name = "Compact weather clock",
+            description = "System time with today's weather in a 2×2 card.",
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.WeatherClock,
+            defaultSubscribed = false,
+            storeCategory = "Clock",
+        ),
+        CardCatalogEntry(
             id = "localtime",
             groupId = GROUP_WEATHER,
             groupTitle = "Weather",

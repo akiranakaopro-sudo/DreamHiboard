@@ -81,7 +81,7 @@ class HiboardActivity : AppCompatActivity() {
             cardId = card ?: host.takeIf {
                 it in setOf(
                     "weather", "weathersquare", "notes", "recent", "flashlight", "storage", "recorder",
-                    "contacts", "calendar", "clock", "weatherclock", "localtime", "music",
+                    "contacts", "calendar", "clock", "weatherclock", "weatherclocksquare", "localtime", "music",
                 )
             },
             edit = host == "edit" || data.getBooleanQueryParameter("edit", false),
