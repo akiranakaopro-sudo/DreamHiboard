@@ -2,7 +2,6 @@ package gd.app.hiboard.ui
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
@@ -43,19 +42,14 @@ class RecorderWaveView @JvmOverloads constructor(
     private val flagDrawable: Drawable? =
         ContextCompat.getDrawable(context, R.drawable.ic_recorder_flag_small)?.mutate()
 
-    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 2f * density
-        color = context.getColor(R.color.hiboard_recorder_wave)
-        strokeCap = Paint.Cap.ROUND
-        pathEffect = DashPathEffect(floatArrayOf(2.5f * density, 5f * density), 0f)
+    private val idleTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = context.getColor(R.color.hiboard_recorder_idle_tick)
     }
     private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = context.getColor(R.color.hiboard_recorder_tick)
     }
-    private val tickHalf = 7.5f * density
-    private val tickWidth = 1.5f * density
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = context.getColor(R.color.hiboard_recorder_wave)
@@ -188,7 +182,7 @@ class RecorderWaveView @JvmOverloads constructor(
         val tape = RecorderWaveSession
         val maxHalf = height * 0.38f
         if (!sessionActive || tape.bars.isEmpty()) {
-            canvas.drawLine(0f, cy, width, cy, linePaint)
+            drawIdleTicks(canvas, cx, cy, width)
         } else {
             val scrollX = elapsedMs * pxPerMs
             val n = tape.bars.size
@@ -235,16 +229,23 @@ class RecorderWaveView @JvmOverloads constructor(
             }
             drawFlags(canvas, cx, scrollX, height)
         }
+        val tickWidth = (width * CURSOR_WIDTH).coerceAtLeast(density)
+        val tickHalf = width * CURSOR_HALF
         val left = cx - tickWidth * 0.5f
-        canvas.drawRoundRect(
-            left,
-            cy - tickHalf,
-            left + tickWidth,
-            cy + tickHalf,
-            tickWidth,
-            tickWidth,
-            tickPaint,
-        )
+        canvas.drawRect(left, cy - tickHalf, left + tickWidth, cy + tickHalf, tickPaint)
+    }
+
+    private fun drawIdleTicks(canvas: Canvas, cx: Float, cy: Float, width: Float) {
+        val pitch = width * IDLE_PITCH
+        val halfW = (width * IDLE_TICK_WIDTH).coerceAtLeast(density * 0.8f) * 0.5f
+        val halfH = width * IDLE_TICK_HALF
+        val reach = width * (0.5f - IDLE_INSET)
+        var offset = pitch
+        while (offset <= reach) {
+            canvas.drawRect(cx - offset - halfW, cy - halfH, cx - offset + halfW, cy + halfH, idleTickPaint)
+            canvas.drawRect(cx + offset - halfW, cy - halfH, cx + offset + halfW, cy + halfH, idleTickPaint)
+            offset += pitch
+        }
     }
 
     private fun drawFlags(canvas: Canvas, centerX: Float, scrollX: Float, height: Float) {
@@ -271,5 +272,11 @@ class RecorderWaveView @JvmOverloads constructor(
         const val AMP_RISE = 0.42f
         const val AMP_FALL = 0.24f
         const val AMP_GAIN = 0.9f
+        const val CURSOR_HALF = 0.09f
+        const val CURSOR_WIDTH = 0.0045f
+        const val IDLE_PITCH = 0.0192f
+        const val IDLE_TICK_WIDTH = 0.0064f
+        const val IDLE_TICK_HALF = 0.0085f
+        const val IDLE_INSET = 0.077f
     }
 }

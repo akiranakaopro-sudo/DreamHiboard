@@ -67,7 +67,7 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         }
         CardEngineId.Notes -> bindNotesPreview(inflater, card, body)
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
-        CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body, density)
+        CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)
         CardEngineId.RecentApps -> Unit
         CardEngineId.Contacts -> bindContactsPreview(inflater, card, body)
@@ -140,15 +140,9 @@ private fun bindRecorderPreview(
     inflater: LayoutInflater,
     card: COUICardView,
     body: LinearLayout,
-    density: Float,
 ) {
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_recorder_card))
-    card.setContentPadding(
-        (10 * density).toInt(),
-        (10 * density).toInt(),
-        (10 * density).toInt(),
-        (8 * density).toInt(),
-    )
+    card.setContentPadding(0, 0, 0, 0)
     val view = inflater.inflate(R.layout.card_recorder, body, true)
     view.findViewById<TextView>(R.id.recorderTime).text = formatRecorderTime(0L)
     view.findViewById<View>(R.id.recorderMark).visibility = View.INVISIBLE

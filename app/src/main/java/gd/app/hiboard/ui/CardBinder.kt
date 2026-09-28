@@ -295,15 +295,9 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        val density = body.resources.displayMetrics.density
         (root as? COUICardView)?.apply {
             setCardBackgroundColor(body.context.getColor(R.color.hiboard_recorder_card))
-            setContentPadding(
-                (10 * density).toInt(),
-                (10 * density).toInt(),
-                (10 * density).toInt(),
-                (8 * density).toInt(),
-            )
+            setContentPadding(0, 0, 0, 0)
             clipToPadding = false
         }
         (root as? ViewGroup)?.clipChildren = false
