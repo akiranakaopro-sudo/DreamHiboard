@@ -88,7 +88,15 @@ class HiboardViewModel(
             engines.recorderStatus.collect { status ->
                 if (status.state != lastState) {
                     lastState = status.state
-                    _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+                    _state.update {
+                        it.copy(
+                            content = it.content.copy(
+                                recorderState = status.state,
+                                recorderElapsedMs = status.elapsedMs,
+                                recorderBound = true,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -321,13 +329,7 @@ class HiboardViewModel(
 
     fun openSystemManager() = engines.openSystemManager()
 
-    fun sendRecorder(command: RecorderCommand): RecorderSendResult {
-        val result = engines.sendRecorder(command)
-        if (command != RecorderCommand.Mark) {
-            _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
-        }
-        return result
-    }
+    fun sendRecorder(command: RecorderCommand): RecorderSendResult = engines.sendRecorder(command)
 
     fun recorderLive() = engines.recorderLive()
 

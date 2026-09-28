@@ -304,19 +304,34 @@ class CardBinder(
         body.clipChildren = false
         body.clipToPadding = false
         val view = inflater.inflate(R.layout.card_recorder, body, true)
-        val recorderState = state.content.recorderState
+        applyRecorder(view, state.content.recorderState, state.content.recorderElapsedMs)
+        val open = View.OnClickListener { onOpenRecorder() }
+        view.findViewById<View>(R.id.recorderRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+        val primary = view.findViewById<View>(R.id.recorderPrimary)
+        primary.setOnClickListener {
+            val shown = primary.getTag(R.id.recorderPrimary) as? RecorderUiState ?: RecorderUiState.Idle
+            onRecorderCommand(recorderPrimaryCommand(shown))
+        }
+        view.findViewById<View>(R.id.recorderMark).setOnClickListener {
+            onRecorderCommand(RecorderCommand.Mark)
+        }
+        view.findViewById<View>(R.id.recorderSave).setOnClickListener {
+            onRecorderCommand(RecorderCommand.Save)
+        }
+    }
+
+    /** Repaints an inflated recorder card for [recorderState] without rebuilding it. */
+    fun applyRecorder(view: View, recorderState: RecorderUiState, elapsedMs: Long) {
+        val context = view.context
         val live = recorderState != RecorderUiState.Idle
         val time = view.findViewById<TextView>(R.id.recorderTime)
         time.setTextColor(
-            body.context.getColor(
-                if (recorderState == RecorderUiState.Idle) {
-                    R.color.hiboard_recorder_title_idle
-                } else {
-                    R.color.hiboard_recorder_title
-                },
+            context.getColor(
+                if (live) R.color.hiboard_recorder_title else R.color.hiboard_recorder_title_idle,
             ),
         )
-        time.text = formatRecorderTime(state.content.recorderElapsedMs)
+        time.text = formatRecorderTime(elapsedMs)
         view.findViewById<RecorderWaveView>(R.id.recorderWave).bind(
             recording = recorderState == RecorderUiState.Recording,
             sessionActive = live,
@@ -330,29 +345,20 @@ class CardBinder(
         save.visibility = if (live) View.VISIBLE else View.INVISIBLE
         mark.isClickable = live
         save.isClickable = live
+        primary.setTag(R.id.recorderPrimary, recorderState)
         when (recorderState) {
             RecorderUiState.Recording -> {
                 primary.setImageResource(R.drawable.ic_recorder_pause)
-                primary.contentDescription = body.context.getString(R.string.recorder_pause)
+                primary.contentDescription = context.getString(R.string.recorder_pause)
             }
             RecorderUiState.Paused -> {
                 primary.setImageResource(R.drawable.ic_recorder_resume)
-                primary.contentDescription = body.context.getString(R.string.recorder_resume)
+                primary.contentDescription = context.getString(R.string.recorder_resume)
             }
             RecorderUiState.Idle -> {
                 primary.setImageResource(R.drawable.ic_recorder_record)
-                primary.contentDescription = body.context.getString(R.string.recorder_start)
+                primary.contentDescription = context.getString(R.string.recorder_start)
             }
-        }
-        val open = View.OnClickListener { onOpenRecorder() }
-        view.findViewById<View>(R.id.recorderRoot).setOnClickListener(open)
-        root.setOnClickListener(open)
-        primary.setOnClickListener {
-            onRecorderCommand(recorderPrimaryCommand(recorderState))
-        }
-        mark.setOnClickListener { onRecorderCommand(RecorderCommand.Mark) }
-        save.setOnClickListener { button ->
-            button.post { onRecorderCommand(RecorderCommand.Save) }
         }
     }
 

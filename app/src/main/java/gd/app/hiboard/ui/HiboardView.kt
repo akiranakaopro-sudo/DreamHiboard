@@ -58,6 +58,7 @@ import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.RecorderUiState
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -71,6 +72,7 @@ class HiboardView @JvmOverloads constructor(
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
     private var lastFlashKey: Any? = null
+    private var lastRecorderKey: RecorderUiState? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
@@ -162,6 +164,7 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
             lastFlashKey = null
+            lastRecorderKey = null
             viewModel.exitEdit()
         }
 
@@ -275,6 +278,15 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    private fun applyRecorderState(state: HiboardUiState, binder: CardBinder) {
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Recorder) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val view = root.findViewById<View>(R.id.recorderRoot) ?: return@forEach
+            binder.applyRecorder(view, state.content.recorderState, state.content.recorderElapsedMs)
+        }
+    }
+
     private fun sendRecorder(viewModel: HiboardViewModel, command: RecorderCommand) {
         performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         when (val result = viewModel.sendRecorder(command)) {
@@ -366,20 +378,33 @@ class HiboardView @JvmOverloads constructor(
             state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
+        val recorderKey = state.content.recorderState
         val gridKey = listOf(
             state.board,
             state.editMode,
-            state.content.copy(flashlightOn = false, flashlightAvailable = false),
+            state.content.copy(
+                flashlightOn = false,
+                flashlightAvailable = false,
+                recorderState = RecorderUiState.Idle,
+                recorderElapsedMs = 0L,
+            ),
         )
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
             lastFlashKey = flashKey
+            lastRecorderKey = recorderKey
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
-        } else if (!dragging && flashKey != lastFlashKey) {
-            lastFlashKey = flashKey
-            applyFlashlightArt(state)
+        } else if (!dragging) {
+            if (flashKey != lastFlashKey) {
+                lastFlashKey = flashKey
+                applyFlashlightArt(state)
+            }
+            if (recorderKey != lastRecorderKey) {
+                lastRecorderKey = recorderKey
+                applyRecorderState(state, binder)
+            }
         }
         if (!state.showStore) {
             state.revealCatalogId?.let { catalogId ->

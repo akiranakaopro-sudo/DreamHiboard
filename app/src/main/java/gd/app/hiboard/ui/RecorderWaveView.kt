@@ -101,7 +101,7 @@ class RecorderWaveView @JvmOverloads constructor(
         this.sessionActive = sessionActive
         this.timeView = timeView
         this.liveSource = source
-        val snap = source()
+        val snap = if (sessionActive) source() else RecorderStatus()
         markTimes = snap.marks
         elapsedMs = snap.elapsedMs
         syncElapsedMs = snap.elapsedMs
