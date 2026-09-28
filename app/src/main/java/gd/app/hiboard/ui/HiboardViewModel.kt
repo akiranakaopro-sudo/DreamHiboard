@@ -336,6 +336,8 @@ class HiboardViewModel(
 
     fun openNotes() = engines.openNotes()
 
+    fun openNote(noteId: Long) = engines.openNote(noteId)
+
     fun createNote() = engines.createNote()
 
     fun toggleFlashlight(): FlashlightToggle {

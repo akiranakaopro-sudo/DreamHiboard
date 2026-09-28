@@ -104,6 +104,12 @@ data class WeatherDayContent(
     val highC: Int = 0,
 )
 
+data class NoteItem(
+    val id: Long = 0L,
+    val title: String = "",
+    val snippet: String = "",
+)
+
 data class CardContent(
     val weatherLocation: String = "",
     val weatherTempC: Int = 22,
@@ -113,6 +119,7 @@ data class CardContent(
     val notesPreview: String = "",
     val notesSnippet: String = "",
     val notesWhen: String = "",
+    val notesRecent: List<NoteItem> = emptyList(),
     val flashlightOn: Boolean = false,
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,

@@ -38,9 +38,9 @@ class NotesRepository(context: Context) {
         }
     }
 
-    fun latest(): NotesPreview = pickDisplayNote(allNotes())
+    fun latest(): NotesPreview = pickDisplayNote(all())
 
-    private fun allNotes(): List<NotesPreview> {
+    fun all(): List<NotesPreview> {
         val byId = linkedMapOf<Long, NotesPreview>()
         (querySearch() + queryLatest()).forEach { note ->
             val key = if (note.id > 0L) note.id else note.updatedAt

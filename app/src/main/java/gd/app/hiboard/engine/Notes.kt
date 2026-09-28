@@ -20,6 +20,9 @@ fun pickDisplayNote(notes: List<NotesPreview>): NotesPreview {
     return ordered.firstOrNull { it.hasText } ?: ordered.firstOrNull() ?: NotesPreview()
 }
 
+fun recentDisplayNotes(notes: List<NotesPreview>, limit: Int): List<NotesPreview> =
+    notes.filter { it.hasText }.sortedByDescending { it.updatedAt }.take(limit)
+
 fun noteHeadlineAndBody(title: String, content: String): Pair<String, String> {
     val lines = content.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
     val headline = title.trim().ifBlank { lines.firstOrNull().orEmpty() }

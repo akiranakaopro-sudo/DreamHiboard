@@ -11,10 +11,12 @@ import gd.app.hiboard.data.WeatherStore
 import gd.app.hiboard.model.CardAction
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
+import gd.app.hiboard.model.NoteItem
 import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
 
 private const val STORAGE_STEP_BYTES = 100_000_000L
+private const val RECENT_NOTES_LIMIT = 2
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
@@ -43,11 +45,13 @@ class CardEngineRegistry(context: Context) {
             )
         },
         CardEngineId.Notes to CardEngine {
-            val latest = notes.latest()
+            val all = notes.all()
+            val latest = pickDisplayNote(all)
             CardContent(
                 notesPreview = latest.title,
                 notesSnippet = latest.snippet,
                 notesWhen = formatNotesWhen(latest.updatedAt),
+                notesRecent = recentDisplayNotes(all, RECENT_NOTES_LIMIT).map { NoteItem(it.id, it.title, it.snippet) },
             )
         },
         CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
@@ -101,6 +105,8 @@ class CardEngineRegistry(context: Context) {
         if (latest.id > 0L) return editNoteIntent(latest.id)
         return createNote()
     }
+
+    fun openNote(noteId: Long): Intent? = if (noteId > 0L) editNoteIntent(noteId) else openNotes()
 
     fun createNote(): Intent {
         return Intent(Intent.ACTION_CREATE_NOTE)
@@ -196,6 +202,7 @@ class CardEngineRegistry(context: Context) {
         notesPreview = b.notesPreview.ifBlank { a.notesPreview },
         notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
         notesWhen = b.notesWhen.ifBlank { a.notesWhen },
+        notesRecent = b.notesRecent.ifEmpty { a.notesRecent },
         flashlightOn = b.flashlightOn || a.flashlightOn,
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,

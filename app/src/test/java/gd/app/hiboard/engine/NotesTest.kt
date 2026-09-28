@@ -58,4 +58,15 @@ class NotesTest {
         assertEquals(emptyLatest, pickDisplayNote(listOf(emptyLatest, blank)))
         assertEquals(NotesPreview(), pickDisplayNote(emptyList()))
     }
+
+    @Test
+    fun recentNotesAreNewestFirstAndSkipEmptyEdits() {
+        val a = NotesPreview(id = 1, title = "Oldest", updatedAt = 10)
+        val b = NotesPreview(id = 2, title = "", snippet = "", updatedAt = 40)
+        val c = NotesPreview(id = 3, title = "Newest", updatedAt = 30)
+        val d = NotesPreview(id = 4, title = "Middle", updatedAt = 20)
+        assertEquals(listOf(c, d), recentDisplayNotes(listOf(a, b, c, d), 2))
+        assertEquals(listOf(c, d, a), recentDisplayNotes(listOf(a, b, c, d), 5))
+        assertEquals(emptyList<NotesPreview>(), recentDisplayNotes(listOf(b), 2))
+    }
 }

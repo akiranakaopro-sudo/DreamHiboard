@@ -17,6 +17,7 @@
     <color name="hiboard_notes_fold">#F0C56A</color>
     <color name="hiboard_notes_title">#634A07</color>
     <color name="hiboard_notes_muted">#BDAC82</color>
+    <color name="hiboard_notes_divider">#DCCDAE</color>
     <color name="hiboard_weather_fallback">#152238</color>
     <color name="hiboard_weather_on_image">#FFFFFFFF</color>
     <color name="hiboard_weather_on_image_muted">#D6E4F4</color>

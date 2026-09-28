@@ -80,7 +80,7 @@ class HiboardActivity : AppCompatActivity() {
         viewModel.applyDeeplink(
             cardId = card ?: host.takeIf {
                 it in setOf(
-                    "weather", "weathersquare", "notes", "recent", "flashlight", "storage", "recorder",
+                    "weather", "weathersquare", "notes", "noteswide", "recent", "flashlight", "storage", "recorder",
                     "contacts", "calendar", "clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock", "weatherdial", "music",
                 )
             },

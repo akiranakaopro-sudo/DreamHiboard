@@ -117,6 +117,7 @@ class HiboardView @JvmOverloads constructor(
         this.viewModel = viewModel
         val binder = CardBinder(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
+            onOpenNote = { launchIntent(this, viewModel.openNote(it)) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
             onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },

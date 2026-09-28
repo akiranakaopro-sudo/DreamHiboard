@@ -73,6 +73,17 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "noteswide",
+            groupId = GROUP_FEATURES,
+            groupTitle = "Features",
+            name = "All notes",
+            description = "Your two latest notes from DreamNote. Tap a note to open it, plus to write a new note.",
+            size = CardSize.FullByTwo,
+            engine = CardEngineId.Notes,
+            defaultSubscribed = false,
+            storeCategory = "All notes",
+        ),
+        CardCatalogEntry(
             id = "recorder",
             groupId = GROUP_FEATURES,
             groupTitle = "Features",

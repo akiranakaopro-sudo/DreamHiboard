@@ -30,6 +30,7 @@ import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
 class CardBinder(
     private val onOpenNotes: () -> Unit,
+    private val onOpenNote: (Long) -> Unit,
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
     private val onOpenStorage: () -> Unit,
@@ -56,7 +57,11 @@ class CardBinder(
             } else {
                 bindWeather(inflater, root, body, state)
             }
-            CardEngineId.Notes -> bindNotes(inflater, root, body, state)
+            CardEngineId.Notes -> if (card.size == CardSize.FullByTwo) {
+                bindNotesWideCard(inflater, root, body, state)
+            } else {
+                bindNotes(inflater, root, body, state)
+            }
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
@@ -153,6 +158,23 @@ class CardBinder(
             body.context.getString(R.string.notes_default_content)
         }
         view.findViewById<TextView>(R.id.notesWhen).text = state.content.notesWhen
+        view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
+        root.setOnClickListener { onOpenNotes() }
+    }
+
+    private fun bindNotesWideCard(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+            setContentPadding(0, 0, 0, 0)
+        }
+        val view = inflater.inflate(R.layout.card_notes_wide, body, true)
+        bindNotesWide(view, state.content.notesRecent, onOpenNote)
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
         view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
         root.setOnClickListener { onOpenNotes() }

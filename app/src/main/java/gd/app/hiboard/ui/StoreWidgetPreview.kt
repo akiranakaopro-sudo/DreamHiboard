@@ -20,6 +20,7 @@ import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
+import gd.app.hiboard.model.NoteItem
 import kotlin.math.roundToInt
 
 fun storePreviewDims(entry: CardCatalogEntry, boardWidth: Int, density: Float): Pair<Int, Int> {
@@ -65,7 +66,17 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         } else {
             bindWeatherPreview(inflater, card, body)
         }
-        CardEngineId.Notes -> bindNotesPreview(inflater, card, body)
+        CardEngineId.Notes -> if (entry.size == CardSize.FullByTwo) {
+            card.setCardBackgroundColor(context.getColor(R.color.hiboard_notes_card))
+            card.setContentPadding(0, 0, 0, 0)
+            val sample = NoteItem(
+                title = context.getString(R.string.notes_default_title),
+                snippet = context.getString(R.string.notes_default_content),
+            )
+            bindNotesWide(inflater.inflate(R.layout.card_notes_wide, body, true), listOf(sample, sample), onOpenNote = null)
+        } else {
+            bindNotesPreview(inflater, card, body)
+        }
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)

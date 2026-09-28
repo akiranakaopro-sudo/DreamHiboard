@@ -17,6 +17,7 @@
     <color name="hiboard_notes_fold">#F0C56A</color>
     <color name="hiboard_notes_title">#634A07</color>
     <color name="hiboard_notes_muted">#BDAC82</color>
+    <color name="hiboard_notes_divider">#DCCDAE</color>
     <color name="hiboard_flashlight_off">#476CA1</color>
     <color name="hiboard_flashlight_on">#476CA1</color>
     <color name="hiboard_flashlight_label_off">#C5D0E0</color>
