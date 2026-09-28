@@ -21,13 +21,17 @@ import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.ui.grid.insertFillingEmptyTwoByTwo
 import gd.app.hiboard.ui.grid.pinLockedCards
+import android.os.SystemClock
 import java.util.UUID
+import java.util.concurrent.Executors
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class HiboardUiState(
     val board: BoardSnapshot = BoardSnapshot(emptyList(), emptyList()),
@@ -52,6 +56,9 @@ class HiboardViewModel(
 
     private val _state = MutableStateFlow(HiboardUiState())
     val state: StateFlow<HiboardUiState> = _state.asStateFlow()
+    private val loader = Executors.newSingleThreadExecutor { r -> Thread(r, "hiboard-cards") }
+        .asCoroutineDispatcher()
+    private var lastVisibleRefresh = 0L
 
     init {
         viewModelScope.launch {
@@ -74,14 +81,10 @@ class HiboardViewModel(
             }
         }
         viewModelScope.launch {
-            engines.notesRevisions.collect {
-                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
-            }
+            engines.notesRevisions.collect { refreshContent(CardAction.Bind) }
         }
         viewModelScope.launch {
-            engines.weatherSnapshot.collect {
-                _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
-            }
+            engines.weatherSnapshot.collect { refreshContent(CardAction.Bind) }
         }
         viewModelScope.launch {
             var lastState = engines.recorderStatus.value.state
@@ -109,27 +112,50 @@ class HiboardViewModel(
                 _state.update { it.copy(content = engines.compose(CardAction.Create)) }
             }
             HostEvent.Enter, HostEvent.Resume -> {
-                engines.refreshRecents()
                 engines.syncRecorder()
-                _state.update {
-                    it.copy(
-                        screenVisible = true,
-                        content = engines.compose(CardAction.Visible),
-                    )
+                _state.update { it.copy(screenVisible = true) }
+                // Returning from an app fires Enter (onStart) and Resume back to back.
+                val now = SystemClock.uptimeMillis()
+                if (now - lastVisibleRefresh >= VISIBLE_REFRESH_GAP_MS) {
+                    lastVisibleRefresh = now
+                    refreshContent(CardAction.Visible, syncRecents = true)
                 }
             }
             HostEvent.Exit, HostEvent.Pause -> {
-                _state.update {
-                    it.copy(
-                        screenVisible = false,
-                        content = engines.compose(CardAction.Hidden),
-                    )
-                }
+                _state.update { it.copy(screenVisible = false) }
             }
-            HostEvent.Destroy -> {
-                engines.compose(CardAction.Destroy)
+            HostEvent.Destroy -> Unit
+        }
+    }
+
+    /**
+     * Re-queries card data on [loader]; contacts, notes and usage stats can take hundreds of
+     * milliseconds. Flashlight and recorder fields are driven by their own flows, so keep the
+     * current values instead of a snapshot that may be stale by the time the query returns.
+     */
+    private fun refreshContent(action: CardAction, syncRecents: Boolean = false) {
+        viewModelScope.launch {
+            val fresh = withContext(loader) {
+                if (syncRecents) engines.refreshRecents()
+                engines.compose(action)
+            }
+            _state.update {
+                it.copy(
+                    content = fresh.copy(
+                        flashlightOn = it.content.flashlightOn,
+                        flashlightAvailable = it.content.flashlightAvailable,
+                        recorderState = it.content.recorderState,
+                        recorderElapsedMs = it.content.recorderElapsedMs,
+                        recorderBound = it.content.recorderBound,
+                    ),
+                )
             }
         }
+    }
+
+    override fun onCleared() {
+        loader.close()
+        super.onCleared()
     }
 
     fun toggleEdit() {
@@ -339,7 +365,7 @@ class HiboardViewModel(
 
     fun openApp(app: ShortcutApp): Intent? {
         val intent = engines.openApp(app)
-        _state.update { it.copy(content = engines.compose(CardAction.Bind)) }
+        refreshContent(CardAction.Bind)
         return intent
     }
 
@@ -359,6 +385,8 @@ class HiboardViewModel(
     }
 
     companion object {
+        private const val VISIBLE_REFRESH_GAP_MS = 1_000L
+
         fun factory(): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {

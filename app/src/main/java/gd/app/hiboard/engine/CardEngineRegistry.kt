@@ -14,6 +14,8 @@ import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
 
+private const val STORAGE_STEP_BYTES = 100_000_000L
+
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
 }
@@ -58,7 +60,8 @@ class CardEngineRegistry(context: Context) {
         CardEngineId.Storage to CardEngine {
             val status = storage.status()
             CardContent(
-                storageUsedBytes = status.usedBytes,
+                // Free RAM moves every read; keep only the 0.1 GB the card shows so it compares equal.
+                storageUsedBytes = (status.usedBytes + STORAGE_STEP_BYTES / 2) / STORAGE_STEP_BYTES * STORAGE_STEP_BYTES,
                 storageTotalBytes = status.totalBytes,
             )
         },
