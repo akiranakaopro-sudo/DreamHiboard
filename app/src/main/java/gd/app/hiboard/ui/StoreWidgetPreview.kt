@@ -95,20 +95,14 @@ private fun bindWeatherPreview(inflater: LayoutInflater, card: COUICardView, bod
     card.setContentPadding(0, 0, 0, 0)
     card.clipToOutline = true
     val view = inflater.inflate(R.layout.card_weather, body, true)
-    view.findViewById<ImageView>(R.id.weatherBackground).setImageResource(weatherBackgroundRes(weather.condition))
-    view.findViewById<TextView>(R.id.weatherLocation).text = weather.location
-    view.findViewById<TextView>(R.id.weatherSummary).text = weather.condition.displayName
-    view.findViewById<ImageView>(R.id.weatherConditionIcon).setImageResource(weatherIconRes(weather.condition))
-    view.findViewById<TextView>(R.id.weatherTemp).text = "${weather.temperatureC}°"
-    val forecast = view.findViewById<LinearLayout>(R.id.weatherForecast)
-    forecast.removeAllViews()
-    weather.days.forEach { day ->
-        val item = inflater.inflate(R.layout.item_weather_day, forecast, false)
-        item.findViewById<TextView>(R.id.weatherDayLabel).text = day.label
-        item.findViewById<ImageView>(R.id.weatherDayIcon).setImageResource(weatherIconRes(day.condition))
-        item.findViewById<TextView>(R.id.weatherDayRange).text = "${day.lowC}° / ${day.highC}°"
-        forecast.addView(item)
-    }
+    bindWeatherWide(
+        view = view,
+        location = weather.location,
+        summary = weather.condition.displayName,
+        condition = weather.condition,
+        temperatureC = weather.temperatureC,
+        days = weather.days.map { WeatherWideDay(it.label, it.condition, it.lowC, it.highC) },
+    )
 }
 
 private fun bindNotesPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {

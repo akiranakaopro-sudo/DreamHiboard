@@ -29,8 +29,6 @@ import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
 import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
-import gd.app.hiboard.model.WeatherDayContent
-
 class CardBinder(
     private val onOpenNotes: () -> Unit,
     private val onCreateNote: () -> Unit,
@@ -98,28 +96,21 @@ class CardBinder(
             clipToOutline = true
         }
         val view = inflater.inflate(R.layout.card_weather, body, true)
-        view.findViewById<ImageView>(R.id.weatherBackground).setImageResource(weatherBackgroundRes(condition))
-        view.findViewById<TextView>(R.id.weatherLocation).text =
-            state.content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location }
-        view.findViewById<TextView>(R.id.weatherSummary).text =
-            state.content.weatherSummary.ifBlank { condition.displayName }
-        view.findViewById<ImageView>(R.id.weatherConditionIcon).setImageResource(weatherIconRes(condition))
-        view.findViewById<TextView>(R.id.weatherTemp).text = "${state.content.weatherTempC}°"
-        val forecast = view.findViewById<LinearLayout>(R.id.weatherForecast)
-        forecast.removeAllViews()
-        val days = state.content.weatherDays.ifEmpty {
+        val days = state.content.weatherDays.map { day ->
+            WeatherWideDay(day.label, WeatherCondition.from(day.condition), day.lowC, day.highC)
+        }.ifEmpty {
             WeatherSnapshot.DEFAULT.resolved().days.map { day ->
-                WeatherDayContent(day.label, day.condition.json, day.lowC, day.highC)
+                WeatherWideDay(day.label, day.condition, day.lowC, day.highC)
             }
         }
-        days.forEach { day ->
-            val item = inflater.inflate(R.layout.item_weather_day, forecast, false)
-            val dayCondition = WeatherCondition.from(day.condition)
-            item.findViewById<TextView>(R.id.weatherDayLabel).text = day.label
-            item.findViewById<ImageView>(R.id.weatherDayIcon).setImageResource(weatherIconRes(dayCondition))
-            item.findViewById<TextView>(R.id.weatherDayRange).text = "${day.lowC}° / ${day.highC}°"
-            forecast.addView(item)
-        }
+        bindWeatherWide(
+            view = view,
+            location = state.content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location },
+            summary = state.content.weatherSummary.ifBlank { condition.displayName },
+            condition = condition,
+            temperatureC = state.content.weatherTempC,
+            days = days,
+        )
     }
 
     private fun bindWeatherSquareCard(root: View, body: LinearLayout, state: HiboardUiState) {
@@ -138,26 +129,6 @@ class CardBinder(
             lowC = today?.lowC ?: fallback.lowC,
             highC = today?.highC ?: fallback.highC,
         )
-    }
-
-    private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
-        WeatherCondition.Sunny -> R.drawable.bg_weather_sunny
-        WeatherCondition.Cloudy -> R.drawable.bg_weather_cloudy
-        WeatherCondition.Rain -> R.drawable.bg_weather_rain
-        WeatherCondition.Thunder -> R.drawable.bg_weather_thunder
-        WeatherCondition.Snow -> R.drawable.bg_weather_snow
-        WeatherCondition.Fog -> R.drawable.bg_weather_fog
-        WeatherCondition.Night -> R.drawable.bg_weather_night
-    }
-
-    private fun weatherIconRes(condition: WeatherCondition): Int = when (condition) {
-        WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
-        WeatherCondition.Cloudy -> R.drawable.ic_weather_cloudy
-        WeatherCondition.Rain -> R.drawable.ic_weather_rain
-        WeatherCondition.Thunder -> R.drawable.ic_weather_thunder
-        WeatherCondition.Snow -> R.drawable.ic_weather_snow
-        WeatherCondition.Fog -> R.drawable.ic_weather_fog
-        WeatherCondition.Night -> R.drawable.ic_weather_night
     }
 
     private fun bindNotes(

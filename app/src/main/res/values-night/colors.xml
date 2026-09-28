@@ -41,4 +41,6 @@
     <color name="hiboard_recorder_tick">#EB3B2F</color>
     <color name="hiboard_recorder_idle_tick">#BDBDBD</color>
     <color name="hiboard_recorder_flag">#3478F6</color>
+    <color name="hiboard_weather_day_label">#A6FFFFFF</color>
+    <color name="hiboard_weather_range_slash">#66FFFFFF</color>
 </resources>
