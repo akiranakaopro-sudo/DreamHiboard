@@ -107,6 +107,7 @@ private fun bindWeatherPreview(inflater: LayoutInflater, card: COUICardView, bod
 
 private fun bindNotesPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+    card.setContentPadding(0, 0, 0, 0)
     val view = inflater.inflate(R.layout.card_notes, body, true)
     view.findViewById<TextView>(R.id.notesTitle).text = body.context.getString(R.string.notes_default_title)
     view.findViewById<TextView>(R.id.notesSnippet).text = body.context.getString(R.string.notes_default_content)

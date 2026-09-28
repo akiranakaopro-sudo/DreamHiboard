@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.view.doOnLayout
 import com.coui.appcompat.cardview.COUICardView
 import gd.app.hiboard.R
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
@@ -137,19 +136,21 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        (root as? COUICardView)?.setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+            setContentPadding(0, 0, 0, 0)
+        }
         val view = inflater.inflate(R.layout.card_notes, body, true)
-        val titleView = view.findViewById<TextView>(R.id.notesTitle)
-        val snippetView = view.findViewById<TextView>(R.id.notesSnippet)
-        titleView.text = state.content.notesPreview.ifBlank {
+        val hasNote = state.content.notesPreview.isNotBlank() || state.content.notesSnippet.isNotBlank()
+        view.findViewById<TextView>(R.id.notesTitle).text = if (hasNote) {
+            state.content.notesPreview
+        } else {
             body.context.getString(R.string.notes_default_title)
         }
-        snippetView.text = state.content.notesSnippet.ifBlank {
+        view.findViewById<TextView>(R.id.notesSnippet).text = if (hasNote) {
+            state.content.notesSnippet
+        } else {
             body.context.getString(R.string.notes_default_content)
-        }
-        snippetView.doOnLayout { measured ->
-            val line = snippetView.lineHeight.coerceAtLeast(1)
-            snippetView.maxLines = (measured.height / line).coerceAtLeast(1)
         }
         view.findViewById<TextView>(R.id.notesWhen).text = state.content.notesWhen
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
