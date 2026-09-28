@@ -57,7 +57,7 @@ class CardBinder(
             } else {
                 bindWeather(inflater, root, body, state)
             }
-            CardEngineId.Notes -> if (card.size == CardSize.FullByTwo) {
+            CardEngineId.Notes -> if (card.size.columns >= 4) {
                 bindNotesWideCard(inflater, root, body, state)
             } else {
                 bindNotes(inflater, root, body, state)

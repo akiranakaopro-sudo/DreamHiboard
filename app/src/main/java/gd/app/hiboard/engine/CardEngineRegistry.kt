@@ -16,7 +16,7 @@ import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
 
 private const val STORAGE_STEP_BYTES = 100_000_000L
-private const val RECENT_NOTES_LIMIT = 2
+private const val RECENT_NOTES_LIMIT = 5
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent

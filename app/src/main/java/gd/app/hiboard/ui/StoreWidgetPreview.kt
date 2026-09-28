@@ -66,14 +66,14 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
         } else {
             bindWeatherPreview(inflater, card, body)
         }
-        CardEngineId.Notes -> if (entry.size == CardSize.FullByTwo) {
+        CardEngineId.Notes -> if (entry.size.columns >= 4) {
             card.setCardBackgroundColor(context.getColor(R.color.hiboard_notes_card))
             card.setContentPadding(0, 0, 0, 0)
             val sample = NoteItem(
                 title = context.getString(R.string.notes_default_title),
                 snippet = context.getString(R.string.notes_default_content),
             )
-            bindNotesWide(inflater.inflate(R.layout.card_notes_wide, body, true), listOf(sample, sample), onOpenNote = null)
+            bindNotesWide(inflater.inflate(R.layout.card_notes_wide, body, true), List(if (entry.size.rows >= 4) 3 else 2) { sample }, onOpenNote = null)
         } else {
             bindNotesPreview(inflater, card, body)
         }

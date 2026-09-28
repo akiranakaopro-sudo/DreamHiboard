@@ -58,15 +58,16 @@ class WidgetStoreTest {
         val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
             .flatMap { it.entries }
         assertEquals(
-            listOf("All notes", "All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
+            listOf("All notes", "All notes", "All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
             features.map { it.name },
         )
         assertEquals(CardSize.FullByTwo, features.first { it.name == "Contacts" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.name == "Music" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.id == "noteswide" }.size)
+        assertEquals(CardSize.FourByFour, features.first { it.id == "noteslarge" }.size)
         assertEquals(
             true,
-            features.filter { it.name != "Contacts" && it.name != "Music" && it.id != "noteswide" }
+            features.filter { it.name != "Contacts" && it.name != "Music" && it.id !in setOf("noteswide", "noteslarge") }
                 .all { it.size.columns == 2 && it.size.rows == 2 },
         )
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
@@ -108,6 +109,7 @@ class WidgetStoreTest {
             listOf(
                 "weathersquare",
                 "noteswide",
+                "noteslarge",
                 "contacts",
                 "music",
                 "calendar",

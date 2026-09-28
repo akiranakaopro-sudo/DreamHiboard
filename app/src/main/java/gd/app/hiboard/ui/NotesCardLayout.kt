@@ -119,7 +119,7 @@ class NotesCardLayout @JvmOverloads constructor(
         const val NOTE_LEFT = 0.112f
         const val NOTE_RIGHT = 0.085f
         const val NOTE_BASELINE = 0.4017f
-        const val LINE_STEP = 0.087f
+        const val LINE_STEP = 0.109f
         const val WHEN_TEXT = 0.096f
         const val WHEN_BASELINE_OF_HEIGHT = 0.8718f
         const val SNIPPET_BOTTOM_GAP = 0.03f
