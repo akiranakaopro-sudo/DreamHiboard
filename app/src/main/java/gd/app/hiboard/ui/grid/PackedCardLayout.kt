@@ -114,6 +114,18 @@ class PackedCardLayout @JvmOverloads constructor(
         requestLayout()
     }
 
+    /** Swaps one card's view in place, keeping every other card as it is. */
+    fun replaceCard(card: CardInstance, view: View) {
+        if (isDragging) return
+        val index = cardViews.indexOfFirst { it.tag == card.instanceId }
+        if (index < 0) return
+        val old = cardViews[index]
+        view.tag = card.instanceId
+        cardViews[index] = view
+        addView(view, indexOfChild(old))
+        removeView(old)
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val placements = packCards(cards, columns)

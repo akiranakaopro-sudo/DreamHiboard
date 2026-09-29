@@ -55,6 +55,8 @@ class MusicCardView @JvmOverloads constructor(
     private var appliedArt: Bitmap? = null
     private var sourceApplied = false
     private var appliedPackage: String? = null
+    private var appliedPlaying: Boolean? = null
+    private var appliedFavorite: Boolean? = null
 
     private val tick = object : Runnable {
         override fun run() {
@@ -156,18 +158,24 @@ class MusicCardView @JvmOverloads constructor(
         raw = now
         val favoriteOn = now.favorite || now.title in liked
         shown = now.copy(favorite = favoriteOn)
-        titleView.text = shown.title
-        artistView.text = shown.artist
-        positionView.text = musicClock(shown.positionMs)
-        durationView.text = musicClock(shown.durationMs)
+        titleView.setTextIfChanged(shown.title)
+        artistView.setTextIfChanged(shown.artist)
+        positionView.setTextIfChanged(musicClock(shown.positionMs))
+        durationView.setTextIfChanged(musicClock(shown.durationMs))
         progress.progress = if (shown.durationMs <= 0L) {
             0
         } else {
             ((shown.positionMs.coerceAtMost(shown.durationMs) * 1000L) / shown.durationMs).toInt()
         }
-        play.setImageResource(if (shown.playing) R.drawable.ic_music_pause else R.drawable.ic_music_play)
-        play.contentDescription = context.getString(if (shown.playing) R.string.music_pause else R.string.music_play)
-        favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
+        if (appliedPlaying != shown.playing) {
+            appliedPlaying = shown.playing
+            play.setImageResource(if (shown.playing) R.drawable.ic_music_pause else R.drawable.ic_music_play)
+            play.contentDescription = context.getString(if (shown.playing) R.string.music_pause else R.string.music_play)
+        }
+        if (appliedFavorite != shown.favorite) {
+            appliedFavorite = shown.favorite
+            favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
+        }
         rhythm.playing = shown.playing
         bindArt(shown.art)
         bindSource(shown.packageName)

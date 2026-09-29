@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <gd.app.hiboard.ui.DragSheetLayout
         android:id="@+id/pickerSheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -89,12 +89,17 @@
                 android:textSize="17sp" />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/pickerList"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:overScrollMode="never"
-            android:paddingTop="23.5dp" />
-    </LinearLayout>
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/pickerList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:paddingTop="23.5dp" />
+        </FrameLayout>
+    </gd.app.hiboard.ui.DragSheetLayout>
 </FrameLayout>

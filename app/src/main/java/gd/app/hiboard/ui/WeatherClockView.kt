@@ -172,18 +172,18 @@ class WeatherClockView @JvmOverloads constructor(
         val month = now.get(Calendar.MONTH)
         val day = now.get(Calendar.DAY_OF_MONTH)
         colorDate(compactClockDate(year, month, day, Locale.getDefault()))
-        hourView.text = String.format(Locale.US, "%02d", now.get(Calendar.HOUR_OF_DAY))
-        minuteView.text = String.format(Locale.US, "%02d", now.get(Calendar.MINUTE))
+        hourView.setTextIfChanged(String.format(Locale.US, "%02d", now.get(Calendar.HOUR_OF_DAY)))
+        minuteView.setTextIfChanged(String.format(Locale.US, "%02d", now.get(Calendar.MINUTE)))
         handsView.hands = clockHands(
             now.get(Calendar.HOUR_OF_DAY),
             now.get(Calendar.MINUTE),
             now.get(Calendar.SECOND),
         )
-        ticks.invalidate()
         handsView.invalidate()
     }
 
     private fun colorDate(text: String) {
+        if (dateView.text.toString() == text) return
         val gap = text.lastIndexOf(' ')
         if (gap <= 0) {
             dateView.text = text

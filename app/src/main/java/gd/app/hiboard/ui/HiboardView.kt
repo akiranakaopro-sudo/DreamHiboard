@@ -73,6 +73,7 @@ class HiboardView @JvmOverloads constructor(
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
+    private var lastNoteFolders: Map<String, String> = emptyMap()
     private var lastFlashKey: Any? = null
     private var lastRecorderKey: RecorderUiState? = null
     private var lastStoreKey: Any? = null
@@ -394,7 +395,6 @@ class HiboardView @JvmOverloads constructor(
         val gridKey = listOf(
             state.board,
             state.editMode,
-            state.noteFolderSelections,
             state.content.copy(
                 flashlightOn = false,
                 flashlightAvailable = false,
@@ -406,10 +406,21 @@ class HiboardView @JvmOverloads constructor(
             lastGridKey = gridKey
             lastFlashKey = flashKey
             lastRecorderKey = recorderKey
+            lastNoteFolders = state.noteFolderSelections
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
         } else if (!dragging) {
+            if (state.noteFolderSelections != lastNoteFolders) {
+                val previous = lastNoteFolders
+                lastNoteFolders = state.noteFolderSelections
+                state.board.subscribed.forEach { card ->
+                    if (card.engine != CardEngineId.Notes) return@forEach
+                    if (previous[card.catalogId] == state.noteFolderSelections[card.catalogId]) return@forEach
+                    val view = binder.create(binding.subscribedGrid, card, state, recommend = false)
+                    binding.subscribedGrid.replaceCard(card, view)
+                }
+            }
             if (flashKey != lastFlashKey) {
                 lastFlashKey = flashKey
                 applyFlashlightArt(state)
