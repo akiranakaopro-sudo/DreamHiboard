@@ -92,7 +92,7 @@ class WeatherClockView @JvmOverloads constructor(
         ticks.wide = !square
         ticks.invalidate()
         dateView.typeface = if (square) heavy else medium
-        labelView.typeface = if (square) Typeface.DEFAULT else medium
+        labelView.typeface = if (square) heavy else medium
         val digitColor = if (square) Color.BLACK else WIDE_TEXT
         hourView.setTextColor(digitColor)
         minuteView.setTextColor(digitColor)
