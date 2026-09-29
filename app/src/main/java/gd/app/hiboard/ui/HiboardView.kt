@@ -1065,7 +1065,9 @@ class HiboardView @JvmOverloads constructor(
         list.removeAllViews()
         val padH = (16 * density).toInt()
         list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        // Wide notes variants stay reachable from the All notes detail pager.
         val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+            .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
         if (entries.isEmpty()) {
             val empty = TextView(context).apply {
                 text = context.getString(R.string.store_empty)
@@ -1109,16 +1111,29 @@ class HiboardView @JvmOverloads constructor(
             list.addView(row)
             pending.clear()
         }
+        val deferredWide = mutableListOf<CardCatalogEntry>()
+        fun flushWide() {
+            deferredWide.forEach { list.addView(storeWidgetBlock(list, it, viewModel, boardWidth)) }
+            deferredWide.clear()
+        }
+        // A lone small card waits for the next one so rows never leave a hole beside it.
         entries.forEach { entry ->
             if (entry.size.columns >= 4) {
-                flushRow()
-                list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+                if (pending.isEmpty()) {
+                    list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+                } else {
+                    deferredWide.add(entry)
+                }
             } else {
                 pending.add(entry)
-                if (pending.size == 2) flushRow()
+                if (pending.size == 2) {
+                    flushRow()
+                    flushWide()
+                }
             }
         }
         flushRow()
+        flushWide()
     }
 
     private fun storeGalleryBoardWidth(list: LinearLayout): Int {
