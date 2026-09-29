@@ -1,5 +1,6 @@
 package gd.app.hiboard.engine
 
+import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -17,6 +18,7 @@ import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
 
 private const val STORAGE_STEP_BYTES = 100_000_000L
+private const val QUICK_SEARCH_PACKAGE = "gd.app.quicksearch"
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
@@ -121,7 +123,10 @@ class CardEngineRegistry(context: Context) {
     }
 
     fun openQuickSearch(): Intent? {
-        return appContext.packageManager.getLaunchIntentForPackage("gd.app.quicksearch")
+        val pm = appContext.packageManager
+        val search = Intent(SearchManager.INTENT_ACTION_GLOBAL_SEARCH).setPackage(QUICK_SEARCH_PACKAGE)
+        if (search.resolveActivity(pm) != null) return search
+        return pm.getLaunchIntentForPackage(QUICK_SEARCH_PACKAGE)
     }
 
     fun openApp(app: ShortcutApp): Intent? {
