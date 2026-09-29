@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import gd.app.hiboard.data.ContactsRepository
+import gd.app.hiboard.data.NoteFolderStore
 import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
 import gd.app.hiboard.data.WeatherStore
@@ -16,7 +17,6 @@ import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
 
 private const val STORAGE_STEP_BYTES = 100_000_000L
-private const val RECENT_NOTES_LIMIT = 5
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
@@ -26,6 +26,7 @@ class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
     private val recents = RecentAppsRepository(appContext)
     private val notes = NotesRepository(appContext)
+    private val noteFolderStore = NoteFolderStore(appContext)
     private val weather = WeatherStore.get(appContext)
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
@@ -45,13 +46,11 @@ class CardEngineRegistry(context: Context) {
             )
         },
         CardEngineId.Notes to CardEngine {
-            val all = notes.all()
-            val latest = pickDisplayNote(all)
             CardContent(
-                notesPreview = latest.title,
-                notesSnippet = latest.snippet,
-                notesWhen = formatNotesWhen(latest.updatedAt),
-                notesRecent = recentDisplayNotes(all, RECENT_NOTES_LIMIT).map { NoteItem(it.id, it.title, it.snippet) },
+                notes = recentDisplayNotes(notes.all(), Int.MAX_VALUE).map {
+                    NoteItem(it.id, it.title, it.snippet, it.folder, it.updatedAt)
+                },
+                noteFolders = notes.folders(),
             )
         },
         CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
@@ -154,6 +153,9 @@ class CardEngineRegistry(context: Context) {
         get() = flashlight.available
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
+    val noteFolderSelections = noteFolderStore.selections
+
+    fun setNoteFolder(catalogId: String, folder: String) = noteFolderStore.set(catalogId, folder)
     val weatherSnapshot = weather.snapshot
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
@@ -199,10 +201,8 @@ class CardEngineRegistry(context: Context) {
         weatherSummary = b.weatherSummary.ifBlank { a.weatherSummary },
         weatherCondition = b.weatherCondition.ifBlank { a.weatherCondition },
         weatherDays = b.weatherDays.ifEmpty { a.weatherDays },
-        notesPreview = b.notesPreview.ifBlank { a.notesPreview },
-        notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
-        notesWhen = b.notesWhen.ifBlank { a.notesWhen },
-        notesRecent = b.notesRecent.ifEmpty { a.notesRecent },
+        notes = b.notes.ifEmpty { a.notes },
+        noteFolders = b.noteFolders.ifEmpty { a.noteFolders },
         flashlightOn = b.flashlightOn || a.flashlightOn,
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,

@@ -11,7 +11,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.coui.appcompat.cardview.COUICardView
 import gd.app.hiboard.R
+import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
+import gd.app.hiboard.engine.formatNotesWhen
+import gd.app.hiboard.engine.noteFolderLabel
+import gd.app.hiboard.engine.notesInFolder
+import gd.app.hiboard.model.NoteItem
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderStatus
 import gd.app.hiboard.engine.WeatherCondition
@@ -58,9 +63,9 @@ class CardBinder(
                 bindWeather(inflater, root, body, state)
             }
             CardEngineId.Notes -> if (card.size.columns >= 4) {
-                bindNotesWideCard(inflater, root, body, state)
+                bindNotesWideCard(inflater, root, body, card, state)
             } else {
-                bindNotes(inflater, root, body, state)
+                bindNotes(inflater, root, body, card, state)
             }
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
@@ -139,6 +144,7 @@ class CardBinder(
         inflater: LayoutInflater,
         root: View,
         body: LinearLayout,
+        card: CardInstance,
         state: HiboardUiState,
     ) {
         (root as? COUICardView)?.apply {
@@ -146,27 +152,43 @@ class CardBinder(
             setContentPadding(0, 0, 0, 0)
         }
         val view = inflater.inflate(R.layout.card_notes, body, true)
-        val hasNote = state.content.notesPreview.isNotBlank() || state.content.notesSnippet.isNotBlank()
-        view.findViewById<TextView>(R.id.notesTitle).text = if (hasNote) {
-            state.content.notesPreview
-        } else {
-            body.context.getString(R.string.notes_default_title)
-        }
-        view.findViewById<TextView>(R.id.notesSnippet).text = if (hasNote) {
-            state.content.notesSnippet
-        } else {
-            body.context.getString(R.string.notes_default_content)
-        }
-        view.findViewById<TextView>(R.id.notesWhen).text = state.content.notesWhen
+        val folder = bindNotesLabel(view, card, state)
+        val latest = notesInFolder(state.content.notes, folder).firstOrNull()
+        view.findViewById<TextView>(R.id.notesTitle).text =
+            latest?.title ?: body.context.getString(R.string.notes_default_title)
+        view.findViewById<TextView>(R.id.notesSnippet).text =
+            latest?.snippet ?: body.context.getString(R.string.notes_default_content)
+        view.findViewById<TextView>(R.id.notesWhen).text = latest?.let { formatNotesWhen(it.updatedAt) }.orEmpty()
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
-        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
-        root.setOnClickListener { onOpenNotes() }
+        val open = View.OnClickListener { openNotesIn(folder, latest) }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+    }
+
+    /** Shows the card's folder name in the header and returns its folder key. */
+    private fun bindNotesLabel(view: View, card: CardInstance, state: HiboardUiState): String {
+        val folder = state.noteFolderSelections[card.catalogId] ?: ALL_NOTES_FOLDER
+        view.findViewById<TextView>(R.id.notesLabel).text = noteFolderLabel(
+            state.content.noteFolders,
+            folder,
+            view.context.getString(R.string.notes_label),
+        )
+        return folder
+    }
+
+    private fun openNotesIn(folder: String, latest: NoteItem?) {
+        when {
+            folder == ALL_NOTES_FOLDER -> onOpenNotes()
+            latest != null -> onOpenNote(latest.id)
+            else -> onCreateNote()
+        }
     }
 
     private fun bindNotesWideCard(
         inflater: LayoutInflater,
         root: View,
         body: LinearLayout,
+        card: CardInstance,
         state: HiboardUiState,
     ) {
         (root as? COUICardView)?.apply {
@@ -174,10 +196,13 @@ class CardBinder(
             setContentPadding(0, 0, 0, 0)
         }
         val view = inflater.inflate(R.layout.card_notes_wide, body, true)
-        bindNotesWide(view, state.content.notesRecent, onOpenNote)
+        val folder = bindNotesLabel(view, card, state)
+        val notes = notesInFolder(state.content.notes, folder).take(WIDE_NOTES_LIMIT)
+        bindNotesWide(view, notes, onOpenNote)
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
-        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
-        root.setOnClickListener { onOpenNotes() }
+        val open = View.OnClickListener { openNotesIn(folder, notes.firstOrNull()) }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
     }
 
     private fun bindRecentApps(
@@ -448,6 +473,8 @@ private fun recentIcon(pm: PackageManager, app: ShortcutApp) = try {
 } catch (_: PackageManager.NameNotFoundException) {
     null
 }
+
+private const val WIDE_NOTES_LIMIT = 5
 
 fun launchIntent(view: View, intent: Intent?) {
     if (intent != null) {

@@ -28,6 +28,8 @@
     <string name="recent_apps_label">Recent apps</string>
     <string name="store_close">Close</string>
     <string name="store_back">Back</string>
+    <string name="edit_widget">Edit</string>
+    <string name="note_folder_title">Select folder</string>
     <string name="remove_widget">Remove widget</string>
     <string name="widget_details">Widget details</string>
     <string name="widget_details_size">Size %1$d × %2$d</string>

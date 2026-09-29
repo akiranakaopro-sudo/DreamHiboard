@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.data.BoardRepository
+import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.CardEngineRegistry
 import gd.app.hiboard.engine.FlashlightToggle
 import gd.app.hiboard.engine.RecorderCommand
@@ -47,6 +48,7 @@ data class HiboardUiState(
     val storeDetailId: String? = null,
     val storeSearchOpen: Boolean = false,
     val revealCatalogId: String? = null,
+    val noteFolderSelections: Map<String, String> = emptyMap(),
 )
 
 class HiboardViewModel(
@@ -82,6 +84,11 @@ class HiboardViewModel(
         }
         viewModelScope.launch {
             engines.notesRevisions.collect { refreshContent(CardAction.Bind) }
+        }
+        viewModelScope.launch {
+            engines.noteFolderSelections.collect { selections ->
+                _state.update { it.copy(noteFolderSelections = selections) }
+            }
         }
         viewModelScope.launch {
             engines.weatherSnapshot.collect { refreshContent(CardAction.Bind) }
@@ -282,7 +289,10 @@ class HiboardViewModel(
             )
         }
         viewModelScope.launch { repository.unsubscribe(catalogId, keepIds) }
+        engines.setNoteFolder(catalogId, ALL_NOTES_FOLDER)
     }
+
+    fun setNoteFolder(catalogId: String, folder: String) = engines.setNoteFolder(catalogId, folder)
 
     fun enterEdit() {
         _state.update { if (it.editMode) it else it.copy(editMode = true, showStore = false) }

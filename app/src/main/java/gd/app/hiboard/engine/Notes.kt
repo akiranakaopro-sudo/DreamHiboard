@@ -1,5 +1,7 @@
 package gd.app.hiboard.engine
 
+import gd.app.hiboard.model.NoteFolder
+import gd.app.hiboard.model.NoteItem
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -10,9 +12,21 @@ data class NotesPreview(
     val title: String = "",
     val snippet: String = "",
     val updatedAt: Long = 0L,
+    val folder: String = "",
 ) {
     val hasText: Boolean
         get() = title.isNotBlank() || snippet.isNotBlank()
+}
+
+/** Folder key meaning every note; DreamNote folder keys are never blank. */
+const val ALL_NOTES_FOLDER = ""
+
+fun notesInFolder(notes: List<NoteItem>, folder: String): List<NoteItem> =
+    if (folder == ALL_NOTES_FOLDER) notes else notes.filter { it.folder.equals(folder, ignoreCase = true) }
+
+fun noteFolderLabel(folders: List<NoteFolder>, folder: String, allNotes: String): String {
+    if (folder == ALL_NOTES_FOLDER) return allNotes
+    return folders.firstOrNull { it.key.equals(folder, ignoreCase = true) }?.label ?: folder
 }
 
 fun pickDisplayNote(notes: List<NotesPreview>): NotesPreview {

@@ -108,6 +108,13 @@ data class NoteItem(
     val id: Long = 0L,
     val title: String = "",
     val snippet: String = "",
+    val folder: String = "",
+    val updatedAt: Long = 0L,
+)
+
+data class NoteFolder(
+    val key: String,
+    val label: String,
 )
 
 data class CardContent(
@@ -116,10 +123,8 @@ data class CardContent(
     val weatherSummary: String = "",
     val weatherCondition: String = "",
     val weatherDays: List<WeatherDayContent> = emptyList(),
-    val notesPreview: String = "",
-    val notesSnippet: String = "",
-    val notesWhen: String = "",
-    val notesRecent: List<NoteItem> = emptyList(),
+    val notes: List<NoteItem> = emptyList(),
+    val noteFolders: List<NoteFolder> = emptyList(),
     val flashlightOn: Boolean = false,
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,

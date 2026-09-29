@@ -50,6 +50,7 @@ import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
 import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.databinding.ViewHiboardBinding
+import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.FlashlightToggle
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderSendResult
@@ -58,6 +59,7 @@ import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.NoteFolder
 import gd.app.hiboard.model.RecorderUiState
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
@@ -194,26 +196,25 @@ class HiboardView @JvmOverloads constructor(
     private fun showCardMenu(card: CardInstance, anchor: View, viewModel: HiboardViewModel) {
         dismissCardMenu()
         val popup = COUIPopupListWindow(context)
+        val actions = buildList {
+            if (card.engine == CardEngineId.Notes) {
+                add(Triple(R.string.edit_widget, R.drawable.ic_widget_edit) { showNoteFolderPicker(card, viewModel) })
+            }
+            add(Triple(R.string.remove_widget, R.drawable.ic_widget_remove) { viewModel.unsubscribe(card.catalogId) })
+            add(Triple(R.string.widget_details, R.drawable.ic_widget_info) { showWidgetDetails(card) })
+        }
         popup.setItemList(
-            listOf(
+            actions.map { (title, icon, _) ->
                 PopupListItem.Builder()
-                    .setTitle(context.getString(R.string.remove_widget))
-                    .setIcon(ContextCompat.getDrawable(context, R.drawable.ic_widget_remove))
+                    .setTitle(context.getString(title))
+                    .setIcon(ContextCompat.getDrawable(context, icon))
                     .setForceTint(PopupListItem.MENU_ITEM_FORCE_TINT_NONE)
-                    .build(),
-                PopupListItem.Builder()
-                    .setTitle(context.getString(R.string.widget_details))
-                    .setIcon(ContextCompat.getDrawable(context, R.drawable.ic_widget_info))
-                    .setForceTint(PopupListItem.MENU_ITEM_FORCE_TINT_NONE)
-                    .build(),
-            ),
+                    .build()
+            },
         )
         popup.setOnItemClickListener { _, _, position, _ ->
             popup.dismiss()
-            when (position) {
-                0 -> viewModel.unsubscribe(card.catalogId)
-                1 -> showWidgetDetails(card)
-            }
+            actions.getOrNull(position)?.third?.invoke()
         }
         popup.setOnDismissListener { if (cardMenu === popup) cardMenu = null }
         cardMenu = popup
@@ -226,6 +227,22 @@ class HiboardView @JvmOverloads constructor(
         } else {
             anchor.post { present() }
         }
+    }
+
+    private fun showNoteFolderPicker(card: CardInstance, viewModel: HiboardViewModel) {
+        val state = viewModel.state.value
+        val folders = listOf(NoteFolder(ALL_NOTES_FOLDER, context.getString(R.string.notes_label))) +
+            state.content.noteFolders
+        val current = state.noteFolderSelections[card.catalogId] ?: ALL_NOTES_FOLDER
+        val checked = folders.indexOfFirst { it.key.equals(current, ignoreCase = true) }.coerceAtLeast(0)
+        COUIAlertDialogBuilder(context)
+            .setTitle(R.string.note_folder_title)
+            .setSingleChoiceItems(folders.map { it.label }.toTypedArray(), checked) { dialog, which ->
+                viewModel.setNoteFolder(card.catalogId, folders[which].key)
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showWidgetDetails(card: CardInstance) {
@@ -383,6 +400,7 @@ class HiboardView @JvmOverloads constructor(
         val gridKey = listOf(
             state.board,
             state.editMode,
+            state.noteFolderSelections,
             state.content.copy(
                 flashlightOn = false,
                 flashlightAvailable = false,
