@@ -27,8 +27,8 @@ data class MusicNow(
 ) {
     companion object {
         val SAMPLE = MusicNow(
-            title = "跟世界说晚安",
-            artist = "胡彦斌 - 前途无量",
+            title = "Title",
+            artist = "author",
             playing = false,
             positionMs = 0L,
             durationMs = 0L,

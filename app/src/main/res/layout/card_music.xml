@@ -148,6 +148,6 @@
             android:layout_height="wrap_content"
             android:contentDescription="@string/music_favorite"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_music_heart" />
+            android:src="@drawable/ic_music_star" />
     </gd.app.hiboard.ui.MusicCardLayout>
 </merge>
