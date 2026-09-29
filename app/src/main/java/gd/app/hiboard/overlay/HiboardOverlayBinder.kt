@@ -93,13 +93,6 @@ class HiboardOverlayBinder(
      */
     private var windowParked = true
     /**
-     * After [warmOverlayOffscreen], keep the window at x=0 with the surface
-     * shown and hide via plate alpha + content translation only. Re-parking or
-     * INVISIBLE→VISIBLE on open pays a system hitch Oppo's in-process Assist
-     * never hits mid-gesture.
-     */
-    private var hideInPlace = false
-    /**
      * Oppo fixed Assist plate (DecorView / blur bg). Opaque #8397cc color;
      * translucency via [View.setAlpha] — NOT ColorDrawable.setAlpha (that flips
      * window opaque↔translucent composition and blinks while dragging).
@@ -116,6 +109,14 @@ class HiboardOverlayBinder(
      * spring-open after the user already reversed (AIDL oneway race).
      */
     private val scrollGen = AtomicInteger(0)
+    /**
+     * Launcher overscroll starts at 0 even when it interrupts a close settle that
+     * is still visible; this offset keeps that reopen continuous from [progress].
+     */
+    @Volatile
+    private var launcherScrollOffset = 0f
+    @Volatile
+    private var launcherOffsetArmed = false
 
     private val applyPendingProgressRunnable = Runnable {
         progressApplyScheduled = false
@@ -154,6 +155,7 @@ class HiboardOverlayBinder(
         if (!acceptingUserScroll) {
             sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS
             markScrollSessionStart()
+            armLauncherOffset()
         }
         acceptingUserScroll = true
         scrolling = true
@@ -180,7 +182,7 @@ class HiboardOverlayBinder(
         if (closeDragging) return
         // Oppo launcher sends undamped |amount|/width (may be > 1). Map past-open
         // through COUI closed-form damp; finger-driven close already sends damped p.
-        val visual = mapLauncherScrollToVisual(p)
+        var visual = mapLauncherScrollToVisual(p)
         // Post-finger workspace rubber-band must not yank an open settle to 0.
         if (!acceptingUserScroll && settleTarget >= 1f && visual < progress) {
             return
@@ -196,6 +198,7 @@ class HiboardOverlayBinder(
             // weak left tip at past-open wrongly settled closed.
             sessionFromOpen = progress >= SESSION_FROM_OPEN_PROGRESS
             markScrollSessionStart()
+            armLauncherOffset()
             mainHandler.post {
                 if (closeDragging) {
                     acceptingUserScroll = false
@@ -213,6 +216,14 @@ class HiboardOverlayBinder(
                 }
             }
         }
+        if (launcherOffsetArmed) {
+            launcherOffsetArmed = false
+            launcherScrollOffset = (progress - visual).coerceAtLeast(0f)
+        }
+        if (launcherScrollOffset > 0f) {
+            visual = (visual + launcherScrollOffset)
+                .coerceAtMost(1f + CouiOverscroll.MAX_FRACTION)
+        }
         sampleScrollVelocity(visual)
         pendingProgress = visual
         if (Looper.myLooper() == mainHandler.looper) {
@@ -227,6 +238,11 @@ class HiboardOverlayBinder(
         if (progressApplyScheduled) return
         progressApplyScheduled = true
         mainHandler.post(applyPendingProgressRunnable)
+    }
+
+    private fun armLauncherOffset() {
+        launcherScrollOffset = 0f
+        launcherOffsetArmed = settleTarget == 0f && progress > 0.001f
     }
 
     /** Stamp gesture clock once per finger session (open or close). */
@@ -269,6 +285,8 @@ class HiboardOverlayBinder(
      */
     private fun scheduleFinishScroll(gen: Int, velocity: Float) {
         acceptingUserScroll = false
+        launcherOffsetArmed = false
+        launcherScrollOffset = 0f
         val run = Runnable {
             if (gen != scrollGen.get()) {
                 Log.i(TAG, "drop stale endScroll gen=$gen now=${scrollGen.get()}")
@@ -487,7 +505,6 @@ class HiboardOverlayBinder(
             storeSlide = null
             attached = false
             windowParked = true
-            hideInPlace = false
             notifyStatus(0)
         }
     }
@@ -506,7 +523,6 @@ class HiboardOverlayBinder(
         windowInteractive = false
         overscrollLayersOn = false
         windowParked = true
-        hideInPlace = false
         mainHandler.removeCallbacks(applyPendingProgressRunnable)
         lastNotifiedProgress = -1f
         try {
@@ -582,7 +598,7 @@ class HiboardOverlayBinder(
     }
 
     /**
-     * Oppo OverlayWindow: `wmLp.x = if (p < 0.01) -width else 0`.
+     * Oppo Assist window: x = -width while closed, 0 while open.
      * Only crosses the threshold — never per-frame updateViewLayout.
      */
     private fun syncWindowParked(parked: Boolean) {
@@ -616,7 +632,6 @@ class HiboardOverlayBinder(
         windowInteractive = false
         overscrollLayersOn = false
         windowParked = true
-        hideInPlace = false
         plateView = null
         contentSlide = null
         storeSlide = null
@@ -649,19 +664,16 @@ class HiboardOverlayBinder(
     }
 
     /**
-     * First-swipe hitch fix: enter + compose, unpark, then keep the surface
-     * shown. Oppo Assist never toggles window visibility on open — only alpha /
-     * scroll. Our INVISIBLE→VISIBLE was still a SurfaceFlinger show hitch after
-     * hideInPlace removed the park cost.
+     * Pay enter + first render once while parked off-screen, then hide again.
+     * Resting closed must stay parked AND hidden (Oppo Assist: x = -width,
+     * View.GONE): a shown full-screen window from another UID makes
+     * InputDispatcher drop touches to the IME as occluded/untrusted.
      */
     private fun warmOverlayOffscreen() {
         if (!attached || progress > 0.001f) return
         val view = hostView ?: return
         ensureEntered()
-        // Unpark first so the costly updateViewLayout happens before any swipe.
-        syncWindowParked(false)
-        hideInPlace = true
-        // Resting closed: surface shown, plate clear, content off-screen, no touch.
+        syncWindowParked(true)
         setPlateAlpha(0f)
         val w = windowWidth.toFloat().coerceAtLeast(1f)
         contentSlide?.translationX = -w
@@ -669,10 +681,12 @@ class HiboardOverlayBinder(
         view.alpha = 1f
         view.visibility = View.VISIBLE
         syncTouchable(false)
-        view.post {
-            if (!attached || progress > 0.001f) return@post
-            view.invalidate()
-            Log.i(TAG, "overlay warmed (surface kept visible)")
+        view.postOnAnimation {
+            view.post {
+                if (!attached || progress > 0.001f || acceptingUserScroll) return@post
+                view.visibility = View.INVISIBLE
+                Log.i(TAG, "overlay warmed (parked + hidden)")
+            }
         }
     }
 
@@ -818,13 +832,8 @@ class HiboardOverlayBinder(
             setPlateAlpha(0f)
             contentSlide?.translationX = -w
             storeSlide?.translationX = -w
-            if (hideInPlace) {
-                // Keep surface shown — only alpha/translation change on next open.
-                view.visibility = View.VISIBLE
-            } else {
-                view.visibility = View.INVISIBLE
-                syncWindowParked(true)
-            }
+            view.visibility = View.INVISIBLE
+            syncWindowParked(true)
         } else if (visual <= 1f) {
             // Finger path: do not flip LAYER_TYPE (crossing 1.0 blinked solid↔clear).
             if (!fromUser) syncOverscrollLayers(false)
@@ -832,9 +841,7 @@ class HiboardOverlayBinder(
             contentSlide?.translationX = contentX
             storeSlide?.translationX = contentX
             setPlateAlpha(visual.coerceIn(0f, 1f))
-            if (!hideInPlace) {
-                syncWindowParked(false)
-            }
+            syncWindowParked(false)
             view.visibility = View.VISIBLE
         } else {
             if (!fromUser) syncOverscrollLayers(true)
@@ -842,9 +849,7 @@ class HiboardOverlayBinder(
             contentSlide?.translationX = slideX
             storeSlide?.translationX = slideX
             setPlateAlpha(1f)
-            if (!hideInPlace) {
-                syncWindowParked(false)
-            }
+            syncWindowParked(false)
             view.visibility = View.VISIBLE
         }
 
@@ -904,12 +909,15 @@ class HiboardOverlayBinder(
      * Panel takes horizontal close/reopen once it covers enough of the screen.
      * Not while launcher finger is still driving [acceptingUserScroll].
      * Oppo: settle is interruptible — keep touch + close-gesture alive while the
-     * spring runs so swipe-right mid-close can reopen.
+     * spring runs so swipe-right mid-close can reopen. Once a close settle is
+     * mostly done, touch goes back to home so the next swipe pages the workspace
+     * (a reopen from there continues via [launcherScrollOffset]).
      */
     private fun shouldPanelBeInteractive(p: Float): Boolean {
         if (closeDragging) return true
         if (acceptingUserScroll) return false
         if (p <= 0.001f) return false
+        if (settleTarget == 0f && p < PANEL_INTERACTIVE_THRESHOLD) return false
         if (settleSpring?.isRunning == true || settleTarget >= 0f) return true
         return p >= PANEL_INTERACTIVE_THRESHOLD
     }
