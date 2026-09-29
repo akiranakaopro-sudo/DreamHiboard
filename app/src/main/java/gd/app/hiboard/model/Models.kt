@@ -115,6 +115,7 @@ data class NoteItem(
 data class NoteFolder(
     val key: String,
     val label: String,
+    val count: Int = 0,
 )
 
 data class CardContent(

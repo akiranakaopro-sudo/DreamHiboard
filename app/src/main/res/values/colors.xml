@@ -59,4 +59,12 @@
     <color name="hiboard_clock_face">#FFFFFFFF</color>
     <color name="hiboard_weather_day_label">#A6FFFFFF</color>
     <color name="hiboard_weather_range_slash">#66FFFFFF</color>
+    <color name="hiboard_picker_bg">#FFF0F1F3</color>
+    <color name="hiboard_picker_field">#FFDDDEE0</color>
+    <color name="hiboard_picker_hint">#FF86878A</color>
+    <color name="hiboard_picker_item">#FFFFFFFF</color>
+    <color name="hiboard_picker_title">#FF1A1A1A</color>
+    <color name="hiboard_picker_subtitle">#FF8A8A8A</color>
+    <color name="hiboard_picker_accent">#FF0466EF</color>
+    <color name="hiboard_picker_radio_off">#FFBFC1C0</color>
 </resources>

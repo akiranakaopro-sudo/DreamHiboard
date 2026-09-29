@@ -231,18 +231,12 @@ class HiboardView @JvmOverloads constructor(
 
     private fun showNoteFolderPicker(card: CardInstance, viewModel: HiboardViewModel) {
         val state = viewModel.state.value
-        val folders = listOf(NoteFolder(ALL_NOTES_FOLDER, context.getString(R.string.notes_label))) +
-            state.content.noteFolders
+        val folders = state.content.noteFolders
+        val total = if (folders.isEmpty()) state.content.notes.size else folders.sumOf { it.count }
+        val notebooks = listOf(NoteFolder(ALL_NOTES_FOLDER, context.getString(R.string.notes_label), total)) + folders
         val current = state.noteFolderSelections[card.catalogId] ?: ALL_NOTES_FOLDER
-        val checked = folders.indexOfFirst { it.key.equals(current, ignoreCase = true) }.coerceAtLeast(0)
-        COUIAlertDialogBuilder(context)
-            .setTitle(R.string.note_folder_title)
-            .setSingleChoiceItems(folders.map { it.label }.toTypedArray(), checked) { dialog, which ->
-                viewModel.setNoteFolder(card.catalogId, folders[which].key)
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        val selected = notebooks.firstOrNull { it.key.equals(current, ignoreCase = true) }?.key ?: ALL_NOTES_FOLDER
+        NotebookPickerDialog(context, notebooks, selected) { viewModel.setNoteFolder(card.catalogId, it) }.show()
     }
 
     private fun showWidgetDetails(card: CardInstance) {

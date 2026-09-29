@@ -120,7 +120,9 @@ class NotesRepository(context: Context) {
                 buildList {
                     while (cursor.moveToNext()) {
                         val key = string(cursor, "key")
-                        if (key.isNotEmpty()) add(NoteFolder(key, string(cursor, "label").ifEmpty { key }))
+                        if (key.isNotEmpty()) {
+                            add(NoteFolder(key, string(cursor, "label").ifEmpty { key }, long(cursor, "count").toInt()))
+                        }
                     }
                 }
             }.orEmpty()
