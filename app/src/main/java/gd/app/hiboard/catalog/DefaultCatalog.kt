@@ -112,7 +112,7 @@ object DefaultCatalog {
             description = "Favorite people in one row. Tap a person to open them.",
             size = CardSize.FullByTwo,
             engine = CardEngineId.Contacts,
-            defaultSubscribed = false,
+            defaultSubscribed = true,
         ),
         CardCatalogEntry(
             id = "music",
@@ -122,7 +122,7 @@ object DefaultCatalog {
             description = "Cover, progress, and playback for the current track.",
             size = CardSize.FullByTwo,
             engine = CardEngineId.Music,
-            defaultSubscribed = false,
+            defaultSubscribed = true,
         ),
         CardCatalogEntry(
             id = "calendar",
@@ -132,7 +132,7 @@ object DefaultCatalog {
             description = "This month, with today marked. Tap to open Calendar.",
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Calendar,
-            defaultSubscribed = false,
+            defaultSubscribed = true,
         ),
         CardCatalogEntry(
             id = "clock",
@@ -142,7 +142,7 @@ object DefaultCatalog {
             description = "Analog clock set to the system time.",
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Clock,
-            defaultSubscribed = false,
+            defaultSubscribed = true,
             storeCategory = "Clock",
         ),
         CardCatalogEntry(
@@ -206,8 +206,20 @@ object DefaultCatalog {
 
     fun lockedIds(): List<String> = entries.filter { it.locked }.map { it.id }
 
+    /** Seat order of the default board; the grid packs cards in this order. */
+    private val defaultBoardOrder = listOf(
+        "weather",
+        "storage", "clock",
+        "notes", "flashlight",
+        "calendar", "recorder",
+        "contacts",
+        "music",
+    )
+
     fun defaultBoardIds(): List<String> =
-        entries.filter { it.defaultSubscribed && !it.locked }.map { it.id }
+        entries.filter { it.defaultSubscribed && !it.locked }
+            .sortedBy { entry -> defaultBoardOrder.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
+            .map { it.id }
 
     fun defaultRecommendedIds(): List<String> =
         entries.filter { !it.defaultSubscribed && !it.locked }.map { it.id }
