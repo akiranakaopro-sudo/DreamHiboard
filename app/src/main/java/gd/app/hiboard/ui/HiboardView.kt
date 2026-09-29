@@ -968,9 +968,7 @@ class HiboardView @JvmOverloads constructor(
         host.removeAllViews()
         fun addPreview() {
             if (!host.isAttachedToWindow) return
-            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
-                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
-                    .coerceAtLeast(1)
+            val boardWidth = storeDetailBoardWidth(host)
             val (cardW, cardH) = storePreviewDims(entry, boardWidth, resources.displayMetrics.density)
             host.removeAllViews()
             host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
@@ -983,9 +981,7 @@ class HiboardView @JvmOverloads constructor(
         host.removeAllViews()
         fun addPager() {
             if (!host.isAttachedToWindow) return
-            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
-                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
-                    .coerceAtLeast(1)
+            val boardWidth = storeDetailBoardWidth(host)
             host.clipChildren = true
             host.clipToPadding = true
             host.removeAllViews()
@@ -1027,6 +1023,13 @@ class HiboardView @JvmOverloads constructor(
             pager.setCurrentItem(index, false)
         }
         if (host.width > 0) addPager() else host.post { addPager() }
+    }
+
+    /** The pager spans the sheet so pages swipe edge to edge; cards keep the inset board size. */
+    private fun storeDetailBoardWidth(host: View): Int {
+        val density = resources.displayMetrics.density
+        val width = host.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return (width - (56 * density).toInt()).coerceAtLeast(1)
     }
 
     /** COUI measures a full slot after the last dot, so the ink sits left of the view. */
