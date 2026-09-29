@@ -52,7 +52,7 @@ class MusicCardView @JvmOverloads constructor(
     private var shown = MusicNow.SAMPLE
     private val liked = mutableSetOf<String>()
     private var artApplied = false
-    private var appliedArt: Bitmap? = null
+    private var appliedArtKey: List<Any?>? = null
     private var sourceApplied = false
     private var appliedPackage: String? = null
     private var appliedPlaying: Boolean? = null
@@ -177,14 +177,20 @@ class MusicCardView @JvmOverloads constructor(
             favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
         }
         rhythm.playing = shown.playing
-        bindArt(shown.art)
+        bindArt(shown)
         bindSource(shown.packageName)
     }
 
-    private fun bindArt(art: Bitmap?) {
-        if (artApplied && art === appliedArt) return
+    /**
+     * Every poll parcels a fresh copy of the same cover, so identity says nothing. Reloading it
+     * re-uploads the texture and re-runs the blur, so only a new track or cover size counts.
+     */
+    private fun bindArt(now: MusicNow) {
+        val art = now.art
+        val key = listOf(now.packageName, now.title, now.artist, art?.width, art?.height)
+        if (artApplied && key == appliedArtKey) return
         artApplied = true
-        appliedArt = art
+        appliedArtKey = key
         if (art == null) {
             backgroundView.setImageResource(R.drawable.bg_music_card)
             clearBlur()

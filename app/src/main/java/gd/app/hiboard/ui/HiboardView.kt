@@ -57,6 +57,7 @@ import gd.app.hiboard.engine.RecorderSendResult
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
+import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.NoteFolder
@@ -73,6 +74,7 @@ class HiboardView @JvmOverloads constructor(
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
+    private var lastContent: CardContent? = null
     private var lastNoteFolders: Map<String, String> = emptyMap()
     private var lastFlashKey: Any? = null
     private var lastRecorderKey: RecorderUiState? = null
@@ -159,6 +161,7 @@ class HiboardView @JvmOverloads constructor(
         binding.searchBar.setOnClickListener {
             launchIntent(this, viewModel.openQuickSearch())
         }
+        binding.boardScroll.onScrollMoved = { layerCardsWhileScrolling() }
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
         binding.subscribedGrid.onAddSlotClick = { viewModel.openStore() }
         binding.subscribedGrid.onCardLongPress = { card, anchor ->
@@ -254,6 +257,23 @@ class HiboardView @JvmOverloads constructor(
             .setPositiveButton(android.R.string.ok, null)
             .show()
     }
+
+    /**
+     * Re-rendering every card (blurred music art, shadowed clock hands) each frame is what makes
+     * the scroll heavy; cached layers for the cards on screen are dropped once it settles.
+     */
+    private fun layerCardsWhileScrolling() {
+        val grid = binding.subscribedGrid
+        val scroll = binding.boardScroll
+        val gridTop = grid.top + (grid.parent as View).top
+        val margin = scroll.height / 2
+        val top = scroll.scrollY - gridTop - margin
+        grid.setScrollLayers(top, top + scroll.height + margin * 2)
+        removeCallbacks(dropScrollLayers)
+        postDelayed(dropScrollLayers, SCROLL_LAYER_HOLD_MS)
+    }
+
+    private val dropScrollLayers = Runnable { binding.subscribedGrid.setScrollLayers(1, 0) }
 
     private fun dismissCardMenu() {
         cardMenu?.dismiss()
@@ -392,18 +412,16 @@ class HiboardView @JvmOverloads constructor(
         val dragging = binding.subscribedGrid.isDragging
         val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
         val recorderKey = state.content.recorderState
-        val gridKey = listOf(
-            state.board,
-            state.editMode,
-            state.content.copy(
-                flashlightOn = false,
-                flashlightAvailable = false,
-                recorderState = RecorderUiState.Idle,
-                recorderElapsedMs = 0L,
-            ),
+        val gridKey = listOf(state.board, state.editMode)
+        val content = state.content.copy(
+            flashlightOn = false,
+            flashlightAvailable = false,
+            recorderState = RecorderUiState.Idle,
+            recorderElapsedMs = 0L,
         )
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
+            lastContent = content
             lastFlashKey = flashKey
             lastRecorderKey = recorderKey
             lastNoteFolders = state.noteFolderSelections
@@ -411,12 +429,19 @@ class HiboardView @JvmOverloads constructor(
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
         } else if (!dragging) {
-            if (state.noteFolderSelections != lastNoteFolders) {
-                val previous = lastNoteFolders
+            val previousContent = lastContent
+            val previousFolders = lastNoteFolders
+            if (content != previousContent || state.noteFolderSelections != previousFolders) {
+                lastContent = content
                 lastNoteFolders = state.noteFolderSelections
+                // Rebuilding every card blocks the UI thread for most of a second, so a refresh
+                // on return (recents always change) only swaps the cards whose data changed.
                 state.board.subscribed.forEach { card ->
-                    if (card.engine != CardEngineId.Notes) return@forEach
-                    if (previous[card.catalogId] == state.noteFolderSelections[card.catalogId]) return@forEach
+                    val changed = previousContent == null ||
+                        cardData(card.engine, previousContent) != cardData(card.engine, content) ||
+                        (card.engine == CardEngineId.Notes &&
+                            previousFolders[card.catalogId] != state.noteFolderSelections[card.catalogId])
+                    if (!changed) return@forEach
                     val view = binder.create(binding.subscribedGrid, card, state, recommend = false)
                     binding.subscribedGrid.replaceCard(card, view)
                 }
@@ -436,6 +461,29 @@ class HiboardView @JvmOverloads constructor(
                 viewModel.consumeReveal()
             }
         }
+    }
+
+    /** The part of [content] a card of [engine] draws; flashlight and recorder update in place. */
+    private fun cardData(engine: CardEngineId, content: CardContent): Any = when (engine) {
+        CardEngineId.Weather, CardEngineId.WeatherClock, CardEngineId.WeatherDial -> listOf(
+            content.weatherLocation,
+            content.weatherTempC,
+            content.weatherSummary,
+            content.weatherCondition,
+            content.weatherDays,
+        )
+        CardEngineId.Notes -> content.notes to content.noteFolders
+        CardEngineId.RecentApps -> content.recentApps
+        CardEngineId.Storage -> content.storageUsedBytes to content.storageTotalBytes
+        CardEngineId.Contacts -> Triple(content.contacts, content.contactsPermitted, content.contactsReady)
+        CardEngineId.Flashlight,
+        CardEngineId.Recorder,
+        CardEngineId.Calendar,
+        CardEngineId.Clock,
+        CardEngineId.LocalTime,
+        CardEngineId.RomanClock,
+        CardEngineId.Music,
+        -> Unit
     }
 
     private fun bindStoreSheetDrag(viewModel: HiboardViewModel) {
@@ -1259,6 +1307,7 @@ class HiboardView @JvmOverloads constructor(
     private companion object {
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
+        const val SCROLL_LAYER_HOLD_MS = 300L
         const val CONTACTS_PERMISSION = 44
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L

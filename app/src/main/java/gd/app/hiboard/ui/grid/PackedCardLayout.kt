@@ -185,6 +185,18 @@ class PackedCardLayout @JvmOverloads constructor(
         super.dispatchDraw(canvas)
     }
 
+    /**
+     * While the board scrolls, cards within [top]..[bottom] (grid coordinates) render into
+     * hardware layers so each frame only moves cached textures; [top] > [bottom] drops them all.
+     */
+    fun setScrollLayers(top: Int, bottom: Int) {
+        cardViews.forEach { child ->
+            val near = child.bottom >= top && child.top <= bottom
+            val type = if (near) LAYER_TYPE_HARDWARE else LAYER_TYPE_NONE
+            if (child.layerType != type) child.setLayerType(type, null)
+        }
+    }
+
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
             stoleStream = false
