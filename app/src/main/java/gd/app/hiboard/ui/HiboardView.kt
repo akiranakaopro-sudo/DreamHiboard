@@ -1025,11 +1025,12 @@ class HiboardView @JvmOverloads constructor(
         if (host.width > 0) addPager() else host.post { addPager() }
     }
 
-    /** The pager spans the sheet so pages swipe edge to edge; cards keep the inset board size. */
+    /** Previews are sized from the board grid width so they match the cards on the board. */
     private fun storeDetailBoardWidth(host: View): Int {
+        binding.subscribedGrid.width.takeIf { it > 0 }?.let { return it }
         val density = resources.displayMetrics.density
         val width = host.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
-        return (width - (56 * density).toInt()).coerceAtLeast(1)
+        return (width - (32 * density).toInt()).coerceAtLeast(1)
     }
 
     /** COUI measures a full slot after the last dot, so the ink sits left of the view. */
@@ -1077,7 +1078,7 @@ class HiboardView @JvmOverloads constructor(
             return
         }
         val boardWidth = storeGalleryBoardWidth(list)
-        val gap = (12 * density).roundToInt()
+        val gap = (10 * density).roundToInt()
         val pending = mutableListOf<CardCatalogEntry>()
         fun flushRow() {
             if (pending.isEmpty()) return
@@ -1091,18 +1092,18 @@ class HiboardView @JvmOverloads constructor(
                 )
             }
             pending.forEachIndexed { index, entry ->
-                val block = storeWidgetBlock(row, entry, viewModel, (boardWidth - gap).coerceAtLeast(1))
+                val block = storeWidgetBlock(row, entry, viewModel, boardWidth)
                 block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    if (pending.size > 1) {
-                        if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
-                    }
+                    if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
                 }
                 row.addView(block)
             }
             if (pending.size == 1) {
                 row.addView(
                     View(context),
-                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
+                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                        marginStart = gap / 2
+                    },
                 )
             }
             list.addView(row)
@@ -1121,6 +1122,7 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun storeGalleryBoardWidth(list: LinearLayout): Int {
+        binding.subscribedGrid.width.takeIf { it > 0 }?.let { return it }
         val pad = list.paddingLeft + list.paddingRight
         list.width.takeIf { it > pad }?.let { return it - pad }
         binding.storePager.width.takeIf { it > pad }?.let { return it - pad }
