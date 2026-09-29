@@ -83,9 +83,17 @@ class MusicCardView @JvmOverloads constructor(
         play = findViewById(R.id.musicPlay)
         next = findViewById(R.id.musicNext)
         favorite = findViewById(R.id.musicFavorite)
-        cover.outlineProvider = roundOutline(8f)
+        cover.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, view.height * MusicCardLayout.COVER_CORNER)
+            }
+        }
         cover.clipToOutline = true
-        sourceIcon.outlineProvider = roundOutline(8f)
+        sourceIcon.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setOval(0, 0, view.width, view.height)
+            }
+        }
         sourceIcon.clipToOutline = true
         titleView.isSelected = true
         render(MusicNow.SAMPLE)
@@ -179,7 +187,7 @@ class MusicCardView @JvmOverloads constructor(
         backgroundView.setImageBitmap(art)
         blurBackground()
         cover.setImageBitmap(art)
-        scrim.setBackgroundColor(0x33000000)
+        scrim.setBackgroundColor(0x59000000)
     }
 
     private fun bindSource(packageName: String?) {
@@ -206,13 +214,6 @@ class MusicCardView @JvmOverloads constructor(
     private fun clearBlur() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
         backgroundView.setRenderEffect(null)
-    }
-
-    private fun roundOutline(radiusDp: Float) = object : ViewOutlineProvider() {
-        override fun getOutline(view: View, outline: Outline) {
-            val radius = radiusDp * resources.displayMetrics.density
-            outline.setRoundRect(0, 0, view.width, view.height, radius)
-        }
     }
 }
 
@@ -250,7 +251,7 @@ class MusicRhythmView @JvmOverloads constructor(
 }
 
 fun bindMusicCard(card: COUICardView, body: LinearLayout, live: Boolean) {
-    card.setCardBackgroundColor(0xFF6E5338.toInt())
+    card.setCardBackgroundColor(0xFF1E2C36.toInt())
     card.setContentPadding(0, 0, 0, 0)
     card.clipToOutline = true
     val music = MusicCardView(body.context)
