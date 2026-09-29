@@ -33,6 +33,8 @@ enum class CardEngineId {
     Clock,
     WeatherClock,
     LocalTime,
+    RomanClock,
+    WeatherDial,
     Music,
 }
 
@@ -102,15 +104,28 @@ data class WeatherDayContent(
     val highC: Int = 0,
 )
 
+data class NoteItem(
+    val id: Long = 0L,
+    val title: String = "",
+    val snippet: String = "",
+    val folder: String = "",
+    val updatedAt: Long = 0L,
+)
+
+data class NoteFolder(
+    val key: String,
+    val label: String,
+    val count: Int = 0,
+)
+
 data class CardContent(
     val weatherLocation: String = "",
     val weatherTempC: Int = 22,
     val weatherSummary: String = "",
     val weatherCondition: String = "",
     val weatherDays: List<WeatherDayContent> = emptyList(),
-    val notesPreview: String = "",
-    val notesSnippet: String = "",
-    val notesWhen: String = "",
+    val notes: List<NoteItem> = emptyList(),
+    val noteFolders: List<NoteFolder> = emptyList(),
     val flashlightOn: Boolean = false,
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,

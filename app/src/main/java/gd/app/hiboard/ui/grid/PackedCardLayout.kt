@@ -114,6 +114,18 @@ class PackedCardLayout @JvmOverloads constructor(
         requestLayout()
     }
 
+    /** Swaps one card's view in place, keeping every other card as it is. */
+    fun replaceCard(card: CardInstance, view: View) {
+        if (isDragging) return
+        val index = cardViews.indexOfFirst { it.tag == card.instanceId }
+        if (index < 0) return
+        val old = cardViews[index]
+        view.tag = card.instanceId
+        cardViews[index] = view
+        addView(view, indexOfChild(old))
+        removeView(old)
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val placements = packCards(cards, columns)
@@ -171,6 +183,18 @@ class PackedCardLayout @JvmOverloads constructor(
     override fun dispatchDraw(canvas: Canvas) {
         drawSeatOutline(canvas)
         super.dispatchDraw(canvas)
+    }
+
+    /**
+     * While the board scrolls, cards within [top]..[bottom] (grid coordinates) render into
+     * hardware layers so each frame only moves cached textures; [top] > [bottom] drops them all.
+     */
+    fun setScrollLayers(top: Int, bottom: Int) {
+        cardViews.forEach { child ->
+            val near = child.bottom >= top && child.top <= bottom
+            val type = if (near) LAYER_TYPE_HARDWARE else LAYER_TYPE_NONE
+            if (child.layerType != type) child.setLayerType(type, null)
+        }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {

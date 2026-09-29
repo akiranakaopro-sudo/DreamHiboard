@@ -18,6 +18,7 @@ import gd.app.hiboard.model.ShortcutApp
 class RecentAppsRepository(context: Context) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    @Volatile
     private var recents: List<String> = load()
 
     fun apps(): List<ShortcutApp> {

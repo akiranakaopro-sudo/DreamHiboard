@@ -9,10 +9,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.view.doOnLayout
 import com.coui.appcompat.cardview.COUICardView
 import gd.app.hiboard.R
+import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.RECENT_APP_LIMIT
+import gd.app.hiboard.engine.formatNotesWhen
+import gd.app.hiboard.engine.noteFolderLabel
+import gd.app.hiboard.engine.notesInFolder
+import gd.app.hiboard.model.NoteItem
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderStatus
 import gd.app.hiboard.engine.WeatherCondition
@@ -20,16 +24,18 @@ import gd.app.hiboard.engine.WeatherSnapshot
 import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
-import gd.app.hiboard.engine.formatStorageUsage
+import gd.app.hiboard.engine.STORAGE_DISPLAY_OFFSET_BYTES
+import gd.app.hiboard.engine.formatStoragePair
+import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.recorderPrimaryCommand
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.CardSize
 import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
-import gd.app.hiboard.model.WeatherDayContent
-
 class CardBinder(
     private val onOpenNotes: () -> Unit,
+    private val onOpenNote: (Long) -> Unit,
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
     private val onOpenStorage: () -> Unit,
@@ -51,8 +57,16 @@ class CardBinder(
         val body = root.findViewById<LinearLayout>(R.id.cardBody)
         val badge = root.findViewById<TextView>(R.id.cardBadge)
         when (card.engine) {
-            CardEngineId.Weather -> bindWeather(inflater, root, body, state)
-            CardEngineId.Notes -> bindNotes(inflater, root, body, state)
+            CardEngineId.Weather -> if (card.size == CardSize.TwoByTwo) {
+                bindWeatherSquareCard(root, body, state)
+            } else {
+                bindWeather(inflater, root, body, state)
+            }
+            CardEngineId.Notes -> if (card.size.columns >= 4) {
+                bindNotesWideCard(inflater, root, body, card, state)
+            } else {
+                bindNotes(inflater, root, body, card, state)
+            }
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
@@ -62,6 +76,8 @@ class CardBinder(
             CardEngineId.Clock -> bindClock(root, body)
             CardEngineId.WeatherClock -> bindWeatherClockCard(root, body, state)
             CardEngineId.LocalTime -> bindLocalTime(root, body)
+            CardEngineId.RomanClock -> bindRomanClockCard(root, body)
+            CardEngineId.WeatherDial -> bindWeatherDialCard(root, body, state)
             CardEngineId.Music -> bindMusic(root, body)
         }
         if (state.editMode && card.canEdit) {
@@ -89,74 +105,104 @@ class CardBinder(
             clipToOutline = true
         }
         val view = inflater.inflate(R.layout.card_weather, body, true)
-        view.findViewById<ImageView>(R.id.weatherBackground).setImageResource(weatherBackgroundRes(condition))
-        view.findViewById<TextView>(R.id.weatherLocation).text =
-            state.content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location }
-        view.findViewById<TextView>(R.id.weatherSummary).text =
-            state.content.weatherSummary.ifBlank { condition.displayName }
-        view.findViewById<ImageView>(R.id.weatherConditionIcon).setImageResource(weatherIconRes(condition))
-        view.findViewById<TextView>(R.id.weatherTemp).text = "${state.content.weatherTempC}°"
-        val forecast = view.findViewById<LinearLayout>(R.id.weatherForecast)
-        forecast.removeAllViews()
-        val days = state.content.weatherDays.ifEmpty {
+        val days = state.content.weatherDays.map { day ->
+            WeatherWideDay(day.label, WeatherCondition.from(day.condition), day.lowC, day.highC)
+        }.ifEmpty {
             WeatherSnapshot.DEFAULT.resolved().days.map { day ->
-                WeatherDayContent(day.label, day.condition.json, day.lowC, day.highC)
+                WeatherWideDay(day.label, day.condition, day.lowC, day.highC)
             }
         }
-        days.forEach { day ->
-            val item = inflater.inflate(R.layout.item_weather_day, forecast, false)
-            val dayCondition = WeatherCondition.from(day.condition)
-            item.findViewById<TextView>(R.id.weatherDayLabel).text = day.label
-            item.findViewById<ImageView>(R.id.weatherDayIcon).setImageResource(weatherIconRes(dayCondition))
-            item.findViewById<TextView>(R.id.weatherDayRange).text = "${day.lowC}° / ${day.highC}°"
-            forecast.addView(item)
-        }
+        bindWeatherWide(
+            view = view,
+            location = state.content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location },
+            summary = state.content.weatherSummary.ifBlank { condition.displayName },
+            condition = condition,
+            temperatureC = state.content.weatherTempC,
+            days = days,
+        )
     }
 
-    private fun weatherBackgroundRes(condition: WeatherCondition): Int = when (condition) {
-        WeatherCondition.Sunny -> R.drawable.bg_weather_sunny
-        WeatherCondition.Cloudy -> R.drawable.bg_weather_cloudy
-        WeatherCondition.Rain -> R.drawable.bg_weather_rain
-        WeatherCondition.Thunder -> R.drawable.bg_weather_thunder
-        WeatherCondition.Snow -> R.drawable.bg_weather_snow
-        WeatherCondition.Fog -> R.drawable.bg_weather_fog
-        WeatherCondition.Night -> R.drawable.bg_weather_night
-    }
-
-    private fun weatherIconRes(condition: WeatherCondition): Int = when (condition) {
-        WeatherCondition.Sunny -> R.drawable.ic_weather_sunny
-        WeatherCondition.Cloudy -> R.drawable.ic_weather_cloudy
-        WeatherCondition.Rain -> R.drawable.ic_weather_rain
-        WeatherCondition.Thunder -> R.drawable.ic_weather_thunder
-        WeatherCondition.Snow -> R.drawable.ic_weather_snow
-        WeatherCondition.Fog -> R.drawable.ic_weather_fog
-        WeatherCondition.Night -> R.drawable.ic_weather_night
+    private fun bindWeatherSquareCard(root: View, body: LinearLayout, state: HiboardUiState) {
+        val card = root as? COUICardView ?: return
+        val content = state.content
+        val condition = WeatherCondition.from(content.weatherCondition.ifBlank { content.weatherSummary })
+        val today = content.weatherDays.firstOrNull()
+        val fallback = WeatherSnapshot.DEFAULT.days.first()
+        bindWeatherSquare(
+            card = card,
+            body = body,
+            location = content.weatherLocation.ifBlank { WeatherSnapshot.DEFAULT.location },
+            condition = condition,
+            summary = content.weatherSummary.ifBlank { condition.displayName },
+            temperatureC = content.weatherTempC,
+            lowC = today?.lowC ?: fallback.lowC,
+            highC = today?.highC ?: fallback.highC,
+        )
     }
 
     private fun bindNotes(
         inflater: LayoutInflater,
         root: View,
         body: LinearLayout,
+        card: CardInstance,
         state: HiboardUiState,
     ) {
-        (root as? COUICardView)?.setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+            setContentPadding(0, 0, 0, 0)
+        }
         val view = inflater.inflate(R.layout.card_notes, body, true)
-        val titleView = view.findViewById<TextView>(R.id.notesTitle)
-        val snippetView = view.findViewById<TextView>(R.id.notesSnippet)
-        titleView.text = state.content.notesPreview.ifBlank {
-            body.context.getString(R.string.notes_default_title)
-        }
-        snippetView.text = state.content.notesSnippet.ifBlank {
-            body.context.getString(R.string.notes_default_content)
-        }
-        snippetView.doOnLayout { measured ->
-            val line = snippetView.lineHeight.coerceAtLeast(1)
-            snippetView.maxLines = (measured.height / line).coerceAtLeast(1)
-        }
-        view.findViewById<TextView>(R.id.notesWhen).text = state.content.notesWhen
+        val folder = bindNotesLabel(view, card, state)
+        val latest = notesInFolder(state.content.notes, folder).firstOrNull()
+        view.findViewById<TextView>(R.id.notesTitle).text =
+            latest?.title ?: body.context.getString(R.string.notes_default_title)
+        view.findViewById<TextView>(R.id.notesSnippet).text =
+            latest?.snippet ?: body.context.getString(R.string.notes_default_content)
+        view.findViewById<TextView>(R.id.notesWhen).text = latest?.let { formatNotesWhen(it.updatedAt) }.orEmpty()
         view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
-        view.findViewById<View>(R.id.notesRoot).setOnClickListener { onOpenNotes() }
-        root.setOnClickListener { onOpenNotes() }
+        val open = View.OnClickListener { openNotesIn(folder, latest) }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+    }
+
+    /** Shows the card's folder name in the header and returns its folder key. */
+    private fun bindNotesLabel(view: View, card: CardInstance, state: HiboardUiState): String {
+        val folder = state.noteFolderSelections[card.catalogId] ?: ALL_NOTES_FOLDER
+        view.findViewById<TextView>(R.id.notesLabel).text = noteFolderLabel(
+            state.content.noteFolders,
+            folder,
+            view.context.getString(R.string.notes_label),
+        )
+        return folder
+    }
+
+    private fun openNotesIn(folder: String, latest: NoteItem?) {
+        when {
+            folder == ALL_NOTES_FOLDER -> onOpenNotes()
+            latest != null -> onOpenNote(latest.id)
+            else -> onCreateNote()
+        }
+    }
+
+    private fun bindNotesWideCard(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        card: CardInstance,
+        state: HiboardUiState,
+    ) {
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_notes_card))
+            setContentPadding(0, 0, 0, 0)
+        }
+        val view = inflater.inflate(R.layout.card_notes_wide, body, true)
+        val folder = bindNotesLabel(view, card, state)
+        val notes = notesInFolder(state.content.notes, folder).take(WIDE_NOTES_LIMIT)
+        bindNotesWide(view, notes, onOpenNote)
+        view.findViewById<View>(R.id.notesAdd).setOnClickListener { onCreateNote() }
+        val open = View.OnClickListener { openNotesIn(folder, notes.firstOrNull()) }
+        view.findViewById<View>(R.id.notesRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
     }
 
     private fun bindRecentApps(
@@ -198,37 +244,34 @@ class CardBinder(
     ) {
         val on = state.content.flashlightOn
         val available = state.content.flashlightAvailable
-        val cardColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_on else R.color.hiboard_flashlight_off,
-        )
-        val labelColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_label_on else R.color.hiboard_flashlight_label_off,
-        )
-        val iconColor = body.context.getColor(
-            if (on) R.color.hiboard_flashlight_icon_on else R.color.hiboard_flashlight_icon_off,
-        )
+        val cardColor = body.context.getColor(R.color.hiboard_flashlight_off)
         (root as? COUICardView)?.apply {
             setCardBackgroundColor(cardColor)
-            val pad = (8 * body.resources.displayMetrics.density).toInt()
-            setContentPadding(pad, pad, pad, pad)
+            setContentPadding(0, 0, 0, 0)
+            clipToOutline = true
         }
         val view = inflater.inflate(R.layout.card_flashlight, body, true)
-        view.findViewById<TextView>(R.id.flashlightLabel).setTextColor(labelColor)
-        view.findViewById<ImageView>(R.id.flashlightGlow).visibility =
-            if (on) View.VISIBLE else View.INVISIBLE
-        view.findViewById<ImageView>(R.id.flashlightIcon).imageTintList =
-            android.content.res.ColorStateList.valueOf(iconColor)
-        view.findViewById<TextView>(R.id.flashlightState).apply {
-            setTextColor(labelColor)
-            text = when {
-                !available -> context.getString(R.string.flashlight_unavailable)
-                on -> context.getString(R.string.flashlight_on)
-                else -> context.getString(R.string.flashlight_off)
-            }
-        }
+        val art = view.findViewById<ImageView>(R.id.flashlightArt)
+        // Warm both frames so the next toggle does not stall on decode.
+        art.context.getDrawable(R.drawable.flashlight_on)
+        art.context.getDrawable(R.drawable.flashlight_off)
+        applyFlashlightArt(art, on, available)
         val toggle = View.OnClickListener { onToggleFlashlight() }
         view.findViewById<View>(R.id.flashlightRoot).setOnClickListener(toggle)
         root.setOnClickListener(toggle)
+    }
+
+    companion object {
+        fun applyFlashlightArt(art: ImageView, on: Boolean, available: Boolean) {
+            art.setImageResource(if (on) R.drawable.flashlight_on else R.drawable.flashlight_off)
+            art.scaleType = ImageView.ScaleType.CENTER_CROP
+            art.alpha = if (available || on) 1f else 0.72f
+            art.contentDescription = when {
+                !available -> art.context.getString(R.string.flashlight_unavailable)
+                on -> art.context.getString(R.string.flashlight_on)
+                else -> art.context.getString(R.string.flashlight_off)
+            }
+        }
     }
 
     private fun bindStorage(
@@ -237,18 +280,31 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        (root as? COUICardView)?.setCardBackgroundColor(
-            body.context.getColor(R.color.hiboard_storage_card),
-        )
+        val density = body.resources.displayMetrics.density
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
+            setContentPadding(
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+                (14 * density).toInt(),
+            )
+        }
         val view = inflater.inflate(R.layout.card_storage, body, true)
         val total = state.content.storageTotalBytes
         val used = state.content.storageUsedBytes
-        view.findViewById<StorageUsageBar>(R.id.storageBar).progress =
-            if (total <= 0L) 0f else (used.toDouble() / total).toFloat().coerceIn(0f, 1f)
-        view.findViewById<TextView>(R.id.storageUsage).text = formatStorageUsage(used, total)
+        val displayUsed = (used - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+        val displayTotal = (total - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
+        view.findViewById<StorageUsageRing>(R.id.storageRing).progress =
+            if (displayTotal <= 0L) {
+                0f
+            } else {
+                (displayUsed.toDouble() / displayTotal).toFloat().coerceIn(0f, 1f)
+            }
+        view.findViewById<TextView>(R.id.storagePercent).text = formatStoragePercent(used, total)
+        view.findViewById<TextView>(R.id.storageUsage).text = formatStoragePair(used, total)
         val open = View.OnClickListener { onOpenStorage() }
         view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
-        view.findViewById<View>(R.id.storageCleanup).setOnClickListener(open)
         root.setOnClickListener(open)
     }
 
@@ -258,34 +314,43 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        val density = body.resources.displayMetrics.density
         (root as? COUICardView)?.apply {
             setCardBackgroundColor(body.context.getColor(R.color.hiboard_recorder_card))
-            setContentPadding(
-                (10 * density).toInt(),
-                (10 * density).toInt(),
-                (10 * density).toInt(),
-                (8 * density).toInt(),
-            )
+            setContentPadding(0, 0, 0, 0)
             clipToPadding = false
         }
         (root as? ViewGroup)?.clipChildren = false
         body.clipChildren = false
         body.clipToPadding = false
         val view = inflater.inflate(R.layout.card_recorder, body, true)
-        val recorderState = state.content.recorderState
+        applyRecorder(view, state.content.recorderState, state.content.recorderElapsedMs)
+        val open = View.OnClickListener { onOpenRecorder() }
+        view.findViewById<View>(R.id.recorderRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+        val primary = view.findViewById<View>(R.id.recorderPrimary)
+        primary.setOnClickListener {
+            val shown = primary.getTag(R.id.recorderPrimary) as? RecorderUiState ?: RecorderUiState.Idle
+            onRecorderCommand(recorderPrimaryCommand(shown))
+        }
+        view.findViewById<View>(R.id.recorderMark).setOnClickListener {
+            onRecorderCommand(RecorderCommand.Mark)
+        }
+        view.findViewById<View>(R.id.recorderSave).setOnClickListener {
+            onRecorderCommand(RecorderCommand.Save)
+        }
+    }
+
+    /** Repaints an inflated recorder card for [recorderState] without rebuilding it. */
+    fun applyRecorder(view: View, recorderState: RecorderUiState, elapsedMs: Long) {
+        val context = view.context
         val live = recorderState != RecorderUiState.Idle
         val time = view.findViewById<TextView>(R.id.recorderTime)
         time.setTextColor(
-            body.context.getColor(
-                if (recorderState == RecorderUiState.Idle) {
-                    R.color.hiboard_recorder_title_idle
-                } else {
-                    R.color.hiboard_recorder_title
-                },
+            context.getColor(
+                if (live) R.color.hiboard_recorder_title else R.color.hiboard_recorder_title_idle,
             ),
         )
-        time.text = formatRecorderTime(state.content.recorderElapsedMs)
+        time.text = formatRecorderTime(elapsedMs)
         view.findViewById<RecorderWaveView>(R.id.recorderWave).bind(
             recording = recorderState == RecorderUiState.Recording,
             sessionActive = live,
@@ -299,29 +364,20 @@ class CardBinder(
         save.visibility = if (live) View.VISIBLE else View.INVISIBLE
         mark.isClickable = live
         save.isClickable = live
+        primary.setTag(R.id.recorderPrimary, recorderState)
         when (recorderState) {
             RecorderUiState.Recording -> {
                 primary.setImageResource(R.drawable.ic_recorder_pause)
-                primary.contentDescription = body.context.getString(R.string.recorder_pause)
+                primary.contentDescription = context.getString(R.string.recorder_pause)
             }
             RecorderUiState.Paused -> {
                 primary.setImageResource(R.drawable.ic_recorder_resume)
-                primary.contentDescription = body.context.getString(R.string.recorder_resume)
+                primary.contentDescription = context.getString(R.string.recorder_resume)
             }
             RecorderUiState.Idle -> {
                 primary.setImageResource(R.drawable.ic_recorder_record)
-                primary.contentDescription = body.context.getString(R.string.recorder_start)
+                primary.contentDescription = context.getString(R.string.recorder_start)
             }
-        }
-        val open = View.OnClickListener { onOpenRecorder() }
-        view.findViewById<View>(R.id.recorderRoot).setOnClickListener(open)
-        root.setOnClickListener(open)
-        primary.setOnClickListener {
-            onRecorderCommand(recorderPrimaryCommand(recorderState))
-        }
-        mark.setOnClickListener { onRecorderCommand(RecorderCommand.Mark) }
-        save.setOnClickListener { button ->
-            button.post { onRecorderCommand(RecorderCommand.Save) }
         }
     }
 
@@ -369,6 +425,17 @@ class CardBinder(
 
     private fun bindWeatherClockCard(root: View, body: LinearLayout, state: HiboardUiState) {
         val card = root as? COUICardView ?: return
+        val (condition, temperature) = clockWeather(state)
+        bindWeatherClock(card, body, condition, temperature, onOpenClock)
+    }
+
+    private fun bindWeatherDialCard(root: View, body: LinearLayout, state: HiboardUiState) {
+        val card = root as? COUICardView ?: return
+        val (condition, temperature) = clockWeather(state)
+        bindWeatherDialClock(card, body, condition, temperature, onOpenClock)
+    }
+
+    private fun clockWeather(state: HiboardUiState): Pair<WeatherCondition, Int> {
         val fallback = WeatherSnapshot.DEFAULT.resolved()
         val condition = WeatherCondition.from(
             state.content.weatherCondition.ifBlank { state.content.weatherSummary }.ifBlank { fallback.condition.json },
@@ -378,12 +445,17 @@ class CardBinder(
         } else {
             state.content.weatherTempC
         }
-        bindWeatherClock(card, body, condition, temperature, onOpenClock)
+        return condition to temperature
     }
 
     private fun bindLocalTime(root: View, body: LinearLayout) {
         val card = root as? COUICardView ?: return
         bindLocalTimeClock(card, body, onOpenClock)
+    }
+
+    private fun bindRomanClockCard(root: View, body: LinearLayout) {
+        val card = root as? COUICardView ?: return
+        bindRomanClock(card, body, onOpenClock)
     }
 
     private fun bindMusic(root: View, body: LinearLayout) {
@@ -401,6 +473,8 @@ private fun recentIcon(pm: PackageManager, app: ShortcutApp) = try {
 } catch (_: PackageManager.NameNotFoundException) {
     null
 }
+
+private const val WIDE_NOTES_LIMIT = 5
 
 fun launchIntent(view: View, intent: Intent?) {
     if (intent != null) {

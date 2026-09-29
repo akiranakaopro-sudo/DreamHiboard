@@ -23,6 +23,12 @@ import java.util.UUID
 
 class LocalRecorder(context: Context) {
     private val appContext = context.applicationContext
+
+    /**
+     * Guards the fields below. start/pause/resume/save run on a worker thread while the card
+     * polls status() every frame, so MediaRecorder and file I/O must stay outside this lock.
+     */
+    private val lock = Any()
     private var recorder: MediaRecorder? = null
     private var outputFile: File? = null
     private var state: RecorderUiState = RecorderUiState.Idle
@@ -31,25 +37,33 @@ class LocalRecorder(context: Context) {
     private val marks = mutableListOf<RecorderMark>()
     private var lastAmplitude = 0f
 
-    fun status(): RecorderStatus = RecorderStatus(
-        state = state,
-        elapsedMs = elapsedMs(),
-        marks = marks.map { it.timeMs },
-        amplitude = lastAmplitude,
-    )
+    fun status(): RecorderStatus = synchronized(lock) {
+        RecorderStatus(
+            state = state,
+            elapsedMs = elapsedMs(),
+            marks = marks.map { it.timeMs },
+            amplitude = lastAmplitude,
+        )
+    }
 
     fun amplitude01(): Float {
-        if (state != RecorderUiState.Recording) return lastAmplitude
-        lastAmplitude = try {
-            ((recorder?.maxAmplitude ?: 0) / 32768f).coerceIn(0f, 1f)
+        val mr = synchronized(lock) {
+            if (state != RecorderUiState.Recording) return lastAmplitude
+            recorder
+        } ?: return lastAmplitude
+        val amp = try {
+            (mr.maxAmplitude / 32768f).coerceIn(0f, 1f)
         } catch (_: Exception) {
-            lastAmplitude
+            return lastAmplitude
         }
-        return lastAmplitude
+        synchronized(lock) { if (recorder === mr) lastAmplitude = amp }
+        return amp
     }
 
     fun start(): Boolean {
-        if (state == RecorderUiState.Recording || state == RecorderUiState.Paused) return true
+        synchronized(lock) {
+            if (state == RecorderUiState.Recording || state == RecorderUiState.Paused) return true
+        }
         val file = File(appContext.cacheDir, "hiboard-record-${System.currentTimeMillis()}.mp3")
         val mr = createRecorder()
         return try {
@@ -62,32 +76,35 @@ class LocalRecorder(context: Context) {
             mr.setOutputFile(file.absolutePath)
             mr.prepare()
             mr.start()
-            recorder = mr
-            outputFile = file
-            marks.clear()
-            lastAmplitude = 0f
-            accumulatedMs = 0L
-            startedAtRealtime = SystemClock.elapsedRealtime()
-            state = RecorderUiState.Recording
+            synchronized(lock) {
+                recorder = mr
+                outputFile = file
+                marks.clear()
+                lastAmplitude = 0f
+                accumulatedMs = 0L
+                startedAtRealtime = SystemClock.elapsedRealtime()
+                state = RecorderUiState.Recording
+            }
             true
         } catch (_: Exception) {
             runCatching { mr.reset() }
             runCatching { mr.release() }
             file.delete()
-            recorder = null
-            outputFile = null
-            state = RecorderUiState.Idle
             false
         }
     }
 
     fun pause(): Boolean {
-        val mr = recorder ?: return false
-        if (state != RecorderUiState.Recording) return state == RecorderUiState.Paused
+        val mr = synchronized(lock) {
+            if (state != RecorderUiState.Recording) return state == RecorderUiState.Paused
+            recorder
+        } ?: return false
         return try {
             mr.pause()
-            accumulatedMs = elapsedMs()
-            state = RecorderUiState.Paused
+            synchronized(lock) {
+                accumulatedMs = elapsedMs()
+                state = RecorderUiState.Paused
+            }
             true
         } catch (_: Exception) {
             false
@@ -95,26 +112,30 @@ class LocalRecorder(context: Context) {
     }
 
     fun resume(): Boolean {
-        val mr = recorder ?: return false
-        if (state != RecorderUiState.Paused) return state == RecorderUiState.Recording
+        val mr = synchronized(lock) {
+            if (state != RecorderUiState.Paused) return state == RecorderUiState.Recording
+            recorder
+        } ?: return false
         return try {
             mr.resume()
-            startedAtRealtime = SystemClock.elapsedRealtime()
-            state = RecorderUiState.Recording
+            synchronized(lock) {
+                startedAtRealtime = SystemClock.elapsedRealtime()
+                state = RecorderUiState.Recording
+            }
             true
         } catch (_: Exception) {
             false
         }
     }
 
-    internal fun mark(): RecorderMark? {
+    internal fun mark(): RecorderMark? = synchronized(lock) {
         if (state == RecorderUiState.Idle) return null
         val mark = RecorderMark(
             text = appContext.getString(R.string.recorder_flag_new, marks.size + 1),
             timeMs = elapsedMs(),
         )
         marks += mark
-        return mark
+        mark
     }
 
     /**
@@ -122,19 +143,12 @@ class LocalRecorder(context: Context) {
      * Sound Recorder then appends onto this clip.
      */
     fun releaseForHandoff(): RecorderHandoff? {
-        if (state == RecorderUiState.Idle) return null
-        val file = outputFile
-        val mr = recorder
-        val duration = elapsedMs()
-        val savedMarks = marks.toList()
-        val paused = state == RecorderUiState.Paused
-        state = RecorderUiState.Idle
-        startedAtRealtime = 0L
-        accumulatedMs = 0L
-        lastAmplitude = 0f
-        recorder = null
-        outputFile = null
-        marks.clear()
+        val (session, paused) = synchronized(lock) {
+            if (state == RecorderUiState.Idle) return null
+            val wasPaused = state == RecorderUiState.Paused
+            takeSession() to wasPaused
+        }
+        val (mr, file, duration, savedMarks) = session
         try {
             mr?.stop()
         } catch (_: Exception) {
@@ -155,18 +169,11 @@ class LocalRecorder(context: Context) {
     }
 
     fun save(): Boolean {
-        if (state == RecorderUiState.Idle) return true
-        val file = outputFile
-        val mr = recorder
-        val duration = elapsedMs()
-        val savedMarks = marks.toList()
-        state = RecorderUiState.Idle
-        startedAtRealtime = 0L
-        accumulatedMs = 0L
-        lastAmplitude = 0f
-        recorder = null
-        outputFile = null
-        marks.clear()
+        val session = synchronized(lock) {
+            if (state == RecorderUiState.Idle) return true
+            takeSession()
+        }
+        val (mr, file, duration, savedMarks) = session
         try {
             mr?.stop()
         } catch (_: Exception) {
@@ -182,6 +189,26 @@ class LocalRecorder(context: Context) {
         if (published != null) persistMarks(published, savedMarks)
         return true
     }
+
+    /** Caller holds [lock]. Detaches the running session and resets to Idle. */
+    private fun takeSession(): Session {
+        val session = Session(recorder, outputFile, elapsedMs(), marks.toList())
+        state = RecorderUiState.Idle
+        startedAtRealtime = 0L
+        accumulatedMs = 0L
+        lastAmplitude = 0f
+        recorder = null
+        outputFile = null
+        marks.clear()
+        return session
+    }
+
+    private data class Session(
+        val recorder: MediaRecorder?,
+        val file: File?,
+        val durationMs: Long,
+        val marks: List<RecorderMark>,
+    )
 
     private fun elapsedMs(): Long {
         return when (state) {

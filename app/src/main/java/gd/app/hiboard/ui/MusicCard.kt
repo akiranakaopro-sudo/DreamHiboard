@@ -52,9 +52,11 @@ class MusicCardView @JvmOverloads constructor(
     private var shown = MusicNow.SAMPLE
     private val liked = mutableSetOf<String>()
     private var artApplied = false
-    private var appliedArt: Bitmap? = null
+    private var appliedArtKey: List<Any?>? = null
     private var sourceApplied = false
     private var appliedPackage: String? = null
+    private var appliedPlaying: Boolean? = null
+    private var appliedFavorite: Boolean? = null
 
     private val tick = object : Runnable {
         override fun run() {
@@ -83,9 +85,17 @@ class MusicCardView @JvmOverloads constructor(
         play = findViewById(R.id.musicPlay)
         next = findViewById(R.id.musicNext)
         favorite = findViewById(R.id.musicFavorite)
-        cover.outlineProvider = roundOutline(8f)
+        cover.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, view.height * MusicCardLayout.COVER_CORNER)
+            }
+        }
         cover.clipToOutline = true
-        sourceIcon.outlineProvider = roundOutline(8f)
+        sourceIcon.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setOval(0, 0, view.width, view.height)
+            }
+        }
         sourceIcon.clipToOutline = true
         titleView.isSelected = true
         render(MusicNow.SAMPLE)
@@ -148,27 +158,39 @@ class MusicCardView @JvmOverloads constructor(
         raw = now
         val favoriteOn = now.favorite || now.title in liked
         shown = now.copy(favorite = favoriteOn)
-        titleView.text = shown.title
-        artistView.text = shown.artist
-        positionView.text = musicClock(shown.positionMs)
-        durationView.text = musicClock(shown.durationMs)
+        titleView.setTextIfChanged(shown.title)
+        artistView.setTextIfChanged(shown.artist)
+        positionView.setTextIfChanged(musicClock(shown.positionMs))
+        durationView.setTextIfChanged(musicClock(shown.durationMs))
         progress.progress = if (shown.durationMs <= 0L) {
             0
         } else {
             ((shown.positionMs.coerceAtMost(shown.durationMs) * 1000L) / shown.durationMs).toInt()
         }
-        play.setImageResource(if (shown.playing) R.drawable.ic_music_pause else R.drawable.ic_music_play)
-        play.contentDescription = context.getString(if (shown.playing) R.string.music_pause else R.string.music_play)
-        favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
+        if (appliedPlaying != shown.playing) {
+            appliedPlaying = shown.playing
+            play.setImageResource(if (shown.playing) R.drawable.ic_music_pause else R.drawable.ic_music_play)
+            play.contentDescription = context.getString(if (shown.playing) R.string.music_pause else R.string.music_play)
+        }
+        if (appliedFavorite != shown.favorite) {
+            appliedFavorite = shown.favorite
+            favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
+        }
         rhythm.playing = shown.playing
-        bindArt(shown.art)
+        bindArt(shown)
         bindSource(shown.packageName)
     }
 
-    private fun bindArt(art: Bitmap?) {
-        if (artApplied && art === appliedArt) return
+    /**
+     * Every poll parcels a fresh copy of the same cover, so identity says nothing. Reloading it
+     * re-uploads the texture and re-runs the blur, so only a new track or cover size counts.
+     */
+    private fun bindArt(now: MusicNow) {
+        val art = now.art
+        val key = listOf(now.packageName, now.title, now.artist, art?.width, art?.height)
+        if (artApplied && key == appliedArtKey) return
         artApplied = true
-        appliedArt = art
+        appliedArtKey = key
         if (art == null) {
             backgroundView.setImageResource(R.drawable.bg_music_card)
             clearBlur()
@@ -179,7 +201,7 @@ class MusicCardView @JvmOverloads constructor(
         backgroundView.setImageBitmap(art)
         blurBackground()
         cover.setImageBitmap(art)
-        scrim.setBackgroundColor(0x33000000)
+        scrim.setBackgroundColor(0x59000000)
     }
 
     private fun bindSource(packageName: String?) {
@@ -206,13 +228,6 @@ class MusicCardView @JvmOverloads constructor(
     private fun clearBlur() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
         backgroundView.setRenderEffect(null)
-    }
-
-    private fun roundOutline(radiusDp: Float) = object : ViewOutlineProvider() {
-        override fun getOutline(view: View, outline: Outline) {
-            val radius = radiusDp * resources.displayMetrics.density
-            outline.setRoundRect(0, 0, view.width, view.height, radius)
-        }
     }
 }
 
@@ -250,7 +265,7 @@ class MusicRhythmView @JvmOverloads constructor(
 }
 
 fun bindMusicCard(card: COUICardView, body: LinearLayout, live: Boolean) {
-    card.setCardBackgroundColor(0xFF6E5338.toInt())
+    card.setCardBackgroundColor(0xFF1E2C36.toInt())
     card.setContentPadding(0, 0, 0, 0)
     card.clipToOutline = true
     val music = MusicCardView(body.context)

@@ -10,6 +10,7 @@ import gd.app.hiboard.engine.NOTE_PACKAGE
 import gd.app.hiboard.engine.NotesPreview
 import gd.app.hiboard.engine.noteHeadlineAndBody
 import gd.app.hiboard.engine.pickDisplayNote
+import gd.app.hiboard.model.NoteFolder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -38,9 +39,9 @@ class NotesRepository(context: Context) {
         }
     }
 
-    fun latest(): NotesPreview = pickDisplayNote(allNotes())
+    fun latest(): NotesPreview = pickDisplayNote(all())
 
-    private fun allNotes(): List<NotesPreview> {
+    fun all(): List<NotesPreview> {
         val byId = linkedMapOf<Long, NotesPreview>()
         (querySearch() + queryLatest()).forEach { note ->
             val key = if (note.id > 0L) note.id else note.updatedAt
@@ -109,7 +110,25 @@ class NotesRepository(context: Context) {
         val updated = long(cursor, "updated", "updated_at", "modified", "time", "date")
         if (id <= 0L && title.isBlank() && content.isBlank()) return null
         val (headline, body) = noteHeadlineAndBody(title, content)
-        return NotesPreview(id, headline, body, updated)
+        return NotesPreview(id, headline, body, updated, string(cursor, "category", "folder"))
+    }
+
+    /** DreamNote's visible folders in its own order; empty when DreamNote predates the Folders path. */
+    fun folders(): List<NoteFolder> {
+        return try {
+            appContext.contentResolver.query(FOLDERS_URI, null, null, null, null)?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        val key = string(cursor, "key")
+                        if (key.isNotEmpty()) {
+                            add(NoteFolder(key, string(cursor, "label").ifEmpty { key }, long(cursor, "count").toInt()))
+                        }
+                    }
+                }
+            }.orEmpty()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     private fun isGone(cursor: Cursor): Boolean {
@@ -154,6 +173,7 @@ class NotesRepository(context: Context) {
 
     private companion object {
         val SEARCH_URI: Uri = Uri.parse("content://$NOTE_PACKAGE.search/Search")
+        val FOLDERS_URI: Uri = Uri.parse("content://$NOTE_PACKAGE.search/Folders")
         val URIS = listOf(
             Uri.parse("content://$NOTE_PACKAGE.provider/notes"),
             Uri.parse("content://$NOTE_PACKAGE.notes/notes"),

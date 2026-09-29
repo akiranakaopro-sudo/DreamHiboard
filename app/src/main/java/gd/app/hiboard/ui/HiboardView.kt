@@ -47,19 +47,24 @@ import gd.app.hiboard.overlay.CouiOverscroll
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.WidgetStoreCategory
 import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.storeAppIcon
 import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
 import gd.app.hiboard.catalog.widgetStoreTabs
 import gd.app.hiboard.databinding.ViewHiboardBinding
+import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.FlashlightToggle
 import gd.app.hiboard.engine.RecorderCommand
 import gd.app.hiboard.engine.RecorderSendResult
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardCatalogEntry
+import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
+import gd.app.hiboard.model.NoteFolder
+import gd.app.hiboard.model.RecorderUiState
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -73,6 +78,10 @@ class HiboardView @JvmOverloads constructor(
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
     private var lastGridKey: Any? = null
+    private var lastContent: CardContent? = null
+    private var lastNoteFolders: Map<String, String> = emptyMap()
+    private var lastFlashKey: Any? = null
+    private var lastRecorderKey: RecorderUiState? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
     private var storeSheetOpen = false
@@ -157,6 +166,7 @@ class HiboardView @JvmOverloads constructor(
         this.viewModel = viewModel
         val binder = CardBinder(
             onOpenNotes = { launchIntent(this, viewModel.openNotes()) },
+            onOpenNote = { launchIntent(this, viewModel.openNote(it)) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
             onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
@@ -195,6 +205,7 @@ class HiboardView @JvmOverloads constructor(
         binding.searchBar.setOnClickListener {
             launchIntent(this, viewModel.openQuickSearch())
         }
+        binding.boardScroll.onScrollMoved = { layerCardsWhileScrolling() }
         binding.subscribedGrid.onReorder = { viewModel.reorder(CardArea.Subscribe, it) }
         binding.subscribedGrid.onAddSlotClick = { viewModel.openStore() }
         binding.subscribedGrid.onCardLongPress = { card, anchor ->
@@ -203,6 +214,8 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onDragStarted = { dismissCardMenu() }
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
+            lastFlashKey = null
+            lastRecorderKey = null
             viewModel.exitEdit()
         }
 
@@ -364,26 +377,25 @@ class HiboardView @JvmOverloads constructor(
     private fun showCardMenu(card: CardInstance, anchor: View, viewModel: HiboardViewModel) {
         dismissCardMenu()
         val popup = COUIPopupListWindow(context)
+        val actions = buildList {
+            if (card.engine == CardEngineId.Notes) {
+                add(Triple(R.string.edit_widget, R.drawable.ic_widget_edit) { showNoteFolderPicker(card, viewModel) })
+            }
+            add(Triple(R.string.remove_widget, R.drawable.ic_widget_remove) { viewModel.unsubscribe(card.catalogId) })
+            add(Triple(R.string.widget_details, R.drawable.ic_widget_info) { showWidgetDetails(card) })
+        }
         popup.setItemList(
-            listOf(
+            actions.map { (title, icon, _) ->
                 PopupListItem.Builder()
-                    .setTitle(context.getString(R.string.remove_widget))
-                    .setIcon(ContextCompat.getDrawable(context, R.drawable.ic_widget_remove))
+                    .setTitle(context.getString(title))
+                    .setIcon(ContextCompat.getDrawable(context, icon))
                     .setForceTint(PopupListItem.MENU_ITEM_FORCE_TINT_NONE)
-                    .build(),
-                PopupListItem.Builder()
-                    .setTitle(context.getString(R.string.widget_details))
-                    .setIcon(ContextCompat.getDrawable(context, R.drawable.ic_widget_info))
-                    .setForceTint(PopupListItem.MENU_ITEM_FORCE_TINT_NONE)
-                    .build(),
-            ),
+                    .build()
+            },
         )
         popup.setOnItemClickListener { _, _, position, _ ->
             popup.dismiss()
-            when (position) {
-                0 -> viewModel.unsubscribe(card.catalogId)
-                1 -> showWidgetDetails(card)
-            }
+            actions.getOrNull(position)?.third?.invoke()
         }
         popup.setOnDismissListener { if (cardMenu === popup) cardMenu = null }
         cardMenu = popup
@@ -404,6 +416,16 @@ class HiboardView @JvmOverloads constructor(
         } else {
             anchor.post { present() }
         }
+    }
+
+    private fun showNoteFolderPicker(card: CardInstance, viewModel: HiboardViewModel) {
+        val state = viewModel.state.value
+        val folders = state.content.noteFolders
+        val total = if (folders.isEmpty()) state.content.notes.size else folders.sumOf { it.count }
+        val notebooks = listOf(NoteFolder(ALL_NOTES_FOLDER, context.getString(R.string.notes_label), total)) + folders
+        val current = state.noteFolderSelections[card.catalogId] ?: ALL_NOTES_FOLDER
+        val selected = notebooks.firstOrNull { it.key.equals(current, ignoreCase = true) }?.key ?: ALL_NOTES_FOLDER
+        NotebookPickerDialog(context, notebooks, selected) { viewModel.setNoteFolder(card.catalogId, it) }.show()
     }
 
     private fun showWidgetDetails(card: CardInstance) {
@@ -431,6 +453,23 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Re-rendering every card (blurred music art, shadowed clock hands) each frame is what makes
+     * the scroll heavy; cached layers for the cards on screen are dropped once it settles.
+     */
+    private fun layerCardsWhileScrolling() {
+        val grid = binding.subscribedGrid
+        val scroll = binding.boardScroll
+        val gridTop = grid.top + (grid.parent as View).top
+        val margin = scroll.height / 2
+        val top = scroll.scrollY - gridTop - margin
+        grid.setScrollLayers(top, top + scroll.height + margin * 2)
+        removeCallbacks(dropScrollLayers)
+        postDelayed(dropScrollLayers, SCROLL_LAYER_HOLD_MS)
+    }
+
+    private val dropScrollLayers = Runnable { binding.subscribedGrid.setScrollLayers(1, 0) }
+
     private fun dismissCardMenu() {
         cardMenu?.dismiss()
         cardMenu = null
@@ -447,7 +486,32 @@ class HiboardView @JvmOverloads constructor(
                     activity.requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION)
                 }
             }
-            FlashlightToggle.Changed, FlashlightToggle.Unavailable -> Unit
+            FlashlightToggle.Changed -> {
+                // Paint immediately; state collect will confirm without rebuilding the grid.
+                applyFlashlightArt(viewModel.state.value)
+            }
+            FlashlightToggle.Unavailable -> Unit
+        }
+    }
+
+    private fun applyFlashlightArt(state: HiboardUiState) {
+        val on = state.content.flashlightOn
+        val available = state.content.flashlightAvailable
+        lastFlashKey = on to available
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Flashlight) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val art = root.findViewById<ImageView>(R.id.flashlightArt) ?: return@forEach
+            CardBinder.applyFlashlightArt(art, on, available)
+        }
+    }
+
+    private fun applyRecorderState(state: HiboardUiState, binder: CardBinder) {
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Recorder) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val view = root.findViewById<View>(R.id.recorderRoot) ?: return@forEach
+            binder.applyRecorder(view, state.content.recorderState, state.content.recorderElapsedMs)
         }
     }
 
@@ -541,11 +605,49 @@ class HiboardView @JvmOverloads constructor(
         binding.recentAppsHeader.isVisible =
             state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
-        val gridKey = listOf(state.board, state.editMode, state.content)
+        val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
+        val recorderKey = state.content.recorderState
+        val gridKey = listOf(state.board, state.editMode)
+        val content = state.content.copy(
+            flashlightOn = false,
+            flashlightAvailable = false,
+            recorderState = RecorderUiState.Idle,
+            recorderElapsedMs = 0L,
+        )
         if (!dragging && gridKey != lastGridKey) {
             lastGridKey = gridKey
+            lastContent = content
+            lastFlashKey = flashKey
+            lastRecorderKey = recorderKey
+            lastNoteFolders = state.noteFolderSelections
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
+            }
+        } else if (!dragging) {
+            val previousContent = lastContent
+            val previousFolders = lastNoteFolders
+            if (content != previousContent || state.noteFolderSelections != previousFolders) {
+                lastContent = content
+                lastNoteFolders = state.noteFolderSelections
+                // Rebuilding every card blocks the UI thread for most of a second, so a refresh
+                // on return (recents always change) only swaps the cards whose data changed.
+                state.board.subscribed.forEach { card ->
+                    val changed = previousContent == null ||
+                        cardData(card.engine, previousContent) != cardData(card.engine, content) ||
+                        (card.engine == CardEngineId.Notes &&
+                            previousFolders[card.catalogId] != state.noteFolderSelections[card.catalogId])
+                    if (!changed) return@forEach
+                    val view = binder.create(binding.subscribedGrid, card, state, recommend = false)
+                    binding.subscribedGrid.replaceCard(card, view)
+                }
+            }
+            if (flashKey != lastFlashKey) {
+                lastFlashKey = flashKey
+                applyFlashlightArt(state)
+            }
+            if (recorderKey != lastRecorderKey) {
+                lastRecorderKey = recorderKey
+                applyRecorderState(state, binder)
             }
         }
         if (!state.showStore) {
@@ -554,6 +656,29 @@ class HiboardView @JvmOverloads constructor(
                 viewModel.consumeReveal()
             }
         }
+    }
+
+    /** The part of [content] a card of [engine] draws; flashlight and recorder update in place. */
+    private fun cardData(engine: CardEngineId, content: CardContent): Any = when (engine) {
+        CardEngineId.Weather, CardEngineId.WeatherClock, CardEngineId.WeatherDial -> listOf(
+            content.weatherLocation,
+            content.weatherTempC,
+            content.weatherSummary,
+            content.weatherCondition,
+            content.weatherDays,
+        )
+        CardEngineId.Notes -> content.notes to content.noteFolders
+        CardEngineId.RecentApps -> content.recentApps
+        CardEngineId.Storage -> content.storageUsedBytes to content.storageTotalBytes
+        CardEngineId.Contacts -> Triple(content.contacts, content.contactsPermitted, content.contactsReady)
+        CardEngineId.Flashlight,
+        CardEngineId.Recorder,
+        CardEngineId.Calendar,
+        CardEngineId.Clock,
+        CardEngineId.LocalTime,
+        CardEngineId.RomanClock,
+        CardEngineId.Music,
+        -> Unit
     }
 
     private fun bindStoreSheetDrag(viewModel: HiboardViewModel) {
@@ -850,11 +975,7 @@ class HiboardView @JvmOverloads constructor(
     ): View {
         val entry = category.entries.first()
         val row = inflater.inflate(R.layout.item_widget_row, parent, false)
-        val icon = row.findViewById<ImageView>(R.id.widgetIcon)
-        val look = widgetIcon(entry.engine)
-        icon.setImageResource(look.first)
-        icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
-        icon.backgroundTintList = ColorStateList.valueOf(look.third)
+        bindStoreRowIcon(row.findViewById(R.id.widgetIcon), entry.engine)
         row.findViewById<TextView>(R.id.widgetName).text = category.name
         val count = category.entries.size
         row.findViewById<TextView>(R.id.widgetCount).text = if (count == 1) {
@@ -1047,9 +1168,7 @@ class HiboardView @JvmOverloads constructor(
         host.removeAllViews()
         fun addPreview() {
             if (!host.isAttachedToWindow) return
-            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
-                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
-                    .coerceAtLeast(1)
+            val boardWidth = storeDetailBoardWidth(host)
             val (cardW, cardH) = storePreviewDims(entry, boardWidth, resources.displayMetrics.density)
             host.removeAllViews()
             host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
@@ -1062,9 +1181,7 @@ class HiboardView @JvmOverloads constructor(
         host.removeAllViews()
         fun addPager() {
             if (!host.isAttachedToWindow) return
-            val boardWidth = (host.width - host.paddingLeft - host.paddingRight).takeIf { it > 0 }
-                ?: (resources.displayMetrics.widthPixels - (64 * resources.displayMetrics.density).toInt())
-                    .coerceAtLeast(1)
+            val boardWidth = storeDetailBoardWidth(host)
             host.clipChildren = true
             host.clipToPadding = true
             host.removeAllViews()
@@ -1108,6 +1225,14 @@ class HiboardView @JvmOverloads constructor(
         if (host.width > 0) addPager() else host.post { addPager() }
     }
 
+    /** Previews are sized from the board grid width so they match the cards on the board. */
+    private fun storeDetailBoardWidth(host: View): Int {
+        binding.subscribedGrid.width.takeIf { it > 0 }?.let { return it }
+        val density = resources.displayMetrics.density
+        val width = host.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return (width - (32 * density).toInt()).coerceAtLeast(1)
+    }
+
     /** COUI measures a full slot after the last dot, so the ink sits left of the view. */
     private fun centerDetailIndicator(count: Int) {
         val indicator = binding.storeDetailIndicator
@@ -1140,7 +1265,10 @@ class HiboardView @JvmOverloads constructor(
         list.removeAllViews()
         val padH = (16 * density).toInt()
         list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        // Wide notes variants stay reachable from the All notes detail pager.
         val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+            .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
+            .sortedBy { entry -> STORE_GALLERY_ORDER.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
         if (entries.isEmpty()) {
             val empty = TextView(context).apply {
                 text = context.getString(R.string.store_empty)
@@ -1153,7 +1281,7 @@ class HiboardView @JvmOverloads constructor(
             return
         }
         val boardWidth = storeGalleryBoardWidth(list)
-        val gap = (12 * density).roundToInt()
+        val gap = (10 * density).roundToInt()
         val pending = mutableListOf<CardCatalogEntry>()
         fun flushRow() {
             if (pending.isEmpty()) return
@@ -1166,37 +1294,51 @@ class HiboardView @JvmOverloads constructor(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                 )
             }
-            pending.forEachIndexed { index, entry ->
-                val block = storeWidgetBlock(row, entry, viewModel, (boardWidth - gap).coerceAtLeast(1))
-                block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    if (pending.size > 1) {
-                        if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
-                    }
-                }
+            if (pending.size == 1) {
+                val block = storeWidgetBlock(row, pending[0], viewModel, boardWidth)
+                block.layoutParams = LinearLayout.LayoutParams(
+                    ((boardWidth - gap) / 2).coerceAtLeast(1),
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
                 row.addView(block)
             }
-            if (pending.size == 1) {
-                row.addView(
-                    View(context),
-                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
-                )
+            if (pending.size > 1) pending.forEachIndexed { index, entry ->
+                val block = storeWidgetBlock(row, entry, viewModel, boardWidth)
+                block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
+                }
+                row.addView(block)
             }
             list.addView(row)
             pending.clear()
         }
+        val deferredWide = mutableListOf<CardCatalogEntry>()
+        fun flushWide() {
+            deferredWide.forEach { list.addView(storeWidgetBlock(list, it, viewModel, boardWidth)) }
+            deferredWide.clear()
+        }
+        // A lone small card waits for the next one so rows never leave a hole beside it.
         entries.forEach { entry ->
             if (entry.size.columns >= 4) {
-                flushRow()
-                list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+                if (pending.isEmpty()) {
+                    list.addView(storeWidgetBlock(list, entry, viewModel, boardWidth))
+                } else {
+                    deferredWide.add(entry)
+                }
             } else {
                 pending.add(entry)
-                if (pending.size == 2) flushRow()
+                if (pending.size == 2) {
+                    flushRow()
+                    flushWide()
+                }
             }
         }
         flushRow()
+        flushWide()
     }
 
     private fun storeGalleryBoardWidth(list: LinearLayout): Int {
+        binding.subscribedGrid.width.takeIf { it > 0 }?.let { return it }
         val pad = list.paddingLeft + list.paddingRight
         list.width.takeIf { it > pad }?.let { return it - pad }
         binding.storePager.width.takeIf { it > pad }?.let { return it - pad }
@@ -1258,7 +1400,28 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
-    private fun widgetIcon(engine: CardEngineId): Triple<Int, Int?, Int> {
+    private fun bindStoreRowIcon(icon: ImageView, engine: CardEngineId) {
+        val appIcon = storeAppIcon(context, engine)
+        if (appIcon != null) {
+            icon.setImageDrawable(appIcon)
+            icon.imageTintList = null
+            icon.background = null
+            icon.backgroundTintList = null
+            icon.setPadding(0, 0, 0, 0)
+            icon.scaleType = ImageView.ScaleType.FIT_CENTER
+            return
+        }
+        val pad = (10f * resources.displayMetrics.density).roundToInt()
+        icon.setPadding(pad, pad, pad, pad)
+        icon.setBackgroundResource(R.drawable.bg_widget_icon)
+        icon.scaleType = ImageView.ScaleType.CENTER_INSIDE
+        val look = widgetIconFallback(engine)
+        icon.setImageResource(look.first)
+        icon.imageTintList = look.second?.let { ColorStateList.valueOf(it) }
+        icon.backgroundTintList = ColorStateList.valueOf(look.third)
+    }
+
+    private fun widgetIconFallback(engine: CardEngineId): Triple<Int, Int?, Int> {
         return when (engine) {
             CardEngineId.Weather -> Triple(R.drawable.ic_weather_sunny, null, 0xFFD6ECFF.toInt())
             CardEngineId.Notes -> Triple(R.drawable.ic_notes_mark, null, context.getColor(R.color.hiboard_notes_card))
@@ -1275,6 +1438,8 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.Clock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.WeatherClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.LocalTime -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.RomanClock -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
+            CardEngineId.WeatherDial -> Triple(R.drawable.ic_clock, context.getColor(R.color.hiboard_store_title), Color.WHITE)
             CardEngineId.Music -> Triple(R.drawable.ic_music_note, Color.WHITE, 0xFFA48462.toInt())
         }
     }
@@ -1364,6 +1529,17 @@ class HiboardView @JvmOverloads constructor(
         const val TAG = "HiboardView"
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
+        const val SCROLL_LAYER_HOLD_MS = 300L
+
+        /** Hand-picked gallery order; wide cards alternate with matching 2×2 pairs. Unlisted entries follow by name. */
+        val STORE_GALLERY_ORDER = listOf(
+            "weather",
+            "weathersquare", "weatherclocksquare",
+            "weatherclock",
+            "weatherdial", "romanclock",
+            "clock", "localtime",
+            "calendar",
+        )
         const val CONTACTS_PERMISSION = 44
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L

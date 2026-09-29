@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -48,7 +49,7 @@ class SystemClockView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
     private val handFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF2F313D.toInt()
+        color = 0xFF2B2D38.toInt()
         style = Paint.Style.FILL
     }
     private val handPath = Path()
@@ -58,13 +59,18 @@ class SystemClockView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
     private val hubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF2F313D.toInt()
+        color = 0xFF2B2D38.toInt()
         style = Paint.Style.FILL
     }
-    private val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val secondFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.hiboard_clock_second)
         style = Paint.Style.FILL
     }
+    private val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF0046CC.toInt()
+        style = Paint.Style.FILL
+    }
+    private val tailRect = RectF()
     private val glyphProbe = Rect()
 
     private val tick = object : Runnable {
@@ -103,15 +109,14 @@ class SystemClockView @JvmOverloads constructor(
             now.get(Calendar.MINUTE),
             now.get(Calendar.SECOND),
         )
-        val shadow = face * 0.04f
-        handFill.setShadowLayer(shadow, face * 0.012f, face * 0.02f, 0x33000000)
-        drawTaperedHand(canvas, cx, cy, hands.hourDegrees, face * 0.56f, face * 0.078f, face * 0.046f)
-        drawTaperedHand(canvas, cx, cy, hands.minuteDegrees, face * 0.78f, face * 0.062f, face * 0.036f)
+        handFill.setShadowLayer(face * 0.03f, face * 0.008f, face * 0.016f, 0x33000000)
+        drawNeckedHand(canvas, cx, cy, hands.hourDegrees, face * 0.52f, face * 0.075f, face)
+        drawNeckedHand(canvas, cx, cy, hands.minuteDegrees, face * 0.72f, face * 0.075f, face)
         handFill.clearShadowLayer()
-        canvas.drawCircle(cx, cy, face * 0.082f, hubPaint)
-        secondPaint.strokeWidth = (face * 0.014f).coerceAtLeast(1f)
-        drawHand(canvas, cx, cy, hands.secondDegrees, face * 0.92f, face * 0.16f, secondPaint)
-        canvas.drawCircle(cx, cy, face * 0.051f, pinPaint)
+        drawSecond(canvas, cx, cy, hands.secondDegrees, face)
+        canvas.drawCircle(cx, cy, face * 0.07f, hubPaint)
+        canvas.drawCircle(cx, cy, face * 0.05f, secondFill)
+        canvas.drawCircle(cx, cy, face * 0.024f, pinPaint)
     }
 
     private fun drawTicks(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
@@ -153,42 +158,46 @@ class SystemClockView @JvmOverloads constructor(
         }
     }
 
-    private fun drawTaperedHand(
+    /** Thin neck out of the hub, short taper, then a thick body with a rounded tip. */
+    private fun drawNeckedHand(
         canvas: Canvas,
         cx: Float,
         cy: Float,
         degrees: Float,
         length: Float,
-        baseWidth: Float,
-        tipWidth: Float,
+        bodyWidth: Float,
+        reach: Float,
     ) {
+        val neckHalf = reach * 0.013f
+        val bodyHalf = bodyWidth / 2f
+        val neckEnd = cy - reach * 0.11f
+        val bodyStart = neckEnd - bodyWidth * 0.6f
+        val tipY = cy - length
+        handPath.rewind()
+        handPath.moveTo(cx - neckHalf, cy)
+        handPath.lineTo(cx - neckHalf, neckEnd)
+        handPath.lineTo(cx - bodyHalf, bodyStart)
+        handPath.lineTo(cx - bodyHalf, tipY + bodyHalf)
+        handPath.arcTo(cx - bodyHalf, tipY, cx + bodyHalf, tipY + bodyWidth, 180f, 180f, false)
+        handPath.lineTo(cx + bodyHalf, bodyStart)
+        handPath.lineTo(cx + neckHalf, neckEnd)
+        handPath.lineTo(cx + neckHalf, cy)
+        handPath.close()
         canvas.save()
         canvas.rotate(degrees, cx, cy)
-        val baseY = cy + length * 0.04f
-        val tipY = cy - length
-        val tipR = tipWidth / 2f
-        handPath.rewind()
-        handPath.moveTo(cx - baseWidth / 2f, baseY)
-        handPath.lineTo(cx - tipR, tipY)
-        handPath.quadTo(cx, tipY - tipR, cx + tipR, tipY)
-        handPath.lineTo(cx + baseWidth / 2f, baseY)
-        handPath.close()
         canvas.drawPath(handPath, handFill)
         canvas.restore()
     }
 
-    private fun drawHand(
-        canvas: Canvas,
-        cx: Float,
-        cy: Float,
-        degrees: Float,
-        length: Float,
-        tail: Float,
-        paint: Paint,
-    ) {
+    /** Hairline toward the ticks, with a thicker rounded tail below the hub. */
+    private fun drawSecond(canvas: Canvas, cx: Float, cy: Float, degrees: Float, reach: Float) {
+        secondPaint.strokeWidth = (reach * 0.013f).coerceAtLeast(1f)
         canvas.save()
         canvas.rotate(degrees, cx, cy)
-        canvas.drawLine(cx, cy + tail, cx, cy - length, paint)
+        canvas.drawLine(cx, cy + reach * 0.09f, cx, cy - reach * 0.88f, secondPaint)
+        val half = reach * 0.016f
+        tailRect.set(cx - half, cy + reach * 0.06f, cx + half, cy + reach * 0.22f)
+        canvas.drawRoundRect(tailRect, half, half, secondFill)
         canvas.restore()
     }
 }

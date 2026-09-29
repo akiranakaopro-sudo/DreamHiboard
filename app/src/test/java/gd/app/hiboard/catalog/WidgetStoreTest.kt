@@ -58,25 +58,41 @@ class WidgetStoreTest {
         val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
             .flatMap { it.entries }
         assertEquals(
-            listOf("All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
+            listOf("All notes", "All notes", "All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
             features.map { it.name },
         )
         assertEquals(CardSize.FullByTwo, features.first { it.name == "Contacts" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.name == "Music" }.size)
+        assertEquals(CardSize.FullByTwo, features.first { it.id == "noteswide" }.size)
+        assertEquals(CardSize.FourByFour, features.first { it.id == "noteslarge" }.size)
         assertEquals(
             true,
-            features.filter { it.name != "Contacts" && it.name != "Music" }
+            features.filter { it.name != "Contacts" && it.name != "Music" && it.id !in setOf("noteswide", "noteslarge") }
                 .all { it.size.columns == 2 && it.size.rows == 2 },
         )
         val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
             .flatMap { it.entries }
         assertEquals(
-            listOf("Calendar", "Clock", "Local time clock", "Weather", "Weather clock"),
+            listOf(
+                "Calendar",
+                "Clock",
+                "Compact weather clock",
+                "Local time clock",
+                "Roman numeral clock",
+                "Today's weather",
+                "Weather",
+                "Weather clock",
+                "Weather dial clock",
+            ),
             weather.map { it.name },
         )
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Compact weather clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Today's weather" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
         assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Local time clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Roman numeral clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Weather dial clock" }.size)
         assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
         assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather clock" }.size)
     }
@@ -90,7 +106,20 @@ class WidgetStoreTest {
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
         assertEquals(CardSize.FullByTwo, DefaultCatalog.byId("weather")?.size)
         assertEquals(
-            listOf("contacts", "music", "calendar", "clock", "weatherclock", "localtime"),
+            listOf(
+                "weathersquare",
+                "noteswide",
+                "noteslarge",
+                "contacts",
+                "music",
+                "calendar",
+                "clock",
+                "weatherclock",
+                "weatherclocksquare",
+                "localtime",
+                "romanclock",
+                "weatherdial",
+            ),
             DefaultCatalog.defaultRecommendedIds(),
         )
     }
@@ -116,7 +145,10 @@ class WidgetStoreTest {
             categories.any { it.name == "Local time clock" || it.name == "Weather clock" },
         )
         val clock = categories.first { it.name == "Clock" }
-        assertEquals(listOf("clock", "weatherclock", "localtime"), clock.entries.map { it.id })
+        assertEquals(
+            listOf("clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock", "weatherdial"),
+            clock.entries.map { it.id },
+        )
         assertEquals(
             listOf("localtime"),
             widgetStoreCategories(DefaultCatalog.entries, query = "local time")

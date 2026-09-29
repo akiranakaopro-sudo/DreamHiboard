@@ -1,5 +1,7 @@
 package gd.app.hiboard.engine
 
+import gd.app.hiboard.model.NoteFolder
+import gd.app.hiboard.model.NoteItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Calendar
@@ -57,5 +59,36 @@ class NotesTest {
         assertEquals(older, pickDisplayNote(listOf(emptyLatest, older, blank)))
         assertEquals(emptyLatest, pickDisplayNote(listOf(emptyLatest, blank)))
         assertEquals(NotesPreview(), pickDisplayNote(emptyList()))
+    }
+
+    @Test
+    fun recentNotesAreNewestFirstAndSkipEmptyEdits() {
+        val a = NotesPreview(id = 1, title = "Oldest", updatedAt = 10)
+        val b = NotesPreview(id = 2, title = "", snippet = "", updatedAt = 40)
+        val c = NotesPreview(id = 3, title = "Newest", updatedAt = 30)
+        val d = NotesPreview(id = 4, title = "Middle", updatedAt = 20)
+        assertEquals(listOf(c, d), recentDisplayNotes(listOf(a, b, c, d), 2))
+        assertEquals(listOf(c, d, a), recentDisplayNotes(listOf(a, b, c, d), 5))
+        assertEquals(emptyList<NotesPreview>(), recentDisplayNotes(listOf(b), 2))
+    }
+
+    @Test
+    fun folderFilterKeepsOrderAndIgnoresCase() {
+        val work = NoteItem(id = 1, title = "Plan", folder = "Work")
+        val daily = NoteItem(id = 2, title = "Milk", folder = "Daily")
+        val work2 = NoteItem(id = 3, title = "Review", folder = "work")
+        val notes = listOf(work, daily, work2)
+        assertEquals(notes, notesInFolder(notes, ALL_NOTES_FOLDER))
+        assertEquals(listOf(work, work2), notesInFolder(notes, "Work"))
+        assertEquals(emptyList<NoteItem>(), notesInFolder(notes, "Trips"))
+    }
+
+    @Test
+    fun folderLabelUsesDreamNoteNameOrFallsBackToKey() {
+        val folders = listOf(NoteFolder("Uncategorized", "Uncategorised"), NoteFolder("Work", "Works"))
+        assertEquals("All notes", noteFolderLabel(folders, ALL_NOTES_FOLDER, "All notes"))
+        assertEquals("Works", noteFolderLabel(folders, "work", "All notes"))
+        assertEquals("Uncategorised", noteFolderLabel(folders, "Uncategorized", "All notes"))
+        assertEquals("Gone", noteFolderLabel(folders, "Gone", "All notes"))
     }
 }

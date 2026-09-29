@@ -4,21 +4,17 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.VelocityTracker
-import android.widget.OverScroller
-import android.widget.ScrollView
-import androidx.dynamicanimation.animation.FloatPropertyCompat
-import com.coui.appcompat.animation.dynamicanimation.COUISpringAnimation
-import com.coui.appcompat.animation.dynamicanimation.COUISpringForce
+import com.coui.appcompat.scroll.SpringOverScroller
 import com.coui.appcompat.scrollview.COUIScrollView
+import com.coui.appcompat.uiutil.UIUtil
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
- * DreamRecorder overscroll.
- * The stretch and the return are the same soft spring, so a pull eases home
- * instead of snapping back.
+ * ColorOS assistant screen scrolling: flings, edge rebounds and the pull release all run on
+ * COUI's SpringOverScroller, tuned the way the system COUIScrollView tunes it.
+ * The stretch past an end is drawn as a translation, so scrollY never leaves the content.
  */
 open class SpringScrollView @JvmOverloads constructor(
     context: Context,
@@ -28,22 +24,33 @@ open class SpringScrollView @JvmOverloads constructor(
     private var lastY = 0f
     private var overscroll = 0f
     private var fingerDown = false
-    private var correcting = false
     private var handoff = 0f
-    private var tracker: VelocityTracker? = null
-    private val edgeSpring: COUISpringAnimation
+    private val scroller = SpringOverScroller(context).apply {
+        setSpringBackTensionMultiple(SPRING_BACK_TENSION)
+        setIsScrollView(true)
+        setEnableFlingSpeedIncrease(true)
+    }
+    private var mode = Mode.Idle
+    private var edgeNotified = false
+
+    /** Called for every scroll step and overscroll stretch frame. */
+    var onScrollMoved: (() -> Unit)? = null
+
+    private enum class Mode { Idle, Fling, Return }
 
     init {
         overScrollMode = OVER_SCROLL_NEVER
-        val force = COUISpringForce(0f)
-            .setResponse(0.9f)
-            .setDampingRatio(SPRING_DAMPING)
-        edgeSpring = COUISpringAnimation(this, OVERSCROLL).setSpring(force)
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
             lastY = ev.y
+            if (mode != Mode.Idle) {
+                // A touch that catches a moving list only stops it; it must not click a card.
+                stopAnimation()
+                super.onInterceptTouchEvent(ev)
+                return true
+            }
         }
         return super.onInterceptTouchEvent(ev)
     }
@@ -51,17 +58,13 @@ open class SpringScrollView @JvmOverloads constructor(
     override fun onTouchEvent(ev: MotionEvent): Boolean {
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                cancelReturn()
+                stopAnimation()
                 lastY = ev.y
                 handoff = 0f
                 fingerDown = true
-                tracker?.recycle()
-                tracker = VelocityTracker.obtain()
-                tracker?.addMovement(ev)
             }
             MotionEvent.ACTION_MOVE -> {
-                tracker?.addMovement(ev)
-                val dy = ev.y - lastY
+                val dy = (ev.y.toInt() - lastY.toInt()).toFloat()
                 lastY = ev.y
                 fingerDown = true
                 val before = scrollY
@@ -72,19 +75,84 @@ open class SpringScrollView @JvmOverloads constructor(
                 return handled
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                tracker?.addMovement(ev)
-                tracker?.computeCurrentVelocity(1000)
-                val velocity = tracker?.yVelocity ?: 0f
-                tracker?.recycle()
-                tracker = null
                 fingerDown = false
-                val cancelled = ev.actionMasked == MotionEvent.ACTION_CANCEL
                 val handled = super.onTouchEvent(ev)
-                if (overscroll != 0f) springHome(if (cancelled) 0f else velocity)
+                if (overscroll != 0f) springBack()
                 return handled
             }
         }
         return super.onTouchEvent(ev)
+    }
+
+    override fun fling(velocityY: Int) {
+        // A release while stretched always springs home first, as on ColorOS.
+        if (overscroll != 0f || childCount == 0) return
+        scroller.abortAnimation()
+        scroller.fling(scrollX, scrollY, 0, velocityY)
+        mode = Mode.Fling
+        edgeNotified = false
+        postInvalidateOnAnimation()
+    }
+
+    override fun computeScroll() {
+        if (mode == Mode.Idle) {
+            super.computeScroll()
+            return
+        }
+        if (!scroller.computeScrollOffset()) {
+            finishAnimation()
+            return
+        }
+        applyVirtual(scroller.getCOUICurrY())
+        postInvalidateOnAnimation()
+    }
+
+    /** [y] is scrollY as if the list could leave its range; the excess becomes the stretch. */
+    private fun applyVirtual(y: Int) {
+        val range = scrollRange()
+        if (y in 0..range) {
+            setOverscroll(0f)
+            if (y != scrollY) scrollTo(scrollX, y)
+            return
+        }
+        val edge = if (y < 0) 0 else range
+        var excess = y - edge
+        if (mode == Mode.Fling) {
+            excess = flingResistance(excess)
+            if (!edgeNotified) {
+                edgeNotified = true
+                scroller.notifyVerticalEdgeReached(edge + excess, edge, overflingDistance())
+            }
+        }
+        if (scrollY != edge) scrollTo(scrollX, edge)
+        setOverscroll(-excess.toFloat())
+    }
+
+    private fun springBack() {
+        val range = scrollRange()
+        val edge = if (overscroll > 0f) 0 else range
+        val virtual = edge - overscroll.roundToInt()
+        scroller.abortAnimation()
+        if (scroller.springBack(scrollX, virtual, 0, 0, 0, range)) {
+            mode = Mode.Return
+            postInvalidateOnAnimation()
+        } else {
+            setOverscroll(0f)
+        }
+    }
+
+    private fun stopAnimation() {
+        if (mode == Mode.Idle) return
+        scroller.abortAnimation()
+        mode = Mode.Idle
+    }
+
+    private fun finishAnimation() {
+        val returning = mode == Mode.Return || overscroll != 0f
+        mode = Mode.Idle
+        if (returning && overscroll != 0f && !fingerDown) {
+            if (abs(overscroll) < 1f) setOverscroll(0f) else springBack()
+        }
     }
 
     override fun overScrollBy(
@@ -115,14 +183,12 @@ open class SpringScrollView @JvmOverloads constructor(
 
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
         super.onScrollChanged(left, top, oldLeft, oldTop)
-        if (fingerDown || correcting || overscroll != 0f) return
-        val range = scrollRange()
-        val hitTop = top <= 0 && oldTop > 0
-        val hitBottom = range > 0 && top >= range && oldTop < range
-        if (!hitTop && !hitBottom) return
-        val speed = edgeSpeed().coerceAtMost(MAX_SPRING_SPEED)
-        if (speed < 200f) return
-        springHome(if (hitTop) speed else -speed)
+        onScrollMoved?.invoke()
+    }
+
+    override fun onDetachedFromWindow() {
+        stopAnimation()
+        super.onDetachedFromWindow()
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -138,45 +204,26 @@ open class SpringScrollView @JvmOverloads constructor(
 
     private fun followEdge(dy: Float, scrolled: Int) {
         if (dy == 0f && overscroll == 0f) return
-        if (overscroll != 0f) cancelReturn()
         val atTop = scrollY <= 0
         val atBottom = scrollY >= scrollRange()
         val top = overscroll > 0f || (overscroll == 0f && atTop && dy > 0f && scrolled <= 0)
         val bottom = overscroll < 0f || (overscroll == 0f && atBottom && dy < 0f && scrolled >= 0)
         if (!top && !bottom) return
-        correcting = true
-        try {
-            if (overscroll != 0f && scrolled != 0) scrollBy(0, -scrolled)
-            if (top) shiftTop(dy) else shiftBottom(dy)
-        } finally {
-            correcting = false
-        }
+        if (overscroll != 0f && scrolled != 0) scrollBy(0, -scrolled)
+        stretch(dy)
     }
 
-    /** Same gentle resistance pulling out and coming back, so the stretch does not pop. */
-    private fun shiftTop(dy: Float) {
-        val maxDrag = height * MAX_DRAG_FRACTION
-        val progress = (abs(overscroll) / maxDrag.coerceAtLeast(1f)).coerceAtMost(1f)
-        val damp = TOP_DAMPING / max(MIN_DAMP_SCALE, 1f - min(DAMP_PROGRESS_CAP, progress))
-        val delta = dy / damp
-        var next = overscroll + delta
-        if (next > maxDrag) next = maxDrag
-        if (overscroll > 0f && next < 0f && delta != 0f) {
-            scrollHandoff(-dy * (next / delta))
-            next = 0f
-        }
-        setOverscroll(next)
-    }
-
-    /** Same resistance as COUIPhysicalAnimationUtil.calcRealOverScrollDist, kept in float. */
-    private fun shiftBottom(dy: Float) {
-        val max = height.coerceAtLeast(1).toFloat()
+    /**
+     * COUIPhysicalAnimationUtil.calcRealOverScrollDist. Each event drops its fraction of a pixel
+     * like the system list does, which is what makes a slow pull feel heavier than a quick one.
+     */
+    private fun stretch(dy: Float) {
+        val max = resources.displayMetrics.heightPixels.toFloat()
         val ratio = (abs(overscroll) / max).coerceAtMost(1f)
-        val delta = dy * (1f - ratio) / 5f * 2f
-        var next = overscroll + delta
-        val limit = -max
-        if (next < limit) next = limit
-        if (overscroll < 0f && next > 0f && delta != 0f) {
+        val delta = (dy * (1f - ratio) / 5f * 2f).toInt().toFloat()
+        if (delta == 0f) return
+        var next = (overscroll + delta).coerceIn(-max, max)
+        if (overscroll != 0f && next != 0f && (next > 0f) != (overscroll > 0f) && delta != 0f) {
             scrollHandoff(-dy * (next / delta))
             next = 0f
         }
@@ -192,22 +239,19 @@ open class SpringScrollView @JvmOverloads constructor(
         handoff -= (scrollY - before).toFloat()
     }
 
-    /** A fling that arrives at an end starts here too, from offset 0, carried by [velocity]. */
-    private fun springHome(velocity: Float) {
-        if (overscroll == 0f && velocity == 0f) return
-        edgeSpring.cancelComplete()
-        val speed = velocity.coerceIn(-MAX_SPRING_SPEED, MAX_SPRING_SPEED)
-        edgeSpring.setStartValue(overscroll).setStartVelocity(speed).animateToFinalPosition(0f)
+    /** COUIPhysicalAnimationUtil's soft cap for a fling running past an end. */
+    private fun flingResistance(excess: Int): Int {
+        val cap = resources.displayMetrics.heightPixels * FLING_STRETCH_CAP
+        return (excess * cap / sqrt(cap * cap + excess.toFloat() * excess)).toInt()
     }
 
-    private fun cancelReturn() {
-        edgeSpring.cancelComplete()
-    }
+    private fun overflingDistance(): Int = resources.displayMetrics.heightPixels
 
     private fun setOverscroll(value: Float) {
         if (overscroll == value) return
         overscroll = value
         invalidate()
+        onScrollMoved?.invoke()
     }
 
     private fun scrollRange(): Int {
@@ -216,31 +260,29 @@ open class SpringScrollView @JvmOverloads constructor(
         return (child.height - (height - paddingTop - paddingBottom)).coerceAtLeast(0)
     }
 
-    private fun edgeSpeed(): Float {
-        val field = scrollerField ?: return 0f
-        val scroller = runCatching { field.get(this) as? OverScroller }.getOrNull() ?: return 0f
-        return abs(scroller.currVelocity)
-    }
-
     private companion object {
-        const val TOP_DAMPING = 2.5f
-        const val MIN_DAMP_SCALE = 0.15f
-        const val DAMP_PROGRESS_CAP = 0.95f
-        const val MAX_DRAG_FRACTION = 0.45f
-        /** About a 0.9s glide, slightly overdamped so the return eases instead of kicking. */
-        const val SPRING_DAMPING = 1.08f
-        /** A fling's full speed would slam the edge. This caps the stretch. */
-        const val MAX_SPRING_SPEED = 1600f
+        const val SPRING_BACK_TENSION = 2.15f
+        const val FLING_STRETCH_CAP = 0.3731f
 
-        val scrollerField = runCatching {
-            ScrollView::class.java.getDeclaredField("mScroller").apply { isAccessible = true }
-        }.getOrNull()
+        init {
+            useColorOsFlingFriction()
+        }
 
-        val OVERSCROLL = object : FloatPropertyCompat<SpringScrollView>("overscroll") {
-            override fun getValue(view: SpringScrollView): Float = view.overscroll
-
-            override fun setValue(view: SpringScrollView, value: Float) {
-                view.setOverscroll(value)
+        /**
+         * COUI picks its fling friction from persist.sys.oplus.anim_level, which ColorOS phones
+         * set to 4. Without it flings glide about half again as far, so use the level 4 values.
+         * Must run before the first SpringOverScroller is built.
+         */
+        fun useColorOsFlingFriction() {
+            if (UIUtil.getAnimLevel() >= 3) return
+            runCatching {
+                val rebound = Class.forName("com.coui.appcompat.scroll.SpringOverScroller\$ReboundOverScroller")
+                fun set(name: String, value: Any) {
+                    rebound.getDeclaredField(name).apply { isAccessible = true }.set(null, value)
+                }
+                set("sMidFlingBaseFriction", 4.5)
+                set("sSlowFlingBaseFriction", 4.0)
+                set("sCouiFlingFrictionNormal", 0.24f)
             }
         }
     }

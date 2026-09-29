@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gd.app.hiboard.ui.NotesWideLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/notesRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/notesIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_notes_book" />
+
+    <TextView
+        android:id="@+id/notesLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="@string/notes_label"
+        android:textColor="@color/hiboard_notes_accent"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/notesAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/notes_add"
+        android:focusable="true"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_notes_add" />
+</gd.app.hiboard.ui.NotesWideLayout>

@@ -1,58 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<gd.app.hiboard.ui.NotesCardLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/notesRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clickable="true"
-    android:focusable="true"
-    android:orientation="vertical">
+    android:focusable="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/notesIcon"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_notes_book" />
 
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_notes_mark" />
+    <TextView
+        android:id="@+id/notesLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="@string/notes_label"
+        android:textColor="@color/hiboard_notes_accent"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:text="@string/notes_label"
-            android:textColor="@color/hiboard_notes_accent"
-            android:textSize="15sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/notesAdd"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/bg_notes_add"
-            android:clickable="true"
-            android:contentDescription="@string/notes_add"
-            android:focusable="true"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:text="+"
-            android:textColor="@color/hiboard_notes_accent"
-            android:textSize="18sp" />
-    </LinearLayout>
+    <ImageView
+        android:id="@+id/notesAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/notes_add"
+        android:focusable="true"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_notes_add" />
 
     <TextView
         android:id="@+id/notesTitle"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
         android:includeFontPadding="false"
         android:maxLines="1"
         android:textColor="@color/hiboard_notes_title"
@@ -60,22 +50,21 @@
 
     <TextView
         android:id="@+id/notesSnippet"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="4dp"
-        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:ellipsize="end"
         android:gravity="top"
         android:includeFontPadding="false"
-        android:textColor="@color/hiboard_notes_muted"
-        android:textSize="13sp" />
+        android:textColor="@color/hiboard_notes_title"
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/notesWhen"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:ellipsize="end"
         android:includeFontPadding="false"
+        android:maxLines="1"
         android:textColor="@color/hiboard_notes_muted"
-        android:textSize="12sp" />
-</LinearLayout>
+        android:textSize="16sp" />
+</gd.app.hiboard.ui.NotesCardLayout>

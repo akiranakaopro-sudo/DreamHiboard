@@ -20,6 +20,8 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 
 enum class RecorderCommand {
     Start,
@@ -100,16 +102,18 @@ class RecorderClient(context: Context) {
     private var usingRemote = false
     private var remoteMarkCount = 0
     private val handler = Handler(Looper.getMainLooper())
+    private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "hiboard-recorder") }
+    private var pendingLocal = 0
     private var tickStartElapsed = 0L
     private var tickStartRealtime = 0L
     private val tick = object : Runnable {
         override fun run() {
             if (_status.value.state != RecorderUiState.Recording) return
-            _status.value = if (usingRemote) {
+            if (usingRemote) {
                 val elapsed = tickStartElapsed + (SystemClock.elapsedRealtime() - tickStartRealtime)
-                _status.value.copy(state = RecorderUiState.Recording, elapsedMs = elapsed)
-            } else {
-                local.status()
+                _status.value = _status.value.copy(state = RecorderUiState.Recording, elapsedMs = elapsed)
+            } else if (pendingLocal == 0) {
+                _status.value = local.status()
             }
             handler.postDelayed(this, 200L)
         }
@@ -185,28 +189,25 @@ class RecorderClient(context: Context) {
             }
         }
         usingRemote = false
+        val current = _status.value
         return when (command) {
             RecorderCommand.Start -> {
                 RecorderWaveSession.reset()
-                finishLocal(local.start())
+                runLocal(RecorderStatus(RecorderUiState.Recording)) { local.start() }
             }
-            RecorderCommand.Pause -> finishLocal(local.pause())
-            RecorderCommand.Resume -> finishLocal(local.resume())
+            RecorderCommand.Pause ->
+                runLocal(current.copy(state = RecorderUiState.Paused)) { local.pause() }
+            RecorderCommand.Resume ->
+                runLocal(current.copy(state = RecorderUiState.Recording)) { local.resume() }
             RecorderCommand.Mark -> {
                 val mark = local.mark() ?: return RecorderSendResult.Failed
-                _status.value = local.status()
+                if (pendingLocal == 0) _status.value = local.status()
                 RecorderSendResult.Marked(mark.text, mark.timeMs)
             }
             RecorderCommand.Save -> {
-                val ok = local.save()
-                if (ok) {
-                    RecorderWaveSession.reset()
-                    _status.value = local.status()
-                    syncTicker()
-                    RecorderSendResult.Saved
-                } else {
-                    RecorderSendResult.Failed
-                }
+                RecorderWaveSession.reset()
+                runLocal(RecorderStatus()) { local.save() }
+                RecorderSendResult.Saved
             }
             RecorderCommand.Open -> RecorderSendResult.Failed
         }
@@ -219,12 +220,25 @@ class RecorderClient(context: Context) {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun finishLocal(ok: Boolean): RecorderSendResult {
-        if (ok) {
-            _status.value = local.status()
-            syncTicker()
+    /**
+     * Shows [optimistic] now and runs [op] on the worker; MediaRecorder prepare/stop and
+     * publishing a saved clip take long enough to drop frames on the main thread.
+     */
+    private fun runLocal(optimistic: RecorderStatus, op: () -> Boolean): RecorderSendResult {
+        pendingLocal += 1
+        _status.value = optimistic
+        syncTicker()
+        worker.execute {
+            runCatching { op() }
+            handler.post {
+                pendingLocal -= 1
+                if (pendingLocal == 0 && !usingRemote) {
+                    _status.value = local.status()
+                    syncTicker()
+                }
+            }
         }
-        return if (ok) RecorderSendResult.Sent else RecorderSendResult.Failed
+        return RecorderSendResult.Sent
     }
 
     private fun canUseRemote(): Boolean {
@@ -256,7 +270,7 @@ class RecorderClient(context: Context) {
         if (canUseRemote()) {
             usingRemote = true
             dispatchRemote(RECORDER_ACTION_SYNC)
-        } else if (!usingRemote) {
+        } else if (!usingRemote && pendingLocal == 0) {
             _status.value = local.status()
             syncTicker()
         }
@@ -270,7 +284,8 @@ class RecorderClient(context: Context) {
             }
         }
         if (usingRemote) return recordPageIntent(flags)
-        val snap = local.releaseForHandoff() ?: return recordPageIntent(flags)
+        val snap = worker.submit(Callable { local.releaseForHandoff() }).get()
+            ?: return recordPageIntent(flags)
         val dest = importHandoff(snap.file)
         if (dest == null) return recordPageIntent(flags)
         snap.file.delete()

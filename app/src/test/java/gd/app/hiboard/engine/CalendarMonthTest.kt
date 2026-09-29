@@ -36,4 +36,13 @@ class CalendarMonthTest {
     fun weatherClockDateUsesChineseWeekday() {
         assertEquals("12月25日 周三", weatherClockDate(2024, Calendar.DECEMBER, 25, Locale.CHINA))
     }
+
+    @Test
+    fun compactClockDateUsesOrdinalDay() {
+        assertEquals("Sep 27th, Sun", compactClockDate(2026, Calendar.SEPTEMBER, 27, Locale.US))
+        assertEquals("Sep 1st, Tue", compactClockDate(2026, Calendar.SEPTEMBER, 1, Locale.US))
+        assertEquals("Sep 22nd, Tue", compactClockDate(2026, Calendar.SEPTEMBER, 22, Locale.US))
+        assertEquals("Sep 23rd, Wed", compactClockDate(2026, Calendar.SEPTEMBER, 23, Locale.US))
+        assertEquals("Sep 12th, Sat", compactClockDate(2026, Calendar.SEPTEMBER, 12, Locale.US))
+    }
 }

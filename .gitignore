@@ -38,6 +38,7 @@ tools/
 androguard.db
 tmp_*.py
 screenshot*
+card_*
 
 # Keystore files
 *.jks

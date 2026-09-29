@@ -1,18 +1,24 @@
 package gd.app.hiboard.engine
 
+import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import gd.app.hiboard.data.ContactsRepository
+import gd.app.hiboard.data.NoteFolderStore
 import gd.app.hiboard.data.NotesRepository
 import gd.app.hiboard.data.RecentAppsRepository
 import gd.app.hiboard.data.WeatherStore
 import gd.app.hiboard.model.CardAction
 import gd.app.hiboard.model.CardContent
 import gd.app.hiboard.model.CardEngineId
+import gd.app.hiboard.model.NoteItem
 import gd.app.hiboard.model.ShortcutApp
 import gd.app.hiboard.model.WeatherDayContent
+
+private const val STORAGE_STEP_BYTES = 100_000_000L
+private const val QUICK_SEARCH_PACKAGE = "gd.app.quicksearch"
 
 fun interface CardEngine {
     fun bind(action: CardAction): CardContent
@@ -22,6 +28,7 @@ class CardEngineRegistry(context: Context) {
     private val appContext = context.applicationContext
     private val recents = RecentAppsRepository(appContext)
     private val notes = NotesRepository(appContext)
+    private val noteFolderStore = NoteFolderStore(appContext)
     private val weather = WeatherStore.get(appContext)
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
@@ -41,11 +48,11 @@ class CardEngineRegistry(context: Context) {
             )
         },
         CardEngineId.Notes to CardEngine {
-            val latest = notes.latest()
             CardContent(
-                notesPreview = latest.title,
-                notesSnippet = latest.snippet,
-                notesWhen = formatNotesWhen(latest.updatedAt),
+                notes = recentDisplayNotes(notes.all(), Int.MAX_VALUE).map {
+                    NoteItem(it.id, it.title, it.snippet, it.folder, it.updatedAt)
+                },
+                noteFolders = notes.folders(),
             )
         },
         CardEngineId.RecentApps to CardEngine { CardContent(recentApps = recents.apps()) },
@@ -58,7 +65,8 @@ class CardEngineRegistry(context: Context) {
         CardEngineId.Storage to CardEngine {
             val status = storage.status()
             CardContent(
-                storageUsedBytes = status.usedBytes,
+                // Free RAM moves every read; keep only the 0.1 GB the card shows so it compares equal.
+                storageUsedBytes = (status.usedBytes + STORAGE_STEP_BYTES / 2) / STORAGE_STEP_BYTES * STORAGE_STEP_BYTES,
                 storageTotalBytes = status.totalBytes,
             )
         },
@@ -82,6 +90,8 @@ class CardEngineRegistry(context: Context) {
         CardEngineId.Clock to CardEngine { CardContent() },
         CardEngineId.WeatherClock to CardEngine { CardContent() },
         CardEngineId.LocalTime to CardEngine { CardContent() },
+        CardEngineId.RomanClock to CardEngine { CardContent() },
+        CardEngineId.WeatherDial to CardEngine { CardContent() },
         CardEngineId.Music to CardEngine { CardContent() },
     )
 
@@ -97,6 +107,8 @@ class CardEngineRegistry(context: Context) {
         return createNote()
     }
 
+    fun openNote(noteId: Long): Intent? = if (noteId > 0L) editNoteIntent(noteId) else openNotes()
+
     fun createNote(): Intent {
         return Intent(Intent.ACTION_CREATE_NOTE)
             .setClassName(NOTE_PACKAGE, "$NOTE_PACKAGE.MainActivity")
@@ -111,7 +123,10 @@ class CardEngineRegistry(context: Context) {
     }
 
     fun openQuickSearch(): Intent? {
-        return appContext.packageManager.getLaunchIntentForPackage("gd.app.quicksearch")
+        val pm = appContext.packageManager
+        val search = Intent(SearchManager.INTENT_ACTION_GLOBAL_SEARCH).setPackage(QUICK_SEARCH_PACKAGE)
+        if (search.resolveActivity(pm) != null) return search
+        return pm.getLaunchIntentForPackage(QUICK_SEARCH_PACKAGE)
     }
 
     fun openApp(app: ShortcutApp): Intent? {
@@ -139,8 +154,13 @@ class CardEngineRegistry(context: Context) {
     }
 
     val flashlightOn = flashlight.on
+    val flashlightAvailable: Boolean
+        get() = flashlight.available
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
+    val noteFolderSelections = noteFolderStore.selections
+
+    fun setNoteFolder(catalogId: String, folder: String) = noteFolderStore.set(catalogId, folder)
     val weatherSnapshot = weather.snapshot
 
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
@@ -186,9 +206,8 @@ class CardEngineRegistry(context: Context) {
         weatherSummary = b.weatherSummary.ifBlank { a.weatherSummary },
         weatherCondition = b.weatherCondition.ifBlank { a.weatherCondition },
         weatherDays = b.weatherDays.ifEmpty { a.weatherDays },
-        notesPreview = b.notesPreview.ifBlank { a.notesPreview },
-        notesSnippet = b.notesSnippet.ifBlank { a.notesSnippet },
-        notesWhen = b.notesWhen.ifBlank { a.notesWhen },
+        notes = b.notes.ifEmpty { a.notes },
+        noteFolders = b.noteFolders.ifEmpty { a.noteFolders },
         flashlightOn = b.flashlightOn || a.flashlightOn,
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,

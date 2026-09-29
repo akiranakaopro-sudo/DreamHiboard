@@ -28,6 +28,10 @@ class StorageTest {
         assertEquals("5.1GB", formatStorageGb(5_100_000_000L))
         assertEquals("4.8GB / 8GB", formatStorageUsage(4_800_000_000L, 8_000_000_000L))
         assertEquals("—", formatStorageUsage(0L, 0L))
+        assertEquals("4.4GB | 7.6GB", formatStoragePair(4_800_000_000L, 8_000_000_000L))
+        assertEquals("58%", formatStoragePercent(4_800_000_000L, 8_000_000_000L))
+        assertEquals("21%", formatStoragePercent(2_900_000_000L, 12_400_000_000L))
+        assertEquals("2.5GB | 12GB", formatStoragePair(2_900_000_000L, 12_400_000_000L))
     }
 
     @Test

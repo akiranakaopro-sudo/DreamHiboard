@@ -10,23 +10,26 @@
         android:id="@+id/weatherDayLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
         android:includeFontPadding="false"
-        android:textColor="@color/hiboard_weather_on_image_muted"
-        android:textSize="11sp" />
+        android:maxLines="1"
+        android:textColor="@color/hiboard_weather_day_label"
+        android:textSize="13sp" />
 
     <ImageView
         android:id="@+id/weatherDayIcon"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:layout_marginTop="6dp"
-        android:contentDescription="@null" />
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
 
     <TextView
         android:id="@+id/weatherDayRange"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:fontFamily="sans-serif-medium"
         android:includeFontPadding="false"
+        android:maxLines="1"
         android:textColor="@color/hiboard_weather_on_image"
-        android:textSize="11sp" />
+        android:textSize="16sp" />
 </LinearLayout>

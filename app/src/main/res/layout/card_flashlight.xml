@@ -7,40 +7,10 @@
     android:focusable="true">
 
     <ImageView
-        android:id="@+id/flashlightGlow"
+        android:id="@+id/flashlightArt"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center"
         android:contentDescription="@null"
-        android:scaleType="fitCenter"
-        android:src="@drawable/bg_flashlight_glow" />
-
-    <ImageView
-        android:id="@+id/flashlightIcon"
-        android:layout_width="84dp"
-        android:layout_height="84dp"
-        android:layout_gravity="center"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_flashlight" />
-
-    <TextView
-        android:id="@+id/flashlightLabel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:ellipsize="end"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:text="@string/flashlight_label"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/flashlightState"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:textSize="13sp" />
+        android:scaleType="centerCrop"
+        android:src="@drawable/flashlight_off" />
 </FrameLayout>
