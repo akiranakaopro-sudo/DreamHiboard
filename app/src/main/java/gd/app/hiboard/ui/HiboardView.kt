@@ -1068,6 +1068,7 @@ class HiboardView @JvmOverloads constructor(
         // Wide notes variants stay reachable from the All notes detail pager.
         val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
             .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
+            .sortedBy { entry -> STORE_GALLERY_ORDER.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
         if (entries.isEmpty()) {
             val empty = TextView(context).apply {
                 text = context.getString(R.string.store_empty)
@@ -1093,20 +1094,20 @@ class HiboardView @JvmOverloads constructor(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                 )
             }
-            pending.forEachIndexed { index, entry ->
+            if (pending.size == 1) {
+                val block = storeWidgetBlock(row, pending[0], viewModel, boardWidth)
+                block.layoutParams = LinearLayout.LayoutParams(
+                    ((boardWidth - gap) / 2).coerceAtLeast(1),
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                row.addView(block)
+            }
+            if (pending.size > 1) pending.forEachIndexed { index, entry ->
                 val block = storeWidgetBlock(row, entry, viewModel, boardWidth)
                 block.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                     if (index == 0) marginEnd = gap / 2 else marginStart = gap / 2
                 }
                 row.addView(block)
-            }
-            if (pending.size == 1) {
-                row.addView(
-                    View(context),
-                    LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                        marginStart = gap / 2
-                    },
-                )
             }
             list.addView(row)
             pending.clear()
@@ -1328,6 +1329,16 @@ class HiboardView @JvmOverloads constructor(
         const val CAMERA_PERMISSION = 42
         const val MIC_PERMISSION = 43
         const val SCROLL_LAYER_HOLD_MS = 300L
+
+        /** Hand-picked gallery order; wide cards alternate with matching 2×2 pairs. Unlisted entries follow by name. */
+        val STORE_GALLERY_ORDER = listOf(
+            "weather",
+            "weathersquare", "weatherclocksquare",
+            "weatherclock",
+            "weatherdial", "romanclock",
+            "clock", "localtime",
+            "calendar",
+        )
         const val CONTACTS_PERMISSION = 44
         const val STORE_SLIDE_IN_MS = 360L
         const val STORE_SLIDE_OUT_MS = 280L
