@@ -5,7 +5,7 @@
     <string name="edit_done">Done</string>
     <string name="edit">Edit</string>
     <string name="add_widget">Add widget</string>
-    <string name="add_widget_symbol">+</string>
+    <string name="add_widget_symbol" translatable="false">+</string>
     <string name="add_cards">Add cards</string>
     <string name="catalog_title">Widgets</string>
     <string name="store_search_hint">Search</string>

@@ -43,6 +43,8 @@ class PackedCardLayout @JvmOverloads constructor(
     private val cornerPx = 16 * resources.displayMetrics.density
     private val outlineInsetPx = 2 * resources.displayMetrics.density
     private val reflowMs = 250L
+    private val removeMs = 200L
+    private var reflowNextLayout = false
     private val outlineInMs = 900L
     private val outlineOutMs = 400L
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
@@ -114,6 +116,49 @@ class PackedCardLayout @JvmOverloads constructor(
         requestLayout()
     }
 
+    /**
+     * Moves to [cards] keeping the views of unchanged cards: removed cards fade out, new or changed
+     * cards come from [factory], and the rest slide to their new seats.
+     */
+    fun updateCards(cards: List<CardInstance>, factory: (CardInstance) -> View) {
+        if (isDragging) return
+        val previous = this.cards.associateBy { it.instanceId }
+        val kept = cardViews.associateBy { it.tag as String }
+        val nextIds = cards.map { it.instanceId }.toSet()
+        cardViews.filter { it.tag !in nextIds }.forEach { gone ->
+            gone.animate().cancel()
+            gone.animate()
+                .alpha(0f)
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(removeMs)
+                .setInterpolator(reflowInterpolator)
+                .withEndAction { removeView(gone) }
+                .start()
+        }
+        this.cards = cards
+        cardViews.clear()
+        cards.forEach { card ->
+            val old = kept[card.instanceId]
+            if (old != null && previous[card.instanceId] == card) {
+                cardViews.add(old)
+                return@forEach
+            }
+            val child = factory(card)
+            child.tag = card.instanceId
+            cardViews.add(child)
+            if (old != null) {
+                addView(child, indexOfChild(old))
+                removeView(old)
+            } else {
+                addView(child)
+            }
+        }
+        reflowNextLayout = true
+        syncAddSlots()
+        requestLayout()
+    }
+
     /** Swaps one card's view in place, keeping every other card as it is. */
     fun replaceCard(card: CardInstance, view: View) {
         if (isDragging) return
@@ -156,12 +201,14 @@ class PackedCardLayout @JvmOverloads constructor(
         val placements = packCards(cards, columns)
         val cell = cellWidth(width)
         val dragged = draggedId
+        val reflow = reflowNextLayout
+        reflowNextLayout = false
         cards.forEach { card ->
             val place = placements.firstOrNull { it.instanceId == card.instanceId } ?: return@forEach
             val child = viewFor(card.instanceId) ?: return@forEach
             val x = place.column * (cell + gutterPx)
             val y = place.row * (cell + gutterPx)
-            if (isDragging && card.instanceId != dragged) {
+            if (reflow && child.width > 0 || isDragging && card.instanceId != dragged) {
                 layoutReflow(child, x, y)
             } else {
                 child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)

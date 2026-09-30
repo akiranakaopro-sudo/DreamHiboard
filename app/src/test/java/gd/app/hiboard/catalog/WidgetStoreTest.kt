@@ -98,9 +98,9 @@ class WidgetStoreTest {
     }
 
     @Test
-    fun defaultBoardOrderIsWeatherStorageFlashlightNotesRecorder() {
+    fun defaultBoardOrderMatchesCuratedBoard() {
         assertEquals(
-            listOf("weather", "storage", "flashlight", "notes", "recorder"),
+            listOf("weather", "storage", "clock", "notes", "flashlight", "calendar", "recorder", "contacts", "music"),
             DefaultCatalog.defaultBoardIds(),
         )
         assertEquals(true, DefaultCatalog.byId("flashlight")?.defaultSubscribed)
@@ -110,10 +110,6 @@ class WidgetStoreTest {
                 "weathersquare",
                 "noteswide",
                 "noteslarge",
-                "contacts",
-                "music",
-                "calendar",
-                "clock",
                 "weatherclock",
                 "weatherclocksquare",
                 "localtime",

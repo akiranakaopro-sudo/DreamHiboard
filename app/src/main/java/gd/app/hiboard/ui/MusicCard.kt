@@ -174,7 +174,7 @@ class MusicCardView @JvmOverloads constructor(
         }
         if (appliedFavorite != shown.favorite) {
             appliedFavorite = shown.favorite
-            favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_heart_on else R.drawable.ic_music_heart)
+            favorite.setImageResource(if (shown.favorite) R.drawable.ic_music_star_on else R.drawable.ic_music_star)
         }
         rhythm.playing = shown.playing
         bindArt(shown)

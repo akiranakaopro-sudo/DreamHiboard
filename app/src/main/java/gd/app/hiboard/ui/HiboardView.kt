@@ -77,7 +77,7 @@ class HiboardView @JvmOverloads constructor(
 
     private val binding = ViewHiboardBinding.inflate(LayoutInflater.from(context), this, true)
     private var collectJob: Job? = null
-    private var lastGridKey: Any? = null
+    private var lastGridKey: List<Any>? = null
     private var lastContent: CardContent? = null
     private var lastNoteFolders: Map<String, String> = emptyMap()
     private var lastFlashKey: Any? = null
@@ -614,7 +614,8 @@ class HiboardView @JvmOverloads constructor(
             recorderState = RecorderUiState.Idle,
             recorderElapsedMs = 0L,
         )
-        if (!dragging && gridKey != lastGridKey) {
+        val sameEditMode = lastGridKey?.getOrNull(1) == state.editMode
+        if (!dragging && gridKey != lastGridKey && !sameEditMode) {
             lastGridKey = gridKey
             lastContent = content
             lastFlashKey = flashKey
@@ -624,6 +625,13 @@ class HiboardView @JvmOverloads constructor(
                 binder.create(binding.subscribedGrid, card, state, recommend = false)
             }
         } else if (!dragging) {
+            if (gridKey != lastGridKey) {
+                lastGridKey = gridKey
+                // Adding or removing a card keeps the other views so the board animates instead of rebuilding.
+                binding.subscribedGrid.updateCards(state.board.subscribed) { card ->
+                    binder.create(binding.subscribedGrid, card, state, recommend = false)
+                }
+            }
             val previousContent = lastContent
             val previousFolders = lastNoteFolders
             if (content != previousContent || state.noteFolderSelections != previousFolders) {
