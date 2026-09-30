@@ -25,4 +25,6 @@ interface ILauncherOverlay {
     void windowAttached2(in Bundle bundle, ILauncherOverlayCallback callback);
     oneway void endScrollWithVelocity(float velocity);
     boolean hasOverlayContent();
+    /** Nested UI (Add widgets / detail) first; false → launcher should close overlay. */
+    boolean onBackPressed();
 }

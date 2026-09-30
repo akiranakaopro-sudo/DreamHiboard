@@ -352,12 +352,12 @@ class HiboardOverlayBinder(
     }
 
     override fun onStop() {
+        // Oppo Assist onStop only publishes stopped state — it does NOT collapse
+        // the overlay. Keep progress so Back from an app launched from Quick Glance
+        // returns to glance. Home still closes via Launcher.onNewIntent → hideOverlay.
         mainHandler.post {
-            if (progress > 0f) {
-                cancelSettle(keepProgress = false)
-                applyProgress(0f, fromUser = false)
-                clearContentEntered()
-            }
+            cancelSettle(keepProgress = true)
+            ensureContentPaused()
         }
     }
 
@@ -366,6 +366,32 @@ class HiboardOverlayBinder(
     }
 
     override fun hasOverlayContent(): Boolean = attached
+
+    /**
+     * Oppo Assist: Back is handled inside the overlay first (store / detail).
+     * Returns true when nested UI consumed it; launcher should only [closeOverlay]
+     * when this returns false.
+     */
+    override fun onBackPressed(): Boolean {
+        if (Looper.myLooper() == mainHandler.looper) {
+            return hostController?.onBackPressed() == true
+        }
+        val result = booleanArrayOf(false)
+        val done = java.util.concurrent.CountDownLatch(1)
+        mainHandler.post {
+            try {
+                result[0] = hostController?.onBackPressed() == true
+            } finally {
+                done.countDown()
+            }
+        }
+        return try {
+            done.await(400, java.util.concurrent.TimeUnit.MILLISECONDS)
+            result[0]
+        } catch (_: InterruptedException) {
+            false
+        }
+    }
 
     private fun attachWindow(attrs: WindowManager.LayoutParams?, cb: ILauncherOverlayCallback?) {
         callback = cb
@@ -452,7 +478,13 @@ class HiboardOverlayBinder(
             if (keyCode == android.view.KeyEvent.KEYCODE_BACK &&
                 event.action == android.view.KeyEvent.ACTION_UP
             ) {
-                controller.onBackPressed()
+                // Nested UI first; otherwise dismiss glance (panel window owns focus).
+                if (controller.onBackPressed()) {
+                    true
+                } else {
+                    animateTo(0f, 0f)
+                    true
+                }
             } else {
                 false
             }

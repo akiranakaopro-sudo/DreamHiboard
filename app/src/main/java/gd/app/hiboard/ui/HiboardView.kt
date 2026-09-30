@@ -156,10 +156,10 @@ class HiboardView @JvmOverloads constructor(
     }
 
     fun onBackPressed(): Boolean {
-        if (viewModel?.handleStoreBack() == true) return true
-        val home = onNavigateHome ?: return false
-        home.invoke()
-        return true
+        // Only consume nested UI (store / detail / search). Closing glance is
+        // owned by the launcher (or the overlay key fallback) so Back from Add
+        // widgets returns to Quick Glance home instead of workspace.
+        return viewModel?.handleStoreBack() == true
     }
 
     fun bind(viewModel: HiboardViewModel, lifecycleOwner: LifecycleOwner) {
