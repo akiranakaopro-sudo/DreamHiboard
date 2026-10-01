@@ -134,6 +134,7 @@
              HiboardViewController is the equivalent embed contract. -->
         <activity
             android:name=".HiboardActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
@@ -151,6 +152,7 @@
 
         <activity
             android:name=".deeplink.DeeplinkActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Hiboard.Translucent">
