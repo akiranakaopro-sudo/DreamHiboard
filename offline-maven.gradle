@@ -1,0 +1,248 @@
+/**
+ * Collect resolved Maven artifacts into a local offline repository.
+ *
+ * Usage:
+ *   gradlew :app:assembleRelease
+ *     → downloads missing deps from Google/Maven Central (online repos first)
+ *     → then runs collectToOfflineMaven to refresh D:/Android/maven_repo_hiboard
+ *
+ * Prefer the file mirror first (air-gapped):
+ *   gradlew :app:assembleRelease -PpreferOfflineMaven=true
+ *
+ * Skip auto-collect after assemble:
+ *   gradlew :app:assembleRelease -PautoUpdateOfflineMaven=false
+ */
+def offlineMavenRepoPath = (findProperty('offlineMavenRepo')
+        ?: System.getenv('OFFLINE_MAVEN_REPO')
+        ?: 'D:/Android/maven_repo_hiboard') as String
+def offlineMavenRepoDir = file(offlineMavenRepoPath)
+ext.OFFLINE_MAVEN_REPO = offlineMavenRepoDir
+
+// Detached config so AGP / Kotlin plugin + transitive deps land in the module cache.
+def pluginResolve = configurations.create('offlinePluginResolve')
+dependencies {
+    offlinePluginResolve('com.android.tools.build:gradle:8.7.3')
+    offlinePluginResolve('com.android.application:com.android.application.gradle.plugin:8.7.3')
+    offlinePluginResolve('com.android.library:com.android.library.gradle.plugin:8.7.3')
+    offlinePluginResolve('org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21')
+    offlinePluginResolve('org.jetbrains.kotlin.android:org.jetbrains.kotlin.android.gradle.plugin:2.0.21')
+    offlinePluginResolve('org.jetbrains.kotlin:kotlin-stdlib:2.0.21')
+    offlinePluginResolve('org.gradle.toolchains.foojay-resolver-convention:org.gradle.toolchains.foojay-resolver-convention.gradle.plugin:1.0.0')
+    offlinePluginResolve('org.gradle.toolchains:foojay-resolver:1.0.0')
+    offlinePluginResolve('com.android.tools.build:aapt2:8.7.3-12006047:windows')
+    offlinePluginResolve('com.android.tools.build:aapt2:8.7.3-12006047:osx')
+    offlinePluginResolve('com.android.tools.build:aapt2:8.7.3-12006047:linux')
+}
+
+tasks.register('collectToOfflineMaven') {
+    group = 'offline'
+    description = "Download dependencies and copy them into ${offlineMavenRepoDir}"
+
+    doLast {
+        offlineMavenRepoDir.mkdirs()
+        def cacheRoot = new File(gradle.gradleUserHomeDir, 'caches/modules-2/files-2.1')
+        if (!cacheRoot.isDirectory()) {
+            throw new GradleException("Gradle module cache not found: ${cacheRoot}")
+        }
+
+        // Touch configurations so missing artifacts download into the module cache.
+        def absorbConfiguration = { Configuration cfg, String label ->
+            try {
+                if (!cfg.canBeResolved) {
+                    return 0
+                }
+                def files = cfg.resolve()
+                logger.info("Resolved ${label} → ${files.size()} file(s)")
+                return files.size()
+            } catch (Throwable t) {
+                logger.warn("Skip configuration ${label}: ${t.message}")
+                return 0
+            }
+        }
+
+        int resolvedCount = 0
+        resolvedCount += absorbConfiguration(pluginResolve, ':offlinePluginResolve')
+
+        rootProject.allprojects.each { Project p ->
+            p.configurations.findAll { Configuration cfg ->
+                try {
+                    return cfg.canBeResolved
+                } catch (Throwable ignored) {
+                    return false
+                }
+            }.each { Configuration cfg ->
+                resolvedCount += absorbConfiguration(cfg, "${p.path}:${cfg.name}")
+            }
+            try {
+                def bs = p.buildscript.configurations.findByName('classpath')
+                if (bs != null) {
+                    resolvedCount += absorbConfiguration(bs, "${p.path}:buildscript.classpath")
+                }
+            } catch (Throwable t) {
+                logger.warn("Skip buildscript classpath ${p.path}: ${t.message}")
+            }
+        }
+
+        logger.lifecycle(
+                "Resolved ~${resolvedCount} file reference(s); mirroring module cache → ${offlineMavenRepoDir}")
+
+        // Mirror the entire module cache. Parent POMs and declared (pre-conflict)
+        // versions are required for offline POM parsing and are easy to miss when
+        // filtering to the resolved graph only.
+        int copied = 0
+        int skipped = 0
+        cacheRoot.eachDir { groupDir ->
+            def groupId = groupDir.name
+            groupDir.eachDir { artifactDir ->
+                def artifactId = artifactDir.name
+                artifactDir.eachDir { versionDir ->
+                    def version = versionDir.name
+                    def destDir = new File(
+                            offlineMavenRepoDir,
+                            "${groupId.replace('.', '/')}/${artifactId}/${version}")
+                    versionDir.eachDir { hashDir ->
+                        hashDir.eachFile { src ->
+                            if (!src.isFile()) {
+                                return
+                            }
+                            destDir.mkdirs()
+                            def dest = new File(destDir, src.name)
+                            if (dest.exists() && dest.length() == src.length()) {
+                                skipped++
+                                return
+                            }
+                            java.nio.file.Files.copy(
+                                    src.toPath(),
+                                    dest.toPath(),
+                                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                            copied++
+                        }
+                    }
+                }
+            }
+        }
+
+        // Gradle Module Metadata often uses a Maven "url" that differs from the file name
+        // stored in the module cache (e.g. lifecycle-runtime-android-2.8.7.aar vs
+        // lifecycle-runtime-release.aar). Alias the cache name → Maven URL so offline
+        // resolution against a flat file:// repo works.
+        int aliased = 0
+        offlineMavenRepoDir.eachFileRecurse { File moduleFile ->
+            if (!moduleFile.name.endsWith('.module') || !moduleFile.isFile()) {
+                return
+            }
+            def text = moduleFile.getText('UTF-8')
+            def pairs = []
+            (text =~ /"name"\s*:\s*"([^"]+)"\s*,\s*"url"\s*:\s*"([^"]+)"/).each { m ->
+                pairs << [m[1], m[2]]
+            }
+            (text =~ /"url"\s*:\s*"([^"]+)"\s*,\s*"name"\s*:\s*"([^"]+)"/).each { m ->
+                pairs << [m[2], m[1]]
+            }
+            pairs.each { name, url ->
+                if (url.contains('/') || name == url) {
+                    return
+                }
+                def dir = moduleFile.parentFile
+                def src = new File(dir, name)
+                def dest = new File(dir, url)
+                if (src.isFile() && (!dest.exists() || dest.length() != src.length())) {
+                    java.nio.file.Files.copy(
+                            src.toPath(),
+                            dest.toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                    aliased++
+                }
+            }
+        }
+        logger.lifecycle("Aliased ${aliased} Gradle-module-metadata artifact URL(s)")
+
+        // Drop POM/module-only folders that would block Gradle from falling through
+        // to Google/Maven Central when the file mirror is consulted.
+        int pruned = 0
+        def incompleteDirs = []
+        offlineMavenRepoDir.eachDirRecurse { File dir ->
+            def files = dir.listFiles()?.findAll { it.isFile() } ?: []
+            if (files.isEmpty()) {
+                return
+            }
+            def hasPomOrModule = files.any { it.name.endsWith('.pom') || it.name.endsWith('.module') }
+            def hasBinary = files.any {
+                def n = it.name
+                n.endsWith('.jar') || n.endsWith('.aar') || n.endsWith('.apk')
+            }
+            if (hasPomOrModule && !hasBinary) {
+                incompleteDirs << dir
+            }
+        }
+        incompleteDirs.sort { -it.absolutePath.length() }.each { File dir ->
+            dir.listFiles()?.findAll { it.isFile() }?.each { it.delete() }
+            if (!(dir.listFiles()?.any())) {
+                dir.delete()
+            }
+            pruned++
+        }
+        logger.lifecycle("Pruned ${pruned} incomplete POM-only artifact folder(s)")
+
+        new File(offlineMavenRepoDir, 'README.md').text = """# Offline Maven repo (DreamHiboard)
+
+Collected from Gradle module cache after resolving this project's dependencies
+(app + AGP 8.7.3 + Kotlin 2.0.21 plugins).
+
+Path: `${offlineMavenRepoDir.absolutePath.replace('\\', '/')}`
+
+Generated: ${new Date()}
+Copied: ${copied}, skipped existing: ${skipped}, GMM URL aliases: ${aliased}, pruned incomplete: ${pruned}
+Gradle user home used: `${gradle.gradleUserHomeDir.absolutePath.replace('\\', '/')}`
+
+## Default build behaviour
+
+`settings.gradle.kts` prefers **google() / mavenCentral()** first so missing
+artifacts download automatically during assemble/release. This folder is kept as
+a secondary mirror and is refreshed by `collectToOfflineMaven` (also runs after
+assemble when online).
+
+Prefer the file mirror first only when intentionally offline:
+
+```powershell
+.\\gradlew.bat :app:assembleRelease -PpreferOfflineMaven=true
+```
+
+## Offline build
+
+Still need Gradle wrapper dist + JDK 17/21 + Android SDK. Example:
+
+```powershell
+\$env:JAVA_HOME = "C:\\\\Users\\\\jack0\\\\.jdks\\\\jbr-21.0.11"
+.\\\\gradlew.bat --offline --no-daemon :app:assembleDebug -PpreferOfflineMaven=true
+```
+
+## Re-collect
+
+```powershell
+.\\gradlew.bat :app:assembleRelease collectToOfflineMaven -PofflineMavenRepo=D:/Android/maven_repo_hiboard
+```
+"""
+
+        logger.lifecycle(
+                "Done. copied=${copied} skipped=${skipped} aliased=${aliased} pruned=${pruned} → ${offlineMavenRepoDir.absolutePath}")
+    }
+}
+
+// After a normal (online) assemble/release, refresh the local mirror so the next
+// offline build has newly downloaded JARs. Disable with -PautoUpdateOfflineMaven=false.
+def autoUpdateOfflineMaven = (findProperty('autoUpdateOfflineMaven') ?: 'true').toString()
+        .equalsIgnoreCase('true')
+if (autoUpdateOfflineMaven && !gradle.startParameter.offline) {
+    def collect = tasks.named('collectToOfflineMaven')
+    gradle.projectsEvaluated {
+        rootProject.subprojects.each { Project p ->
+            p.tasks.matching { Task t ->
+                t.name == 'assembleDebug' || t.name == 'assembleRelease' ||
+                        t.name == 'bundleDebug' || t.name == 'bundleRelease'
+            }.configureEach { Task assemble ->
+                assemble.finalizedBy(collect)
+            }
+        }
+    }
+}
