@@ -44,6 +44,14 @@
     <color name="hiboard_recorder_tick">#EB3B2F</color>
     <color name="hiboard_recorder_idle_tick">#BDBDBD</color>
     <color name="hiboard_recorder_flag">#3478F6</color>
+    <color name="hiboard_battery_card">#FFFFFFFF</color>
+    <color name="hiboard_battery_percent">#FF1C1C1E</color>
+    <color name="hiboard_battery_title">#FF1C1C1E</color>
+    <color name="hiboard_battery_charging">#FF2AD181</color>
+    <color name="hiboard_battery_axis">#FF8E8E93</color>
+    <color name="hiboard_battery_grid">#26000000</color>
+    <color name="hiboard_battery_bar_top">#FF3B9BFF</color>
+    <color name="hiboard_battery_bar_bottom">#FF7EC8FF</color>
     <color name="hiboard_store_bg">#FFF3F4F6</color>
     <color name="hiboard_store_title">#FF1C1C1E</color>
     <color name="hiboard_store_close">#FF0076FF</color>

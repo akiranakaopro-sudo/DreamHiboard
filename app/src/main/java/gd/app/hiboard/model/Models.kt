@@ -29,6 +29,7 @@ enum class CardEngineId {
     RecentApps,
     Flashlight,
     Storage,
+    Battery,
     Recorder,
     Contacts,
     Calendar,
@@ -99,6 +100,11 @@ data class BoardContact(
     val photoUri: String? = null,
 )
 
+data class BatterySample(
+    val epochMillis: Long,
+    val levelPercent: Int,
+)
+
 data class WeatherDayContent(
     val label: String = "",
     val condition: String = "",
@@ -132,6 +138,10 @@ data class CardContent(
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,
     val storageTotalBytes: Long = 0L,
+    val batteryPercent: Int = 0,
+    val batteryCharging: Boolean = false,
+    val batterySamples: List<BatterySample> = emptyList(),
+    val batteryReady: Boolean = false,
     val recorderState: RecorderUiState = RecorderUiState.Idle,
     val recorderElapsedMs: Long = 0L,
     val recorderBound: Boolean = false,

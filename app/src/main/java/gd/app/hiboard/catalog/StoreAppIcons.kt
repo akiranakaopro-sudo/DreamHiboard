@@ -75,7 +75,9 @@ internal fun storeAppPackages(engine: CardEngineId): List<String> = when (engine
         "com.android.music",
     )
     CardEngineId.Recorder -> listOf(RECORDER_PACKAGE)
-    CardEngineId.Storage -> SYSTEM_MANAGER_PACKAGES + listOf(
+    CardEngineId.Storage,
+    CardEngineId.Battery,
+    -> SYSTEM_MANAGER_PACKAGES + listOf(
         "com.yft.systemmanager",
         "com.android.storagemanager",
     )

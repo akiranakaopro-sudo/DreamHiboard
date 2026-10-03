@@ -129,6 +129,7 @@ class HiboardView @JvmOverloads constructor(
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
             onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
+            onOpenBattery = { launchIntent(this, viewModel.openBattery()) },
             onRecorderCommand = { command -> sendRecorder(viewModel, command) },
             recorderLive = viewModel::recorderLive,
             onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
@@ -486,6 +487,7 @@ class HiboardView @JvmOverloads constructor(
         CardEngineId.Notes -> content.notes to content.noteFolders
         CardEngineId.RecentApps -> content.recentApps
         CardEngineId.Storage -> content.storageUsedBytes to content.storageTotalBytes
+        CardEngineId.Battery -> Triple(content.batteryPercent, content.batteryCharging, content.batterySamples)
         CardEngineId.Contacts -> Triple(content.contacts, content.contactsPermitted, content.contactsReady)
         CardEngineId.Flashlight,
         CardEngineId.Recorder,
@@ -1239,6 +1241,7 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.Weather -> Triple(R.drawable.ic_weather_sunny, null, 0xFFD6ECFF.toInt())
             CardEngineId.Notes -> Triple(R.drawable.ic_notes_mark, null, context.getColor(R.color.hiboard_notes_card))
             CardEngineId.Storage -> Triple(R.drawable.ic_storage_clean, context.getColor(R.color.hiboard_storage_title), Color.WHITE)
+            CardEngineId.Battery -> Triple(R.drawable.ic_battery_charge, context.getColor(R.color.hiboard_battery_charging), Color.WHITE)
             CardEngineId.Recorder -> Triple(R.drawable.ic_recorder_record, 0xFFE32E27.toInt(), 0xFFFFE8E6.toInt())
             CardEngineId.Flashlight -> Triple(
                 R.drawable.ic_flashlight,

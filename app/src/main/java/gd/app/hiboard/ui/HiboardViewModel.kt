@@ -368,6 +368,8 @@ class HiboardViewModel(
 
     fun openSystemManager() = engines.openSystemManager()
 
+    fun openBattery() = engines.openBattery()
+
     fun sendRecorder(command: RecorderCommand): RecorderSendResult = engines.sendRecorder(command)
 
     fun recorderLive() = engines.recorderLive()

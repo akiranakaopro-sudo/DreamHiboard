@@ -16,6 +16,7 @@ import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.monthPageToday
+import gd.app.hiboard.engine.previewBatterySamples
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
@@ -78,6 +79,7 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
             bindNotesPreview(inflater, card, body)
         }
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
+        CardEngineId.Battery -> bindBatteryPreview(inflater, card, body)
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)
         CardEngineId.RecentApps -> Unit
@@ -140,6 +142,21 @@ private fun bindStoragePreview(inflater: LayoutInflater, card: COUICardView, bod
         formatStoragePercent(2_900_000_000L, 12_400_000_000L)
     view.findViewById<TextView>(R.id.storageUsage).text =
         formatStoragePair(2_900_000_000L, 12_400_000_000L)
+}
+
+private fun bindBatteryPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
+    val density = body.resources.displayMetrics.density
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_card))
+    card.setContentPadding(
+        (16 * density).toInt(),
+        (14 * density).toInt(),
+        (16 * density).toInt(),
+        (12 * density).toInt(),
+    )
+    val view = inflater.inflate(R.layout.card_battery, body, true)
+    view.findViewById<TextView>(R.id.batteryPercent).text = "63%"
+    view.findViewById<View>(R.id.batteryChargingRow).visibility = View.VISIBLE
+    view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples = previewBatterySamples(63)
 }
 
 private fun bindRecorderPreview(

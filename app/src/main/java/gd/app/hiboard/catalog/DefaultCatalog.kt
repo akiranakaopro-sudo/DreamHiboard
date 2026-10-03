@@ -54,6 +54,16 @@ object DefaultCatalog {
             defaultSubscribed = true,
         ),
         CardCatalogEntry(
+            id = "battery",
+            groupId = GROUP_FEATURES,
+            groupTitleRes = R.string.widget_group_features,
+            nameRes = R.string.widget_battery_name,
+            descriptionRes = R.string.widget_battery_desc,
+            size = CardSize.FullByTwo,
+            engine = CardEngineId.Battery,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
             id = "flashlight",
             groupId = GROUP_FEATURES,
             groupTitleRes = R.string.widget_group_features,

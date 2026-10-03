@@ -34,6 +34,14 @@
     <color name="hiboard_storage_ring_mid">#1780FE</color>
     <color name="hiboard_storage_ring_end">#5EC8FF</color>
     <color name="hiboard_storage_cleanup_fill">#EBF3FE</color>
+    <color name="hiboard_battery_card">#FFFFFFFF</color>
+    <color name="hiboard_battery_percent">#FF1C1C1E</color>
+    <color name="hiboard_battery_title">#FF1C1C1E</color>
+    <color name="hiboard_battery_charging">#FF2AD181</color>
+    <color name="hiboard_battery_axis">#FF8E8E93</color>
+    <color name="hiboard_battery_grid">#26000000</color>
+    <color name="hiboard_battery_bar_top">#FF3B9BFF</color>
+    <color name="hiboard_battery_bar_bottom">#FF7EC8FF</color>
     <color name="hiboard_recorder_card">#FFFFFFFF</color>
     <color name="hiboard_recorder_title">#1C1C1E</color>
     <color name="hiboard_recorder_title_idle">#BDBDBD</color>

@@ -39,6 +39,7 @@ class CardBinder(
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
     private val onOpenStorage: () -> Unit,
+    private val onOpenBattery: () -> Unit,
     private val onRecorderCommand: (RecorderCommand) -> Unit,
     private val recorderLive: () -> RecorderStatus,
     private val onOpenRecorder: () -> Unit,
@@ -70,6 +71,7 @@ class CardBinder(
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
+            CardEngineId.Battery -> bindBattery(inflater, root, body, state)
             CardEngineId.Recorder -> bindRecorder(inflater, root, body, state)
             CardEngineId.Contacts -> bindContacts(inflater, root, body, state)
             CardEngineId.Calendar -> bindCalendar(root, body)
@@ -305,6 +307,32 @@ class CardBinder(
         view.findViewById<TextView>(R.id.storageUsage).text = formatStoragePair(used, total)
         val open = View.OnClickListener { onOpenStorage() }
         view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+    }
+
+    private fun bindBattery(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val density = body.resources.displayMetrics.density
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_card))
+            setContentPadding(
+                (16 * density).toInt(),
+                (14 * density).toInt(),
+                (16 * density).toInt(),
+                (12 * density).toInt(),
+            )
+        }
+        val view = inflater.inflate(R.layout.card_battery, body, true)
+        view.findViewById<TextView>(R.id.batteryPercent).text = "${state.content.batteryPercent}%"
+        val chargingRow = view.findViewById<View>(R.id.batteryChargingRow)
+        chargingRow.visibility = if (state.content.batteryCharging) View.VISIBLE else View.GONE
+        view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples = state.content.batterySamples
+        val open = View.OnClickListener { onOpenBattery() }
+        view.findViewById<View>(R.id.batteryRoot).setOnClickListener(open)
         root.setOnClickListener(open)
     }
 
