@@ -43,7 +43,10 @@ import com.coui.appcompat.searchview.COUISearchBar
 import gd.app.hiboard.R
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.WidgetStoreCategory
+import gd.app.hiboard.catalog.description
+import gd.app.hiboard.catalog.groupTitle
 import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.name
 import gd.app.hiboard.catalog.storeAppIcon
 import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
@@ -250,9 +253,9 @@ class HiboardView @JvmOverloads constructor(
             entry.size.columns,
             entry.size.rows,
         )
-        val body = listOf(entry.description, sizeLine).filter { it.isNotBlank() }.joinToString("\n")
+        val body = listOf(entry.description(context), sizeLine).filter { it.isNotBlank() }.joinToString("\n")
         COUIAlertDialogBuilder(context)
-            .setTitle(entry.name)
+            .setTitle(entry.name(context))
             .setMessage(body)
             .setPositiveButton(android.R.string.ok, null)
             .show()
@@ -748,7 +751,7 @@ class HiboardView @JvmOverloads constructor(
         list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
         indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
-        val sections = widgetStoreCategories(catalog, query, groupId)
+        val sections = widgetStoreCategories(resources, catalog, query, groupId)
         bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
         if (sections.isEmpty()) {
             val empty = TextView(context).apply {
@@ -828,7 +831,9 @@ class HiboardView @JvmOverloads constructor(
             binding.storeDetailIndicator.isVisible = false
             return
         }
-        val members = state.catalog.filter { !it.locked && it.listCategory() == focus.listCategory() }
+        val members = state.catalog.filter {
+            !it.locked && it.listCategory(context) == focus.listCategory(context)
+        }
         if (members.isEmpty()) return
         if (state.storeDetailId != openedDetailId) {
             openedDetailId = state.storeDetailId
@@ -852,9 +857,9 @@ class HiboardView @JvmOverloads constructor(
 
     private fun applyDetailSelection(entry: CardCatalogEntry, viewModel: HiboardViewModel) {
         val added = viewModel.state.value.board.subscribed.any { it.catalogId == entry.id }
-        binding.storeDetailTitle.text = entry.groupTitle
-        binding.storeDetailHeadline.text = entry.name
-        binding.storeDetailDesc.text = entry.description
+        binding.storeDetailTitle.text = entry.groupTitle(context)
+        binding.storeDetailHeadline.text = entry.name(context)
+        binding.storeDetailDesc.text = entry.description(context)
         binding.storeDetailAdd.text = context.getString(
             if (added) R.string.store_added else R.string.store_add_to_board,
         )
@@ -1074,7 +1079,7 @@ class HiboardView @JvmOverloads constructor(
         val padH = (16 * density).toInt()
         list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
         // Wide notes variants stay reachable from the All notes detail pager.
-        val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+        val entries = widgetStoreSections(resources, catalog, query = "", groupId).flatMap { it.entries }
             .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
             .sortedBy { entry -> STORE_GALLERY_ORDER.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
         if (entries.isEmpty()) {
@@ -1163,7 +1168,7 @@ class HiboardView @JvmOverloads constructor(
         val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
         val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, parent, false)
         val openDetail = View.OnClickListener { viewModel.openStoreDetail(entry.id) }
-        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
+        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name(context)
         val host = block.findViewById<FrameLayout>(R.id.widgetPreview)
         host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
         host.setOnClickListener(openDetail)

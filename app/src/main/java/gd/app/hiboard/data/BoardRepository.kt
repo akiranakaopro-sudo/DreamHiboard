@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.name
 import gd.app.hiboard.model.BoardSnapshot
 import gd.app.hiboard.model.CardArea
 import gd.app.hiboard.model.CardInstance
@@ -23,7 +24,8 @@ import kotlinx.coroutines.flow.map
 private val Context.boardStore by preferencesDataStore(name = "hiboard_board")
 
 class BoardRepository(context: Context) {
-    private val dataStore = context.applicationContext.boardStore
+    private val appContext = context.applicationContext
+    private val dataStore = appContext.boardStore
 
     val snapshot: Flow<BoardSnapshot> = dataStore.data.map { prefs ->
         val subscribedIds = DefaultCatalog.pinLocked(prefs.subscribedIds())
@@ -122,7 +124,7 @@ class BoardRepository(context: Context) {
             CardInstance(
                 instanceId = UUID.nameUUIDFromBytes("$area:$catalogId".toByteArray()).toString(),
                 catalogId = entry.id,
-                displayName = entry.name,
+                displayName = entry.name(appContext),
                 size = entry.size,
                 area = area,
                 engine = entry.engine,

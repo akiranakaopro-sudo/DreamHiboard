@@ -66,4 +66,51 @@
     <string name="music_pause">Pause</string>
     <string name="music_next">Next</string>
     <string name="music_favorite">Favorite</string>
+
+    <!-- Widget store groups / categories -->
+    <string name="widget_group_features">Features</string>
+    <string name="widget_group_weather">Weather</string>
+    <string name="widget_category_weather">Weather</string>
+    <string name="widget_category_notes">All notes</string>
+    <string name="widget_category_clock">Clock</string>
+
+    <!-- Widget names -->
+    <string name="widget_recent_name">Recent apps</string>
+    <string name="widget_weather_name">Weather</string>
+    <string name="widget_weathersquare_name">Today\'s weather</string>
+    <string name="widget_storage_name">Storage</string>
+    <string name="widget_flashlight_name">Flashlight</string>
+    <string name="widget_notes_name">All notes</string>
+    <string name="widget_noteswide_name">All notes</string>
+    <string name="widget_noteslarge_name">All notes</string>
+    <string name="widget_recorder_name">Recorder</string>
+    <string name="widget_contacts_name">Contacts</string>
+    <string name="widget_music_name">Music</string>
+    <string name="widget_calendar_name">Calendar</string>
+    <string name="widget_clock_name">Clock</string>
+    <string name="widget_weatherclock_name">Weather clock</string>
+    <string name="widget_weatherclocksquare_name">Compact weather clock</string>
+    <string name="widget_localtime_name">Local time clock</string>
+    <string name="widget_romanclock_name">Roman numeral clock</string>
+    <string name="widget_weatherdial_name">Weather dial clock</string>
+
+    <!-- Widget details -->
+    <string name="widget_recent_desc">Last opened app first, then Dialer, Contacts, Messages, Camera, and Settings.</string>
+    <string name="widget_weather_desc">Local 4×2 weather scene. Push your own snapshot through the weather API.</string>
+    <string name="widget_weathersquare_desc">Current temperature, condition, and today\'s low and high in a 2×2 card.</string>
+    <string name="widget_storage_desc">RAM used and free. Tap to open System Manager.</string>
+    <string name="widget_flashlight_desc">Tap to turn the torch on or off. Uses the rear camera flash.</string>
+    <string name="widget_notes_desc">Latest note from DreamNote. Tap to open the list, plus to write a new note.</string>
+    <string name="widget_noteswide_desc">Your two latest notes from DreamNote. Tap a note to open it, plus to write a new note.</string>
+    <string name="widget_noteslarge_desc">Your five latest notes from DreamNote. Tap a note to open it, plus to write a new note.</string>
+    <string name="widget_recorder_desc">Start, pause, mark, and save with DreamRecorder. Tap the card to open Recorder.</string>
+    <string name="widget_contacts_desc">Favorite people in one row. Tap a person to open them.</string>
+    <string name="widget_music_desc">Cover, progress, and playback for the current track.</string>
+    <string name="widget_calendar_desc">This month, with today marked. Tap to open Calendar.</string>
+    <string name="widget_clock_desc">Analog clock set to the system time.</string>
+    <string name="widget_weatherclock_desc">System time with today\'s weather.</string>
+    <string name="widget_weatherclocksquare_desc">System time with today\'s weather in a 2×2 card.</string>
+    <string name="widget_localtime_desc">Hour over minute, set to the system time.</string>
+    <string name="widget_romanclock_desc">Analog clock with Roman numerals, set to the system time.</string>
+    <string name="widget_weatherdial_desc">Analog clock with today\'s weather under the hands.</string>
 </resources>

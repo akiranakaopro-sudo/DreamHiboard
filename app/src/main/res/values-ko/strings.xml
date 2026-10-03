@@ -64,4 +64,51 @@
     <string name="music_pause">일시정지</string>
     <string name="music_next">다음 곡</string>
     <string name="music_favorite">즐겨찾기</string>
+
+    <!-- Widget store groups / categories -->
+    <string name="widget_group_features">기능</string>
+    <string name="widget_group_weather">날씨</string>
+    <string name="widget_category_weather">날씨</string>
+    <string name="widget_category_notes">모든 메모</string>
+    <string name="widget_category_clock">시계</string>
+
+    <!-- Widget names -->
+    <string name="widget_recent_name">최근 앱</string>
+    <string name="widget_weather_name">날씨</string>
+    <string name="widget_weathersquare_name">오늘의 날씨</string>
+    <string name="widget_storage_name">저장 공간</string>
+    <string name="widget_flashlight_name">손전등</string>
+    <string name="widget_notes_name">모든 메모</string>
+    <string name="widget_noteswide_name">모든 메모</string>
+    <string name="widget_noteslarge_name">모든 메모</string>
+    <string name="widget_recorder_name">녹음기</string>
+    <string name="widget_contacts_name">연락처</string>
+    <string name="widget_music_name">음악</string>
+    <string name="widget_calendar_name">캘린더</string>
+    <string name="widget_clock_name">시계</string>
+    <string name="widget_weatherclock_name">날씨 시계</string>
+    <string name="widget_weatherclocksquare_name">컴팩트 날씨 시계</string>
+    <string name="widget_localtime_name">로컬 시간 시계</string>
+    <string name="widget_romanclock_name">로마 숫자 시계</string>
+    <string name="widget_weatherdial_name">날씨 다이얼 시계</string>
+
+    <!-- Widget details -->
+    <string name="widget_recent_desc">가장 최근 앱이 먼저 나오고 Dialer, 연락처, 메시지, 카메라, 설정이 이어집니다.</string>
+    <string name="widget_weather_desc">현지 4×2 날씨 장면입니다. 날씨 API로 스냅샷을 직접 넣을 수 있습니다.</string>
+    <string name="widget_weathersquare_desc">현재 기온, 날씨 상태, 오늘의 최저·최고 기온을 2×2 카드로 보여 줍니다.</string>
+    <string name="widget_storage_desc">사용 중인 RAM과 남은 RAM을 표시합니다. 탭하면 시스템 관리자가 열립니다.</string>
+    <string name="widget_flashlight_desc">탭하면 손전등을 켜거나 끕니다. 후면 카메라 플래시를 사용합니다.</string>
+    <string name="widget_notes_desc">DreamNote의 최신 메모입니다. 탭하면 목록이 열리고, 더하기를 누르면 새 메모를 씁니다.</string>
+    <string name="widget_noteswide_desc">DreamNote의 최근 메모 두 개입니다. 메모를 탭하면 열리고, 더하기를 누르면 새 메모를 씁니다.</string>
+    <string name="widget_noteslarge_desc">DreamNote의 최근 메모 다섯 개입니다. 메모를 탭하면 열리고, 더하기를 누르면 새 메모를 씁니다.</string>
+    <string name="widget_recorder_desc">DreamRecorder로 시작, 일시정지, 표시, 저장을 합니다. 카드를 탭하면 녹음기가 열립니다.</string>
+    <string name="widget_contacts_desc">즐겨찾는 사람을 한 줄로 보여 줍니다. 사람을 탭하면 연락처가 열립니다.</string>
+    <string name="widget_music_desc">현재 곡의 커버, 진행률, 재생 컨트롤을 보여 줍니다.</string>
+    <string name="widget_calendar_desc">이번 달을 보여 주며 오늘을 표시합니다. 탭하면 캘린더가 열립니다.</string>
+    <string name="widget_clock_desc">시스템 시간에 맞춘 아날로그 시계입니다.</string>
+    <string name="widget_weatherclock_desc">시스템 시간과 오늘의 날씨를 함께 보여 줍니다.</string>
+    <string name="widget_weatherclocksquare_desc">2×2 카드에서 시스템 시간과 오늘의 날씨를 보여 줍니다.</string>
+    <string name="widget_localtime_desc">시와 분을 위아래로 보여 주는 시스템 시간 시계입니다.</string>
+    <string name="widget_romanclock_desc">로마 숫자가 있는 아날로그 시계이며 시스템 시간을 따릅니다.</string>
+    <string name="widget_weatherdial_desc">바늘 아래에 오늘의 날씨가 있는 아날로그 시계입니다.</string>
 </resources>

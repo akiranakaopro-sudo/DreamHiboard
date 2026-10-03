@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.name
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.CardEngineRegistry
@@ -244,7 +245,7 @@ class HiboardViewModel(
                 val incoming = CardInstance(
                     instanceId = UUID.nameUUIDFromBytes("${CardArea.Subscribe}:$catalogId".toByteArray()).toString(),
                     catalogId = entry.id,
-                    displayName = entry.name,
+                    displayName = entry.name(HiboardApp.instance),
                     size = entry.size,
                     area = CardArea.Subscribe,
                     engine = entry.engine,

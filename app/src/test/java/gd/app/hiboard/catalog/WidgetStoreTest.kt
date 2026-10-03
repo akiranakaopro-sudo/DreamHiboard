@@ -1,6 +1,5 @@
 package gd.app.hiboard.catalog
 
-import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardSize
@@ -8,93 +7,114 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WidgetStoreTest {
-    private val weather = entry("weather", "Weather", groupId = DefaultCatalog.GROUP_WEATHER)
-    private val notes = entry("notes", "All notes")
-    private val storage = entry("storage", "Storage")
-    private val locked = entry("recent", "Recent apps", locked = true)
+    private val labels = mapOf(
+        1 to "Weather",
+        2 to "All notes",
+        3 to "Storage",
+        4 to "Recent apps",
+        10 to "Clock",
+        11 to "Local time clock",
+        12 to "Weather clock",
+    )
+
+    private val weather = entry("weather", nameRes = 1, groupId = DefaultCatalog.GROUP_WEATHER)
+    private val notes = entry("notes", nameRes = 2)
+    private val storage = entry("storage", nameRes = 3)
+    private val locked = entry("recent", nameRes = 4, locked = true)
 
     @Test
     fun sectionsSkipLockedAndGroupByLetter() {
-        val sections = widgetStoreSections(listOf(weather, notes, storage, locked))
+        val sections = sectionsOf(listOf(weather, notes, storage, locked))
         assertEquals(listOf("A", "S", "W"), sections.map { it.letter })
-        assertEquals(listOf("All notes"), sections[0].entries.map { it.name })
-        assertEquals(listOf("Storage"), sections[1].entries.map { it.name })
-        assertEquals(listOf("Weather"), sections[2].entries.map { it.name })
+        assertEquals(listOf("notes"), sections[0].entries.map { it.id })
+        assertEquals(listOf("storage"), sections[1].entries.map { it.id })
+        assertEquals(listOf("weather"), sections[2].entries.map { it.id })
     }
 
     @Test
     fun queryAndGroupFilterTheList() {
         val catalog = listOf(weather, notes, storage)
         assertEquals(
-            listOf("Weather"),
-            widgetStoreSections(catalog, query = "wea").flatMap { it.entries }.map { it.name },
+            listOf("weather"),
+            sectionsOf(catalog, query = "wea").flatMap { it.entries }.map { it.id },
         )
         assertEquals(
-            listOf("Weather"),
-            widgetStoreSections(catalog, groupId = DefaultCatalog.GROUP_WEATHER)
+            listOf("weather"),
+            sectionsOf(catalog, groupId = DefaultCatalog.GROUP_WEATHER)
                 .flatMap { it.entries }
-                .map { it.name },
+                .map { it.id },
         )
         assertEquals(
-            listOf("All notes", "Storage"),
-            widgetStoreSections(catalog, groupId = DefaultCatalog.GROUP_FEATURES)
+            listOf("notes", "storage"),
+            sectionsOf(catalog, groupId = DefaultCatalog.GROUP_FEATURES)
                 .flatMap { it.entries }
-                .map { it.name },
+                .map { it.id },
         )
         assertEquals(
-            listOf("Weather"),
-            widgetStoreSections(catalog, query = "wea", groupId = DefaultCatalog.GROUP_FEATURES)
+            listOf("weather"),
+            sectionsOf(catalog, query = "wea", groupId = DefaultCatalog.GROUP_FEATURES)
                 .flatMap { it.entries }
-                .map { it.name },
+                .map { it.id },
         )
         assertEquals(
             emptyList<String>(),
-            widgetStoreSections(catalog, groupId = "missing").flatMap { it.entries }.map { it.name },
+            sectionsOf(catalog, groupId = "missing").flatMap { it.entries }.map { it.id },
         )
     }
 
     @Test
     fun featuresAndWeatherShowUnlockedWidgets() {
-        val features = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_FEATURES)
-            .flatMap { it.entries }
+        val features = DefaultCatalog.entries
+            .filter { !it.locked && it.groupId == DefaultCatalog.GROUP_FEATURES }
+            .sortedBy { it.id }
         assertEquals(
-            listOf("All notes", "All notes", "All notes", "Contacts", "Flashlight", "Music", "Recorder", "Storage"),
-            features.map { it.name },
+            listOf(
+                "contacts",
+                "flashlight",
+                "music",
+                "notes",
+                "noteslarge",
+                "noteswide",
+                "recorder",
+                "storage",
+            ),
+            features.map { it.id },
         )
-        assertEquals(CardSize.FullByTwo, features.first { it.name == "Contacts" }.size)
-        assertEquals(CardSize.FullByTwo, features.first { it.name == "Music" }.size)
+        assertEquals(CardSize.FullByTwo, features.first { it.id == "contacts" }.size)
+        assertEquals(CardSize.FullByTwo, features.first { it.id == "music" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.id == "noteswide" }.size)
         assertEquals(CardSize.FourByFour, features.first { it.id == "noteslarge" }.size)
         assertEquals(
             true,
-            features.filter { it.name != "Contacts" && it.name != "Music" && it.id !in setOf("noteswide", "noteslarge") }
+            features.filter { it.id !in setOf("contacts", "music", "noteswide", "noteslarge") }
                 .all { it.size.columns == 2 && it.size.rows == 2 },
         )
-        val weather = widgetStoreSections(DefaultCatalog.entries, groupId = DefaultCatalog.GROUP_WEATHER)
-            .flatMap { it.entries }
+        val weather = DefaultCatalog.entries
+            .filter { !it.locked && it.groupId == DefaultCatalog.GROUP_WEATHER }
+            .sortedBy { it.id }
         assertEquals(
             listOf(
-                "Calendar",
-                "Clock",
-                "Compact weather clock",
-                "Local time clock",
-                "Roman numeral clock",
-                "Today's weather",
-                "Weather",
-                "Weather clock",
-                "Weather dial clock",
+                "calendar",
+                "clock",
+                "localtime",
+                "romanclock",
+                "weather",
+                "weatherclock",
+                "weatherclocksquare",
+                "weatherdial",
+                "weathersquare",
             ),
-            weather.map { it.name },
+            weather.map { it.id },
         )
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Compact weather clock" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Today's weather" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Calendar" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Clock" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Local time clock" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Roman numeral clock" }.size)
-        assertEquals(CardSize.TwoByTwo, weather.first { it.name == "Weather dial clock" }.size)
-        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather" }.size)
-        assertEquals(CardSize.FullByTwo, weather.first { it.name == "Weather clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "weatherclocksquare" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "weathersquare" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "calendar" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "clock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "localtime" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "romanclock" }.size)
+        assertEquals(CardSize.TwoByTwo, weather.first { it.id == "weatherdial" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.id == "weather" }.size)
+        assertEquals(CardSize.FullByTwo, weather.first { it.id == "weatherclock" }.size)
     }
 
     @Test
@@ -135,19 +155,51 @@ class WidgetStoreTest {
 
     @Test
     fun clockWidgetsShareOneCategory() {
-        val categories = widgetStoreCategories(DefaultCatalog.entries).flatMap { it.categories }
+        val clockIds = listOf(
+            "clock",
+            "weatherclock",
+            "weatherclocksquare",
+            "localtime",
+            "romanclock",
+            "weatherdial",
+        )
+        val catalog = clockIds.map { id ->
+            entry(
+                id = id,
+                nameRes = when (id) {
+                    "localtime" -> 11
+                    "weatherclock" -> 12
+                    else -> 10
+                },
+                groupId = DefaultCatalog.GROUP_WEATHER,
+                storeCategoryRes = 10,
+            )
+        } + entry("notes", nameRes = 2, storeCategoryRes = 2)
+        val categories = widgetStoreCategories(
+            catalog = catalog,
+            nameOf = ::label,
+            categoryOf = { entry ->
+                if (entry.storeCategoryRes != 0) label(entry.copy(nameRes = entry.storeCategoryRes))
+                else label(entry)
+            },
+        ).flatMap { it.categories }
         assertEquals(
             false,
             categories.any { it.name == "Local time clock" || it.name == "Weather clock" },
         )
         val clock = categories.first { it.name == "Clock" }
-        assertEquals(
-            listOf("clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock", "weatherdial"),
-            clock.entries.map { it.id },
-        )
+        assertEquals(clockIds, clock.entries.map { it.id })
         assertEquals(
             listOf("localtime"),
-            widgetStoreCategories(DefaultCatalog.entries, query = "local time")
+            widgetStoreCategories(
+                catalog = catalog,
+                query = "local time",
+                nameOf = ::label,
+                categoryOf = { entry ->
+                    if (entry.storeCategoryRes != 0) label(entry.copy(nameRes = entry.storeCategoryRes))
+                    else label(entry)
+                },
+            )
                 .flatMap { it.categories }
                 .flatMap { it.entries }
                 .map { it.id },
@@ -160,22 +212,37 @@ class WidgetStoreTest {
         assertEquals("3 widgets", widgetCountLabel(3))
     }
 
+    private fun sectionsOf(
+        catalog: List<CardCatalogEntry>,
+        query: String = "",
+        groupId: String? = null,
+    ) = widgetStoreSections(
+        catalog = catalog,
+        query = query,
+        groupId = groupId,
+        nameOf = ::label,
+    )
+
+    private fun label(entry: CardCatalogEntry): String = labels.getValue(entry.nameRes)
+
     private fun entry(
         id: String,
-        name: String,
+        nameRes: Int,
         locked: Boolean = false,
         groupId: String = DefaultCatalog.GROUP_FEATURES,
+        storeCategoryRes: Int = 0,
     ): CardCatalogEntry {
         return CardCatalogEntry(
             id = id,
             groupId = groupId,
-            groupTitle = if (groupId == DefaultCatalog.GROUP_WEATHER) "Weather" else "Features",
-            name = name,
-            description = name,
+            groupTitleRes = if (groupId == DefaultCatalog.GROUP_WEATHER) 100 else 101,
+            nameRes = nameRes,
+            descriptionRes = nameRes,
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Notes,
             defaultSubscribed = false,
             locked = locked,
+            storeCategoryRes = storeCategoryRes,
         )
     }
 }

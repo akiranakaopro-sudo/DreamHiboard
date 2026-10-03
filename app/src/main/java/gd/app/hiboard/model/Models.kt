@@ -1,5 +1,7 @@
 package gd.app.hiboard.model
 
+import androidx.annotation.StringRes
+
 /**
  * 4-column grid sizes, mapped from ColorOS `CardSizeOf`.
  *
@@ -56,15 +58,15 @@ enum class CardAction {
 data class CardCatalogEntry(
     val id: String,
     val groupId: String,
-    val groupTitle: String,
-    val name: String,
-    val description: String,
+    @StringRes val groupTitleRes: Int,
+    @StringRes val nameRes: Int,
+    @StringRes val descriptionRes: Int,
     val size: CardSize,
     val engine: CardEngineId,
     val defaultSubscribed: Boolean,
     val resizable: Boolean = false,
     val locked: Boolean = false,
-    val storeCategory: String = "",
+    @StringRes val storeCategoryRes: Int = 0,
 )
 
 /** Placed instance — ColorOS `CardInfo`. */
