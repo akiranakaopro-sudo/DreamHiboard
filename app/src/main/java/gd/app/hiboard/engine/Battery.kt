@@ -97,7 +97,7 @@ class BatteryReader(context: Context) {
         val level = sticky.batteryPercent()
         // ColorOS aC/f: only EXTRA_STATUS == CHARGING (2). FULL / NOT_CHARGING / unplugged ≠ charging.
         val charging = sticky.isBatteryCharging()
-        val samples = persistAndLoad(level, charging)
+        val samples = persistAndLoad(level)
         val remaining = if (charging) -1L else estimateRemainingMs(level, samples)
         return BatterySnapshot(
             levelPercent = level,
@@ -139,33 +139,42 @@ class BatteryReader(context: Context) {
         return (level / percentPerMs).toLong().coerceAtLeast(0L)
     }
 
-    private fun persistAndLoad(level: Int, charging: Boolean): List<BatterySample> {
+    private fun persistAndLoad(level: Int): List<BatterySample> {
         val now = System.currentTimeMillis()
         val existing = loadSamples().filter { now - it.epochMillis <= HISTORY_WINDOW_MS }
         val last = existing.lastOrNull()
-        val shouldAppend = last == null ||
-            last.levelPercent != level ||
-            last.charging != charging ||
-            now - last.epochMillis >= SAMPLE_INTERVAL_MS
+        // Sticks advance on the sample clock only — never on plug / level flicker.
+        val shouldAppend = last == null || now - last.epochMillis >= SAMPLE_INTERVAL_MS
         val next = when {
-            existing.isEmpty() -> seedFlatHistory(level, charging, now)
-            shouldAppend -> (existing + BatterySample(now, level, charging)).takeLast(MAX_SAMPLES)
+            existing.isEmpty() -> seedFlatHistory(level, now)
+            shouldAppend -> {
+                val rising = last != null && level > last.levelPercent
+                (existing + BatterySample(now, level, rising)).takeLast(MAX_SAMPLES)
+            }
             else -> existing
         }
-        if (next != existing) saveSamples(next)
-        return next
+        // Green = percent rose vs the previous stick (re-derived so older prefs stay consistent).
+        val marked = markRising(next)
+        if (marked != existing) saveSamples(marked)
+        return marked
     }
 
-    private fun seedFlatHistory(level: Int, charging: Boolean, now: Long): List<BatterySample> {
+    private fun seedFlatHistory(level: Int, now: Long): List<BatterySample> {
         val step = HISTORY_WINDOW_MS / (MAX_SAMPLES - 1)
-        // Seed discharge history; only the newest point may be actively charging (matches ColorOS mocks).
         return List(MAX_SAMPLES) { index ->
-            val last = index == MAX_SAMPLES - 1
             BatterySample(
                 epochMillis = now - (MAX_SAMPLES - 1 - index) * step,
                 levelPercent = level,
-                charging = charging && last,
+                charging = false,
             )
+        }
+    }
+
+    private fun markRising(samples: List<BatterySample>): List<BatterySample> {
+        if (samples.isEmpty()) return samples
+        return samples.mapIndexed { index, sample ->
+            val rising = index > 0 && sample.levelPercent > samples[index - 1].levelPercent
+            if (sample.charging == rising) sample else sample.copy(charging = rising)
         }
     }
 
@@ -211,7 +220,7 @@ private fun Intent?.batteryPercent(): Int {
 
 /**
  * ColorOS `aC/f` maps EXTRA_STATUS: 2→"charging", 3→"discharging", 4→"not_charging", 5→"full".
- * Green sticks + status-row "Charging" follow status==CHARGING only (not FULL / plugged).
+ * Status-row "Charging" follows status==CHARGING only (not FULL / plugged).
  */
 private fun Intent?.isBatteryCharging(): Boolean {
     if (this == null) return false
@@ -219,27 +228,96 @@ private fun Intent?.isBatteryCharging(): Boolean {
         BatteryManager.BATTERY_STATUS_CHARGING
 }
 
-/** Demo series for store previews (decline with a short active-charge bump). */
+/**
+ * Builds a full 24h stick grid. Gaps between real samples (and out to [end]) are filled by
+ * linear interpolation; before the first sample the first known level is held.
+ */
+fun densifyBatterySamples(
+    samples: List<BatterySample>,
+    end: Long = System.currentTimeMillis(),
+    currentLevel: Int = samples.lastOrNull()?.levelPercent ?: 0,
+): List<BatterySample> {
+    val start = end - HISTORY_WINDOW_MS
+    val step = HISTORY_WINDOW_MS / (MAX_SAMPLES - 1)
+    val sorted = samples.sortedBy { it.epochMillis }
+    val level = currentLevel.coerceIn(0, 100)
+    if (sorted.isEmpty()) {
+        return List(MAX_SAMPLES) { index ->
+            BatterySample(
+                epochMillis = start + index * step,
+                levelPercent = level,
+                charging = false,
+            )
+        }
+    }
+    val levels = IntArray(MAX_SAMPLES) { index ->
+        levelAtTime(sorted, start + index * step, end, level)
+    }
+    return List(MAX_SAMPLES) { index ->
+        val rising = index > 0 && levels[index] > levels[index - 1]
+        BatterySample(
+            epochMillis = start + index * step,
+            levelPercent = levels[index],
+            charging = rising,
+        )
+    }
+}
+
+private fun levelAtTime(
+    sorted: List<BatterySample>,
+    time: Long,
+    end: Long,
+    currentLevel: Int,
+): Int {
+    val first = sorted.first()
+    val last = sorted.last()
+    when {
+        time <= first.epochMillis -> return first.levelPercent
+        time >= end -> return currentLevel
+        time >= last.epochMillis -> {
+            val span = (end - last.epochMillis).coerceAtLeast(1L)
+            val t = ((time - last.epochMillis).toFloat() / span).coerceIn(0f, 1f)
+            return (last.levelPercent + (currentLevel - last.levelPercent) * t).roundToInt()
+                .coerceIn(0, 100)
+        }
+    }
+    for (index in 0 until sorted.lastIndex) {
+        val a = sorted[index]
+        val b = sorted[index + 1]
+        if (time in a.epochMillis..b.epochMillis) {
+            val span = (b.epochMillis - a.epochMillis).coerceAtLeast(1L)
+            val t = (time - a.epochMillis).toFloat() / span
+            return (a.levelPercent + (b.levelPercent - a.levelPercent) * t).roundToInt()
+                .coerceIn(0, 100)
+        }
+    }
+    return currentLevel
+}
+
+/** Demo series for store previews (decline with a short rising / charge bump). */
 fun previewBatterySamples(
     level: Int = 63,
     chargingNow: Boolean = false,
     now: Long = System.currentTimeMillis(),
 ): List<BatterySample> {
     val step = HISTORY_WINDOW_MS / (MAX_SAMPLES - 1)
-    return List(MAX_SAMPLES) { index ->
+    val levels = List(MAX_SAMPLES) { index ->
         val t = index.toFloat() / (MAX_SAMPLES - 1)
         val inChargeBurst = t in 0.70f..0.80f
-        val last = index == MAX_SAMPLES - 1
-        val value = when {
+        when {
             t < 0.70f -> (level + 8 - (t / 0.70f) * 12f).roundToInt()
             inChargeBurst -> (level - 4 + ((t - 0.70f) / 0.10f) * 10f).roundToInt()
             else -> (level + 6 - ((t - 0.80f) / 0.20f) * 6f).roundToInt()
-        }.coerceIn(0, 100)
+        }.coerceIn(0, 100).let { value ->
+            if (chargingNow && index == MAX_SAMPLES - 1) (value + 1).coerceAtMost(100) else value
+        }
+    }
+    return levels.mapIndexed { index, value ->
+        val rising = index > 0 && value > levels[index - 1]
         BatterySample(
             epochMillis = now - (MAX_SAMPLES - 1 - index) * step,
             levelPercent = value,
-            // Green sticks only for active CHARGING samples (not FULL / merely plugged).
-            charging = inChargeBurst || (chargingNow && last),
+            charging = rising,
         )
     }
 }

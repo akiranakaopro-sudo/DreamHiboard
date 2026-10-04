@@ -16,6 +16,7 @@ import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.monthPageToday
+import gd.app.hiboard.engine.densifyBatterySamples
 import gd.app.hiboard.engine.previewBatterySamples
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
@@ -158,7 +159,7 @@ private fun bindBatteryPreview(inflater: LayoutInflater, card: COUICardView, bod
     view.findViewById<ImageView>(R.id.batteryStatusIcon).setImageResource(R.drawable.ic_battery_charge)
     view.findViewById<TextView>(R.id.batteryStatus).setText(R.string.battery_charging)
     view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples =
-        previewBatterySamples(level = 63, chargingNow = true)
+        densifyBatterySamples(previewBatterySamples(level = 63, chargingNow = true), currentLevel = 63)
 }
 
 private fun bindRecorderPreview(

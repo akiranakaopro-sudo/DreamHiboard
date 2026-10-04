@@ -25,6 +25,7 @@ import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.STORAGE_DISPLAY_OFFSET_BYTES
+import gd.app.hiboard.engine.densifyBatterySamples
 import gd.app.hiboard.engine.formatBatteryRemainingDuration
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
@@ -292,11 +293,16 @@ class CardBinder(
                 icon.setImageResource(R.drawable.ic_battery_charge)
                 label.setText(R.string.battery_charging)
             } else {
-                icon.setImageResource(R.drawable.ic_battery_remain)
+                val ring = icon.drawable as? BatteryRemainRingDrawable
+                    ?: BatteryRemainRingDrawable(
+                        fillColor = icon.context.getColor(R.color.hiboard_battery_charging),
+                        trackColor = icon.context.getColor(R.color.hiboard_battery_remain_track),
+                    ).also { icon.setImageDrawable(it) }
+                ring.levelPercent = percent
                 val duration = formatBatteryRemainingDuration(label.resources, remainingMs)
                 label.text = label.resources.getString(R.string.battery_should_last, duration)
             }
-            graph.samples = samples
+            graph.samples = densifyBatterySamples(samples, currentLevel = percent)
         }
     }
 

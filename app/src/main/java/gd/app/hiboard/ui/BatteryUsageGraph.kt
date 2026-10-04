@@ -16,6 +16,11 @@ import java.util.Calendar
 import java.util.Locale
 import kotlin.math.max
 
+private const val WINDOW_MS = 24L * 60L * 60L * 1000L
+private const val MARK_STEP_MS = 4L * 60L * 60L * 1000L
+/** Expected stick count across 24h; keeps bar width stable when sample count changes. */
+private const val SLOT_COUNT = 49
+
 class BatteryUsageGraph @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -36,10 +41,14 @@ class BatteryUsageGraph @JvmOverloads constructor(
     private val nowLabel = context.getString(R.string.battery_now)
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val dashGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         color = gridColor
         pathEffect = DashPathEffect(floatArrayOf(4f, 6f), 0f)
+    }
+    private val solidGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        color = gridColor
     }
     private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = labelColor
@@ -60,7 +69,9 @@ class BatteryUsageGraph @JvmOverloads constructor(
         val density = resources.displayMetrics.density
         axisPaint.textSize = 11f * density
         yLabelPaint.textSize = 11f * density
-        gridPaint.strokeWidth = max(1f, density * 0.8f)
+        val gridStroke = max(1f, density * 0.8f)
+        dashGridPaint.strokeWidth = gridStroke
+        solidGridPaint.strokeWidth = gridStroke
 
         val yLabelWidth = yLabelPaint.measureText("100%") + 8f * density
         val xLabelHeight = axisPaint.textSize + 8f * density
@@ -73,22 +84,28 @@ class BatteryUsageGraph @JvmOverloads constructor(
         val yTicks = intArrayOf(100, 50, 0)
         yTicks.forEach { pct ->
             val y = chartTop + (chartBottom - chartTop) * (1f - pct / 100f)
-            canvas.drawLine(chartLeft, y, chartRight, y, gridPaint)
+            // 100% uses a solid line; 50% / 0% stay dashed.
+            val paint = if (pct == 100) solidGridPaint else dashGridPaint
+            canvas.drawLine(chartLeft, y, chartRight, y, paint)
             val textY = y - (yLabelPaint.descent() + yLabelPaint.ascent()) / 2f
             canvas.drawText("$pct%", w - 2f * density, textY, yLabelPaint)
         }
 
-        val points = samples.ifEmpty { return }
-        val count = points.size
-        val slot = (chartRight - chartLeft) / count
+        val end = System.currentTimeMillis()
+        val start = end - WINDOW_MS
+        val chartWidth = chartRight - chartLeft
+        val slot = chartWidth / SLOT_COUNT
         val barWidth = max(2f * density, slot * 0.55f)
         val radius = barWidth / 2f
 
-        points.forEachIndexed { index, sample ->
+        samples.forEach { sample ->
+            val t = sample.epochMillis
+            if (t < start || t > end) return@forEach
+            val fraction = ((t - start).toFloat() / WINDOW_MS).coerceIn(0f, 1f)
             val level = sample.levelPercent.coerceIn(0, 100) / 100f
-            val cx = chartLeft + slot * (index + 0.5f)
+            val cx = chartLeft + chartWidth * fraction
             val barTopY = chartBottom - (chartBottom - chartTop) * level
-            // Green when sample status was CHARGING (2); otherwise discharge blue.
+            // Green when this stick's level rose vs the previous sample (time-based charge).
             val topColor = if (sample.charging) barChargeTop else barTop
             val bottomColor = if (sample.charging) barChargeBottom else barBottom
             barRect.set(cx - barWidth / 2f, barTopY, cx + barWidth / 2f, chartBottom)
@@ -107,42 +124,51 @@ class BatteryUsageGraph @JvmOverloads constructor(
         }
         barPaint.shader = null
 
-        val xLabels = xAxisLabels(points)
-        xLabels.forEach { (fraction, text) ->
-            val x = chartLeft + (chartRight - chartLeft) * fraction
-            canvas.drawLine(x, chartTop, x, chartBottom, gridPaint)
-            canvas.drawText(text, x, h - 2f * density, axisPaint)
+        val labelBaseline = h - 2f * density
+        val labelTop = labelBaseline + axisPaint.ascent()
+        val xLabels = xAxisLabels(start, end)
+        xLabels.forEachIndexed { index, (fraction, text) ->
+            val x = chartLeft + chartWidth * fraction
+            // Dashed time partitions run through 0% down to the time label.
+            canvas.drawLine(x, chartTop, x, labelTop, dashGridPaint)
+            axisPaint.textAlign = when {
+                index == 0 -> Paint.Align.LEFT
+                index == xLabels.lastIndex -> Paint.Align.RIGHT
+                else -> Paint.Align.CENTER
+            }
+            canvas.drawText(text, x, labelBaseline, axisPaint)
         }
+        axisPaint.textAlign = Paint.Align.CENTER
     }
 
     /**
-     * ColorOS UsageGraph time marks: round "now" to the nearest hour (:30 up), step back 1h,
-     * then label every 4 hours. That keeps odd/even marks alive with the current clock.
+     * Always a fixed 24h axis ending at now. Hour marks keep the current hour's odd/even
+     * parity (step 4h). If the last hour mark would sit on "Now", move it to the first seat.
      */
-    private fun xAxisLabels(points: List<BatterySample>): List<Pair<Float, String>> {
-        if (points.isEmpty()) return emptyList()
-        val start = points.first().epochMillis
-        val end = points.last().epochMillis
-        val span = max(1L, end - start)
-        val fourHours = 4L * 60L * 60L * 1000L
+    private fun xAxisLabels(start: Long, end: Long): List<Pair<Float, String>> {
         val cal = Calendar.getInstance().apply {
             timeInMillis = end
-            val minutes = get(Calendar.MINUTE)
+            set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            set(Calendar.MINUTE, 0)
-            if (minutes >= 30) add(Calendar.HOUR_OF_DAY, 1)
-            add(Calendar.HOUR_OF_DAY, -1)
+            if (timeInMillis >= end - 30L * 60L * 1000L) {
+                add(Calendar.HOUR_OF_DAY, -4)
+            }
         }
-        var mark = cal.timeInMillis
-        while (mark > start) mark -= fourHours
-        while (mark < start) mark += fourHours
         val labels = ArrayList<Pair<Float, String>>()
+        var mark = cal.timeInMillis
+        while (mark > start) mark -= MARK_STEP_MS
+        while (mark < start) mark += MARK_STEP_MS
         while (mark < end) {
-            val fraction = ((mark - start).toFloat() / span).coerceIn(0f, 0.92f)
+            val fraction = ((mark - start).toFloat() / WINDOW_MS).coerceIn(0f, 1f)
             cal.timeInMillis = mark
             labels += fraction to String.format(Locale.US, "%02d", cal.get(Calendar.HOUR_OF_DAY))
-            mark += fourHours
+            mark += MARK_STEP_MS
+        }
+        // e.g. "14" next to "Now" → put "14" in the first seat instead.
+        if (labels.isNotEmpty() && labels.last().first >= 0.90f) {
+            val hour = labels.removeAt(labels.lastIndex).second
+            labels.add(0, 0f to hour)
         }
         labels += 1f to nowLabel
         return labels
