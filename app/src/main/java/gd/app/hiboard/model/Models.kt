@@ -103,6 +103,7 @@ data class BoardContact(
 data class BatterySample(
     val epochMillis: Long,
     val levelPercent: Int,
+    val charging: Boolean = false,
 )
 
 data class WeatherDayContent(
@@ -140,6 +141,7 @@ data class CardContent(
     val storageTotalBytes: Long = 0L,
     val batteryPercent: Int = 0,
     val batteryCharging: Boolean = false,
+    val batteryRemainingMs: Long = -1L,
     val batterySamples: List<BatterySample> = emptyList(),
     val batteryReady: Boolean = false,
     val recorderState: RecorderUiState = RecorderUiState.Idle,

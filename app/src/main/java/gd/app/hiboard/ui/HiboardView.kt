@@ -80,6 +80,7 @@ class HiboardView @JvmOverloads constructor(
     private var lastContent: CardContent? = null
     private var lastNoteFolders: Map<String, String> = emptyMap()
     private var lastFlashKey: Any? = null
+    private var lastBatteryKey: Any? = null
     private var lastRecorderKey: RecorderUiState? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
@@ -175,6 +176,7 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
             lastFlashKey = null
+            lastBatteryKey = null
             lastRecorderKey = null
             viewModel.exitEdit()
         }
@@ -324,6 +326,32 @@ class HiboardView @JvmOverloads constructor(
         }
     }
 
+    private fun applyBatteryState(state: HiboardUiState) {
+        val percent = state.content.batteryPercent
+        val charging = state.content.batteryCharging
+        val remainingMs = state.content.batteryRemainingMs
+        val samples = state.content.batterySamples
+        lastBatteryKey = listOf(percent, charging, remainingMs / 3_600_000L, samples)
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Battery) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val percentView = root.findViewById<TextView>(R.id.batteryPercent) ?: return@forEach
+            val icon = root.findViewById<ImageView>(R.id.batteryStatusIcon) ?: return@forEach
+            val label = root.findViewById<TextView>(R.id.batteryStatus) ?: return@forEach
+            val graph = root.findViewById<BatteryUsageGraph>(R.id.batteryGraph) ?: return@forEach
+            CardBinder.applyBatteryStatus(
+                percentView = percentView,
+                icon = icon,
+                label = label,
+                graph = graph,
+                percent = percent,
+                charging = charging,
+                remainingMs = remainingMs,
+                samples = samples,
+            )
+        }
+    }
+
     private fun sendRecorder(viewModel: HiboardViewModel, command: RecorderCommand) {
         performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         when (val result = viewModel.sendRecorder(command)) {
@@ -415,11 +443,22 @@ class HiboardView @JvmOverloads constructor(
             state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
+        val batteryKey = listOf(
+            state.content.batteryPercent,
+            state.content.batteryCharging,
+            state.content.batteryRemainingMs / 3_600_000L,
+            state.content.batterySamples,
+        )
         val recorderKey = state.content.recorderState
         val gridKey = listOf(state.board, state.editMode)
         val content = state.content.copy(
             flashlightOn = false,
             flashlightAvailable = false,
+            batteryPercent = 0,
+            batteryCharging = false,
+            batteryRemainingMs = -1L,
+            batterySamples = emptyList(),
+            batteryReady = false,
             recorderState = RecorderUiState.Idle,
             recorderElapsedMs = 0L,
         )
@@ -428,6 +467,7 @@ class HiboardView @JvmOverloads constructor(
             lastGridKey = gridKey
             lastContent = content
             lastFlashKey = flashKey
+            lastBatteryKey = batteryKey
             lastRecorderKey = recorderKey
             lastNoteFolders = state.noteFolderSelections
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
@@ -462,6 +502,10 @@ class HiboardView @JvmOverloads constructor(
                 lastFlashKey = flashKey
                 applyFlashlightArt(state)
             }
+            if (batteryKey != lastBatteryKey) {
+                lastBatteryKey = batteryKey
+                applyBatteryState(state)
+            }
             if (recorderKey != lastRecorderKey) {
                 lastRecorderKey = recorderKey
                 applyRecorderState(state, binder)
@@ -487,8 +531,8 @@ class HiboardView @JvmOverloads constructor(
         CardEngineId.Notes -> content.notes to content.noteFolders
         CardEngineId.RecentApps -> content.recentApps
         CardEngineId.Storage -> content.storageUsedBytes to content.storageTotalBytes
-        CardEngineId.Battery -> Triple(content.batteryPercent, content.batteryCharging, content.batterySamples)
         CardEngineId.Contacts -> Triple(content.contacts, content.contactsPermitted, content.contactsReady)
+        CardEngineId.Battery,
         CardEngineId.Flashlight,
         CardEngineId.Recorder,
         CardEngineId.Calendar,

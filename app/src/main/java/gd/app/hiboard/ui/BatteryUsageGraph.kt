@@ -29,6 +29,8 @@ class BatteryUsageGraph @JvmOverloads constructor(
 
     private val barTop = context.getColor(R.color.hiboard_battery_bar_top)
     private val barBottom = context.getColor(R.color.hiboard_battery_bar_bottom)
+    private val barChargeTop = context.getColor(R.color.hiboard_battery_bar_charge_top)
+    private val barChargeBottom = context.getColor(R.color.hiboard_battery_bar_charge_bottom)
     private val labelColor = context.getColor(R.color.hiboard_battery_axis)
     private val gridColor = context.getColor(R.color.hiboard_battery_grid)
     private val nowLabel = context.getString(R.string.battery_now)
@@ -86,14 +88,17 @@ class BatteryUsageGraph @JvmOverloads constructor(
             val level = sample.levelPercent.coerceIn(0, 100) / 100f
             val cx = chartLeft + slot * (index + 0.5f)
             val barTopY = chartBottom - (chartBottom - chartTop) * level
+            // Green when sample status was CHARGING (2); otherwise discharge blue.
+            val topColor = if (sample.charging) barChargeTop else barTop
+            val bottomColor = if (sample.charging) barChargeBottom else barBottom
             barRect.set(cx - barWidth / 2f, barTopY, cx + barWidth / 2f, chartBottom)
             barPaint.shader = LinearGradient(
                 0f,
                 barTopY,
                 0f,
                 chartBottom,
-                barTop,
-                barBottom,
+                topColor,
+                bottomColor,
                 Shader.TileMode.CLAMP,
             )
             barPath.reset()
@@ -110,32 +115,36 @@ class BatteryUsageGraph @JvmOverloads constructor(
         }
     }
 
+    /**
+     * ColorOS UsageGraph time marks: round "now" to the nearest hour (:30 up), step back 1h,
+     * then label every 4 hours. That keeps odd/even marks alive with the current clock.
+     */
     private fun xAxisLabels(points: List<BatterySample>): List<Pair<Float, String>> {
         if (points.isEmpty()) return emptyList()
         val start = points.first().epochMillis
         val end = points.last().epochMillis
         val span = max(1L, end - start)
+        val fourHours = 4L * 60L * 60L * 1000L
         val cal = Calendar.getInstance().apply {
             timeInMillis = end
-            set(Calendar.MINUTE, 0)
+            val minutes = get(Calendar.MINUTE)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            val hour = get(Calendar.HOUR_OF_DAY)
-            set(Calendar.HOUR_OF_DAY, (hour / 4) * 4)
-            if (timeInMillis >= end - 30L * 60L * 1000L) {
-                add(Calendar.HOUR_OF_DAY, -4)
-            }
+            set(Calendar.MINUTE, 0)
+            if (minutes >= 30) add(Calendar.HOUR_OF_DAY, 1)
+            add(Calendar.HOUR_OF_DAY, -1)
         }
+        var mark = cal.timeInMillis
+        while (mark > start) mark -= fourHours
+        while (mark < start) mark += fourHours
         val labels = ArrayList<Pair<Float, String>>()
-        repeat(6) {
-            val t = cal.timeInMillis
-            if (t in start until end) {
-                val fraction = ((t - start).toFloat() / span).coerceIn(0f, 0.92f)
-                labels += fraction to String.format(Locale.US, "%02d", cal.get(Calendar.HOUR_OF_DAY))
-            }
-            cal.add(Calendar.HOUR_OF_DAY, -4)
+        while (mark < end) {
+            val fraction = ((mark - start).toFloat() / span).coerceIn(0f, 0.92f)
+            cal.timeInMillis = mark
+            labels += fraction to String.format(Locale.US, "%02d", cal.get(Calendar.HOUR_OF_DAY))
+            mark += fourHours
         }
         labels += 1f to nowLabel
-        return labels.sortedBy { it.first }
+        return labels
     }
 }

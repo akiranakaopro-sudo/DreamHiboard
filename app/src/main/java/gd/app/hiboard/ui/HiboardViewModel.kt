@@ -84,6 +84,21 @@ class HiboardViewModel(
             }
         }
         viewModelScope.launch {
+            engines.batterySnapshots.collect { snap ->
+                _state.update {
+                    it.copy(
+                        content = it.content.copy(
+                            batteryPercent = snap.levelPercent,
+                            batteryCharging = snap.charging,
+                            batteryRemainingMs = snap.remainingMs,
+                            batterySamples = snap.samples,
+                            batteryReady = true,
+                        ),
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
             engines.notesRevisions.collect { refreshContent(CardAction.Bind) }
         }
         viewModelScope.launch {
@@ -138,8 +153,8 @@ class HiboardViewModel(
 
     /**
      * Re-queries card data on [loader]; contacts, notes and usage stats can take hundreds of
-     * milliseconds. Flashlight and recorder fields are driven by their own flows, so keep the
-     * current values instead of a snapshot that may be stale by the time the query returns.
+     * milliseconds. Flashlight, battery and recorder fields are driven by their own flows, so keep
+     * the current values instead of a snapshot that may be stale by the time the query returns.
      */
     private fun refreshContent(action: CardAction, syncRecents: Boolean = false) {
         viewModelScope.launch {
@@ -152,6 +167,11 @@ class HiboardViewModel(
                     content = fresh.copy(
                         flashlightOn = it.content.flashlightOn,
                         flashlightAvailable = it.content.flashlightAvailable,
+                        batteryPercent = it.content.batteryPercent,
+                        batteryCharging = it.content.batteryCharging,
+                        batteryRemainingMs = it.content.batteryRemainingMs,
+                        batterySamples = it.content.batterySamples,
+                        batteryReady = it.content.batteryReady,
                         recorderState = it.content.recorderState,
                         recorderElapsedMs = it.content.recorderElapsedMs,
                         recorderBound = it.content.recorderBound,

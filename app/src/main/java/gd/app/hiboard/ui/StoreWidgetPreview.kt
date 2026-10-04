@@ -155,8 +155,10 @@ private fun bindBatteryPreview(inflater: LayoutInflater, card: COUICardView, bod
     )
     val view = inflater.inflate(R.layout.card_battery, body, true)
     view.findViewById<TextView>(R.id.batteryPercent).text = "63%"
-    view.findViewById<View>(R.id.batteryChargingRow).visibility = View.VISIBLE
-    view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples = previewBatterySamples(63)
+    view.findViewById<ImageView>(R.id.batteryStatusIcon).setImageResource(R.drawable.ic_battery_charge)
+    view.findViewById<TextView>(R.id.batteryStatus).setText(R.string.battery_charging)
+    view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples =
+        previewBatterySamples(level = 63, chargingNow = true)
 }
 
 private fun bindRecorderPreview(

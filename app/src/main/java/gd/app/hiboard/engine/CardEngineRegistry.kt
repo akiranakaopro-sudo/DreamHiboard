@@ -76,6 +76,7 @@ class CardEngineRegistry(context: Context) {
             CardContent(
                 batteryPercent = snap.levelPercent,
                 batteryCharging = snap.charging,
+                batteryRemainingMs = snap.remainingMs,
                 batterySamples = snap.samples,
                 batteryReady = true,
             )
@@ -166,6 +167,7 @@ class CardEngineRegistry(context: Context) {
     val flashlightOn = flashlight.on
     val flashlightAvailable: Boolean
         get() = flashlight.available
+    val batterySnapshots = battery.snapshots
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
     val noteFolderSelections = noteFolderStore.selections
@@ -226,6 +228,7 @@ class CardEngineRegistry(context: Context) {
         storageTotalBytes = if (b.storageTotalBytes > 0L) b.storageTotalBytes else a.storageTotalBytes,
         batteryPercent = if (b.batteryReady) b.batteryPercent else a.batteryPercent,
         batteryCharging = if (b.batteryReady) b.batteryCharging else a.batteryCharging,
+        batteryRemainingMs = if (b.batteryReady) b.batteryRemainingMs else a.batteryRemainingMs,
         batterySamples = if (b.batteryReady) b.batterySamples else a.batterySamples,
         batteryReady = a.batteryReady || b.batteryReady,
         recorderState = if (b.recorderBound) b.recorderState else a.recorderState,

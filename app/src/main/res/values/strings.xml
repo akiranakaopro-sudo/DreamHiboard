@@ -46,6 +46,9 @@
     <string name="storage_label">Storage</string>
     <string name="storage_cleanup">Clean up</string>
     <string name="battery_charging">Charging</string>
+    <string name="battery_should_last">Should last %1$s</string>
+    <string name="battery_duration_hours">%1$d h</string>
+    <string name="battery_duration_minutes">%1$d m</string>
     <string name="battery_now">Now</string>
     <string name="recorder_label">Recorder</string>
     <string name="recorder_start">Start recording</string>

@@ -25,9 +25,11 @@ import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.STORAGE_DISPLAY_OFFSET_BYTES
+import gd.app.hiboard.engine.formatBatteryRemainingDuration
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.recorderPrimaryCommand
+import gd.app.hiboard.model.BatterySample
 import gd.app.hiboard.model.CardEngineId
 import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
@@ -274,6 +276,28 @@ class CardBinder(
                 else -> art.context.getString(R.string.flashlight_off)
             }
         }
+
+        fun applyBatteryStatus(
+            percentView: TextView,
+            icon: ImageView,
+            label: TextView,
+            graph: BatteryUsageGraph,
+            percent: Int,
+            charging: Boolean,
+            remainingMs: Long,
+            samples: List<BatterySample>,
+        ) {
+            percentView.text = "$percent%"
+            if (charging) {
+                icon.setImageResource(R.drawable.ic_battery_charge)
+                label.setText(R.string.battery_charging)
+            } else {
+                icon.setImageResource(R.drawable.ic_battery_remain)
+                val duration = formatBatteryRemainingDuration(label.resources, remainingMs)
+                label.text = label.resources.getString(R.string.battery_should_last, duration)
+            }
+            graph.samples = samples
+        }
     }
 
     private fun bindStorage(
@@ -328,9 +352,16 @@ class CardBinder(
         }
         val view = inflater.inflate(R.layout.card_battery, body, true)
         view.findViewById<TextView>(R.id.batteryPercent).text = "${state.content.batteryPercent}%"
-        val chargingRow = view.findViewById<View>(R.id.batteryChargingRow)
-        chargingRow.visibility = if (state.content.batteryCharging) View.VISIBLE else View.GONE
-        view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).samples = state.content.batterySamples
+        applyBatteryStatus(
+            percentView = view.findViewById(R.id.batteryPercent),
+            icon = view.findViewById(R.id.batteryStatusIcon),
+            label = view.findViewById(R.id.batteryStatus),
+            graph = view.findViewById(R.id.batteryGraph),
+            percent = state.content.batteryPercent,
+            charging = state.content.batteryCharging,
+            remainingMs = state.content.batteryRemainingMs,
+            samples = state.content.batterySamples,
+        )
         val open = View.OnClickListener { onOpenBattery() }
         view.findViewById<View>(R.id.batteryRoot).setOnClickListener(open)
         root.setOnClickListener(open)
