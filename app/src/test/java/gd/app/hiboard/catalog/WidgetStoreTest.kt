@@ -70,6 +70,7 @@ class WidgetStoreTest {
         assertEquals(
             listOf(
                 "battery",
+                "batterysmall",
                 "contacts",
                 "flashlight",
                 "music",
@@ -82,14 +83,16 @@ class WidgetStoreTest {
             features.map { it.id },
         )
         assertEquals(CardSize.FullByTwo, features.first { it.id == "battery" }.size)
+        assertEquals(CardSize.TwoByTwo, features.first { it.id == "batterysmall" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.id == "contacts" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.id == "music" }.size)
         assertEquals(CardSize.FullByTwo, features.first { it.id == "noteswide" }.size)
         assertEquals(CardSize.FourByFour, features.first { it.id == "noteslarge" }.size)
         assertEquals(
             true,
-            features.filter { it.id !in setOf("battery", "contacts", "music", "noteswide", "noteslarge") }
-                .all { it.size.columns == 2 && it.size.rows == 2 },
+            features.filter {
+                it.id !in setOf("battery", "contacts", "music", "noteswide", "noteslarge")
+            }.all { it.size.columns == 2 && it.size.rows == 2 },
         )
         val weather = DefaultCatalog.entries
             .filter { !it.locked && it.groupId == DefaultCatalog.GROUP_WEATHER }
@@ -131,6 +134,7 @@ class WidgetStoreTest {
             listOf(
                 "weathersquare",
                 "battery",
+                "batterysmall",
                 "noteswide",
                 "noteslarge",
                 "weatherclock",

@@ -64,6 +64,16 @@ object DefaultCatalog {
             defaultSubscribed = false,
         ),
         CardCatalogEntry(
+            id = "batterysmall",
+            groupId = GROUP_FEATURES,
+            groupTitleRes = R.string.widget_group_features,
+            nameRes = R.string.widget_batterysmall_name,
+            descriptionRes = R.string.widget_batterysmall_desc,
+            size = CardSize.TwoByTwo,
+            engine = CardEngineId.Battery,
+            defaultSubscribed = false,
+        ),
+        CardCatalogEntry(
             id = "flashlight",
             groupId = GROUP_FEATURES,
             groupTitleRes = R.string.widget_group_features,
@@ -229,7 +239,9 @@ object DefaultCatalog {
 
     fun defaultBoardIds(): List<String> =
         entries.filter { it.defaultSubscribed && !it.locked }
-            .sortedBy { entry -> defaultBoardOrder.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
+            .sortedBy { entry ->
+                defaultBoardOrder.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it }
+            }
             .map { it.id }
 
     fun defaultRecommendedIds(): List<String> =

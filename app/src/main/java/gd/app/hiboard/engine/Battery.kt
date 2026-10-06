@@ -26,7 +26,11 @@ data class BatterySnapshot(
 
 private const val PREFS = "hiboard_battery"
 private const val KEY_SAMPLES = "samples"
-private const val MAX_SAMPLES = 49
+/** 30‑minute sticks for the FullByTwo card. */
+const val BATTERY_STICK_COUNT = 49
+/** Hourly sticks for the 2×2 card — wider gaps than the FullByTwo grid. */
+const val BATTERY_STICK_COUNT_COMPACT = 25
+private const val MAX_SAMPLES = BATTERY_STICK_COUNT
 private const val SAMPLE_INTERVAL_MS = 30L * 60L * 1000L
 private const val HISTORY_WINDOW_MS = 24L * 60L * 60L * 1000L
 /** Fallback drain assumption when sensors/history are thin (~3.5%/h). */
@@ -231,18 +235,22 @@ private fun Intent?.isBatteryCharging(): Boolean {
 /**
  * Builds a full 24h stick grid. Gaps between real samples (and out to [end]) are filled by
  * linear interpolation; before the first sample the first known level is held.
+ *
+ * @param stickCount number of sticks across 24h (default 49 ≈ every 30 min; compact uses ~25).
  */
 fun densifyBatterySamples(
     samples: List<BatterySample>,
     end: Long = System.currentTimeMillis(),
     currentLevel: Int = samples.lastOrNull()?.levelPercent ?: 0,
+    stickCount: Int = MAX_SAMPLES,
 ): List<BatterySample> {
+    val count = stickCount.coerceAtLeast(2)
     val start = end - HISTORY_WINDOW_MS
-    val step = HISTORY_WINDOW_MS / (MAX_SAMPLES - 1)
+    val step = HISTORY_WINDOW_MS / (count - 1)
     val sorted = samples.sortedBy { it.epochMillis }
     val level = currentLevel.coerceIn(0, 100)
     if (sorted.isEmpty()) {
-        return List(MAX_SAMPLES) { index ->
+        return List(count) { index ->
             BatterySample(
                 epochMillis = start + index * step,
                 levelPercent = level,
@@ -250,10 +258,10 @@ fun densifyBatterySamples(
             )
         }
     }
-    val levels = IntArray(MAX_SAMPLES) { index ->
+    val levels = IntArray(count) { index ->
         levelAtTime(sorted, start + index * step, end, level)
     }
-    return List(MAX_SAMPLES) { index ->
+    return List(count) { index ->
         val rising = index > 0 && levels[index] > levels[index - 1]
         BatterySample(
             epochMillis = start + index * step,

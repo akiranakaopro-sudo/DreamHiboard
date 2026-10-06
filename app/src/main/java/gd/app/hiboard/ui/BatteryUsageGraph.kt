@@ -11,6 +11,7 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
 import gd.app.hiboard.R
+import gd.app.hiboard.engine.BATTERY_STICK_COUNT_COMPACT
 import gd.app.hiboard.model.BatterySample
 import java.util.Calendar
 import java.util.Locale
@@ -28,6 +29,14 @@ class BatteryUsageGraph @JvmOverloads constructor(
 
     var samples: List<BatterySample> = emptyList()
         set(value) {
+            field = value
+            invalidate()
+        }
+
+    /** Compact 2×2 card: 100%/0% labels, three time marks, all dashed horizontals. */
+    var compact: Boolean = false
+        set(value) {
+            if (field == value) return
             field = value
             invalidate()
         }
@@ -67,8 +76,9 @@ class BatteryUsageGraph @JvmOverloads constructor(
         if (w <= 0f || h <= 0f) return
 
         val density = resources.displayMetrics.density
-        axisPaint.textSize = 11f * density
-        yLabelPaint.textSize = 11f * density
+        val axisSp = if (compact) 10f else 11f
+        axisPaint.textSize = axisSp * density
+        yLabelPaint.textSize = axisSp * density
         val gridStroke = max(1f, density * 0.8f)
         dashGridPaint.strokeWidth = gridStroke
         solidGridPaint.strokeWidth = gridStroke
@@ -84,18 +94,21 @@ class BatteryUsageGraph @JvmOverloads constructor(
         val yTicks = intArrayOf(100, 50, 0)
         yTicks.forEach { pct ->
             val y = chartTop + (chartBottom - chartTop) * (1f - pct / 100f)
-            // 100% uses a solid line; 50% / 0% stay dashed.
-            val paint = if (pct == 100) solidGridPaint else dashGridPaint
+            val paint = if (!compact && pct == 100) solidGridPaint else dashGridPaint
             canvas.drawLine(chartLeft, y, chartRight, y, paint)
-            val textY = y - (yLabelPaint.descent() + yLabelPaint.ascent()) / 2f
-            canvas.drawText("$pct%", w - 2f * density, textY, yLabelPaint)
+            if (!compact || pct == 100 || pct == 0) {
+                val textY = y - (yLabelPaint.descent() + yLabelPaint.ascent()) / 2f
+                canvas.drawText("$pct%", w - 2f * density, textY, yLabelPaint)
+            }
         }
 
         val end = System.currentTimeMillis()
         val start = end - WINDOW_MS
         val chartWidth = chartRight - chartLeft
-        val slot = chartWidth / SLOT_COUNT
-        val barWidth = max(2f * density, slot * 0.55f)
+        val slotCount = if (compact) BATTERY_STICK_COUNT_COMPACT else SLOT_COUNT
+        val slot = chartWidth / slotCount
+        // Compact: thinner sticks relative to the wider hourly slots so gaps read clearly.
+        val barWidth = max(2f * density, slot * if (compact) 0.40f else 0.55f)
         val radius = barWidth / 2f
 
         samples.forEach { sample ->
@@ -105,7 +118,6 @@ class BatteryUsageGraph @JvmOverloads constructor(
             val level = sample.levelPercent.coerceIn(0, 100) / 100f
             val cx = chartLeft + chartWidth * fraction
             val barTopY = chartBottom - (chartBottom - chartTop) * level
-            // Green when this stick's level rose vs the previous sample (time-based charge).
             val topColor = if (sample.charging) barChargeTop else barTop
             val bottomColor = if (sample.charging) barChargeBottom else barBottom
             barRect.set(cx - barWidth / 2f, barTopY, cx + barWidth / 2f, chartBottom)
@@ -126,10 +138,9 @@ class BatteryUsageGraph @JvmOverloads constructor(
 
         val labelBaseline = h - 2f * density
         val labelTop = labelBaseline + axisPaint.ascent()
-        val xLabels = xAxisLabels(start, end)
+        val xLabels = if (compact) compactXAxisLabels(start, end) else xAxisLabels(start, end)
         xLabels.forEachIndexed { index, (fraction, text) ->
             val x = chartLeft + chartWidth * fraction
-            // Dashed time partitions run through 0% down to the time label.
             canvas.drawLine(x, chartTop, x, labelTop, dashGridPaint)
             axisPaint.textAlign = when {
                 index == 0 -> Paint.Align.LEFT
@@ -165,12 +176,24 @@ class BatteryUsageGraph @JvmOverloads constructor(
             labels += fraction to String.format(Locale.US, "%02d", cal.get(Calendar.HOUR_OF_DAY))
             mark += MARK_STEP_MS
         }
-        // e.g. "14" next to "Now" → put "14" in the first seat instead.
         if (labels.isNotEmpty() && labels.last().first >= 0.90f) {
             val hour = labels.removeAt(labels.lastIndex).second
             labels.add(0, 0f to hour)
         }
         labels += 1f to nowLabel
         return labels
+    }
+
+    /** Compact card: first hour, mid hour, Now (e.g. 02 · 10 · Now). */
+    private fun compactXAxisLabels(start: Long, end: Long): List<Pair<Float, String>> {
+        val all = xAxisLabels(start, end)
+        val hours = all.filter { it.second != nowLabel }
+        if (hours.isEmpty()) return listOf(1f to nowLabel)
+        val mid = hours[hours.size / 2]
+        return buildList {
+            add(hours.first())
+            if (mid != hours.first()) add(mid)
+            add(1f to nowLabel)
+        }
     }
 }

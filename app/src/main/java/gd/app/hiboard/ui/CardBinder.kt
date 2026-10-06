@@ -25,6 +25,8 @@ import gd.app.hiboard.engine.monthPageToday
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.STORAGE_DISPLAY_OFFSET_BYTES
+import gd.app.hiboard.engine.BATTERY_STICK_COUNT
+import gd.app.hiboard.engine.BATTERY_STICK_COUNT_COMPACT
 import gd.app.hiboard.engine.densifyBatterySamples
 import gd.app.hiboard.engine.formatBatteryRemainingDuration
 import gd.app.hiboard.engine.formatStoragePair
@@ -74,7 +76,11 @@ class CardBinder(
             CardEngineId.RecentApps -> bindRecentApps(inflater, root, body, state)
             CardEngineId.Flashlight -> bindFlashlight(inflater, root, body, state)
             CardEngineId.Storage -> bindStorage(inflater, root, body, state)
-            CardEngineId.Battery -> bindBattery(inflater, root, body, state)
+            CardEngineId.Battery -> if (card.size == CardSize.TwoByTwo) {
+                bindBatterySmall(inflater, root, body, state)
+            } else {
+                bindBattery(inflater, root, body, state)
+            }
             CardEngineId.Recorder -> bindRecorder(inflater, root, body, state)
             CardEngineId.Contacts -> bindContacts(inflater, root, body, state)
             CardEngineId.Calendar -> bindCalendar(root, body)
@@ -280,7 +286,7 @@ class CardBinder(
 
         fun applyBatteryStatus(
             percentView: TextView,
-            icon: ImageView,
+            icon: ImageView?,
             label: TextView,
             graph: BatteryUsageGraph,
             percent: Int,
@@ -290,19 +296,27 @@ class CardBinder(
         ) {
             percentView.text = "$percent%"
             if (charging) {
-                icon.setImageResource(R.drawable.ic_battery_charge)
+                icon?.visibility = View.VISIBLE
+                icon?.setImageResource(R.drawable.ic_battery_charge)
                 label.setText(R.string.battery_charging)
             } else {
-                val ring = icon.drawable as? BatteryRemainRingDrawable
-                    ?: BatteryRemainRingDrawable(
-                        fillColor = icon.context.getColor(R.color.hiboard_battery_charging),
-                        trackColor = icon.context.getColor(R.color.hiboard_battery_remain_track),
-                    ).also { icon.setImageDrawable(it) }
-                ring.levelPercent = percent
+                if (icon != null) {
+                    icon.visibility = View.VISIBLE
+                    val ring = icon.drawable as? BatteryRemainRingDrawable
+                        ?: BatteryRemainRingDrawable(
+                            fillColor = icon.context.getColor(R.color.hiboard_battery_charging),
+                            trackColor = icon.context.getColor(R.color.hiboard_battery_remain_track),
+                        ).also { icon.setImageDrawable(it) }
+                    ring.levelPercent = percent
+                }
                 val duration = formatBatteryRemainingDuration(label.resources, remainingMs)
                 label.text = label.resources.getString(R.string.battery_should_last, duration)
             }
-            graph.samples = densifyBatterySamples(samples, currentLevel = percent)
+            graph.samples = densifyBatterySamples(
+                samples,
+                currentLevel = percent,
+                stickCount = if (graph.compact) BATTERY_STICK_COUNT_COMPACT else BATTERY_STICK_COUNT,
+            )
         }
     }
 
@@ -357,12 +371,47 @@ class CardBinder(
             )
         }
         val view = inflater.inflate(R.layout.card_battery, body, true)
-        view.findViewById<TextView>(R.id.batteryPercent).text = "${state.content.batteryPercent}%"
+        val graph = view.findViewById<BatteryUsageGraph>(R.id.batteryGraph)
+        graph.compact = false
         applyBatteryStatus(
             percentView = view.findViewById(R.id.batteryPercent),
             icon = view.findViewById(R.id.batteryStatusIcon),
             label = view.findViewById(R.id.batteryStatus),
-            graph = view.findViewById(R.id.batteryGraph),
+            graph = graph,
+            percent = state.content.batteryPercent,
+            charging = state.content.batteryCharging,
+            remainingMs = state.content.batteryRemainingMs,
+            samples = state.content.batterySamples,
+        )
+        val open = View.OnClickListener { onOpenBattery() }
+        view.findViewById<View>(R.id.batteryRoot).setOnClickListener(open)
+        root.setOnClickListener(open)
+    }
+
+    private fun bindBatterySmall(
+        inflater: LayoutInflater,
+        root: View,
+        body: LinearLayout,
+        state: HiboardUiState,
+    ) {
+        val density = body.resources.displayMetrics.density
+        (root as? COUICardView)?.apply {
+            setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_card))
+            setContentPadding(
+                (14 * density).toInt(),
+                (12 * density).toInt(),
+                (14 * density).toInt(),
+                (10 * density).toInt(),
+            )
+        }
+        val view = inflater.inflate(R.layout.card_battery_small, body, true)
+        val graph = view.findViewById<BatteryUsageGraph>(R.id.batteryGraph)
+        graph.compact = true
+        applyBatteryStatus(
+            percentView = view.findViewById(R.id.batteryPercent),
+            icon = null,
+            label = view.findViewById(R.id.batteryStatus),
+            graph = graph,
             percent = state.content.batteryPercent,
             charging = state.content.batteryCharging,
             remainingMs = state.content.batteryRemainingMs,

@@ -336,12 +336,11 @@ class HiboardView @JvmOverloads constructor(
             if (card.engine != CardEngineId.Battery) return@forEach
             val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
             val percentView = root.findViewById<TextView>(R.id.batteryPercent) ?: return@forEach
-            val icon = root.findViewById<ImageView>(R.id.batteryStatusIcon) ?: return@forEach
             val label = root.findViewById<TextView>(R.id.batteryStatus) ?: return@forEach
             val graph = root.findViewById<BatteryUsageGraph>(R.id.batteryGraph) ?: return@forEach
             CardBinder.applyBatteryStatus(
                 percentView = percentView,
-                icon = icon,
+                icon = root.findViewById(R.id.batteryStatusIcon),
                 label = label,
                 graph = graph,
                 percent = percent,
