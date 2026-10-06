@@ -40,7 +40,7 @@
     <color name="hiboard_recorder_card">#FFFFFFFF</color>
     <color name="hiboard_recorder_title">#1C1C1E</color>
     <color name="hiboard_recorder_title_idle">#BDBDBD</color>
-    <color name="hiboard_recorder_wave">#C8C8CD</color>
+    <color name="hiboard_recorder_wave">#FF000000</color>
     <color name="hiboard_recorder_tick">#EB3B2F</color>
     <color name="hiboard_recorder_idle_tick">#BDBDBD</color>
     <color name="hiboard_recorder_flag">#3478F6</color>
