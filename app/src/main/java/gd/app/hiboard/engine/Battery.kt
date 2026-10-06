@@ -19,8 +19,11 @@ import kotlinx.coroutines.flow.asStateFlow
 data class BatterySnapshot(
     val levelPercent: Int = 0,
     val charging: Boolean = false,
+    val plugged: Boolean = false,
     /** Estimated remaining use time while discharging; -1 when unknown/charging. */
     val remainingMs: Long = -1L,
+    /** Estimated time to 100% while charging; -1 when unknown/not charging. */
+    val untilFullMs: Long = -1L,
     val samples: List<BatterySample> = emptyList(),
 )
 
@@ -35,6 +38,8 @@ private const val SAMPLE_INTERVAL_MS = 30L * 60L * 1000L
 private const val HISTORY_WINDOW_MS = 24L * 60L * 60L * 1000L
 /** Fallback drain assumption when sensors/history are thin (~3.5%/h). */
 private const val FALLBACK_PERCENT_PER_HOUR = 3.5f
+/** Fallback charge gain when sensors/history are thin (~20%/h). */
+private const val FALLBACK_CHARGE_PERCENT_PER_HOUR = 20f
 
 class BatteryReader(context: Context) {
     private val appContext = context.applicationContext
@@ -88,7 +93,9 @@ class BatteryReader(context: Context) {
         val prev = _snapshot.value
         if (prev.levelPercent == next.levelPercent &&
             prev.charging == next.charging &&
+            prev.plugged == next.plugged &&
             prev.remainingMs / 3_600_000L == next.remainingMs / 3_600_000L &&
+            prev.untilFullMs / 3_600_000L == next.untilFullMs / 3_600_000L &&
             prev.samples == next.samples
         ) {
             return
@@ -101,14 +108,52 @@ class BatteryReader(context: Context) {
         val level = sticky.batteryPercent()
         // ColorOS aC/f: only EXTRA_STATUS == CHARGING (2). FULL / NOT_CHARGING / unplugged ≠ charging.
         val charging = sticky.isBatteryCharging()
+        val plugged = sticky.isBatteryPlugged()
         val samples = persistAndLoad(level)
-        val remaining = if (charging) -1L else estimateRemainingMs(level, samples)
+        val remaining = estimateRemainingMs(level, samples)
+        val untilFull = if (charging && level < 100) estimateUntilFullMs(level, samples) else -1L
         return BatterySnapshot(
             levelPercent = level,
             charging = charging,
+            plugged = plugged,
             remainingMs = remaining,
+            untilFullMs = untilFull,
             samples = samples,
         )
+    }
+
+    private fun estimateUntilFullMs(level: Int, samples: List<BatterySample>): Long {
+        if (level >= 100) return 0L
+        sensorUntilFullMs(level)?.let { return it }
+        historyUntilFullMs(level, samples)?.let { return it }
+        val hours = (100 - level) / FALLBACK_CHARGE_PERCENT_PER_HOUR
+        return (hours * 60L * 60L * 1000L).toLong().coerceAtLeast(0L)
+    }
+
+    private fun sensorUntilFullMs(level: Int): Long? {
+        val manager = batteryManager ?: return null
+        if (level <= 0) return null
+        val chargeUah = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+        val currentUa = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+        if (chargeUah <= 0L || currentUa == Long.MIN_VALUE || currentUa == 0L) return null
+        val chargeUa = if (currentUa > 0L) currentUa else return null
+        val fullUah = chargeUah * 100L / level
+        val remainUah = (fullUah - chargeUah).coerceAtLeast(0L)
+        if (remainUah <= 0L) return 0L
+        return (remainUah * 3600_000L) / chargeUa
+    }
+
+    private fun historyUntilFullMs(level: Int, samples: List<BatterySample>): Long? {
+        val charge = samples.filter { it.charging }
+        if (charge.size < 3) return null
+        val first = charge.first()
+        val last = charge.last()
+        val elapsed = last.epochMillis - first.epochMillis
+        val gained = last.levelPercent - first.levelPercent
+        if (elapsed < 15L * 60L * 1000L || gained <= 0) return null
+        val percentPerMs = gained.toDouble() / elapsed.toDouble()
+        if (percentPerMs <= 0.0) return null
+        return ((100 - level) / percentPerMs).toLong().coerceAtLeast(0L)
     }
 
     private fun estimateRemainingMs(level: Int, samples: List<BatterySample>): Long {
@@ -230,6 +275,11 @@ private fun Intent?.isBatteryCharging(): Boolean {
     if (this == null) return false
     return getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN) ==
         BatteryManager.BATTERY_STATUS_CHARGING
+}
+
+private fun Intent?.isBatteryPlugged(): Boolean {
+    if (this == null) return false
+    return getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
 }
 
 /**

@@ -76,7 +76,9 @@ class CardEngineRegistry(context: Context) {
             CardContent(
                 batteryPercent = snap.levelPercent,
                 batteryCharging = snap.charging,
+                batteryPlugged = snap.plugged,
                 batteryRemainingMs = snap.remainingMs,
+                batteryUntilFullMs = snap.untilFullMs,
                 batterySamples = snap.samples,
                 batteryReady = true,
             )
@@ -228,7 +230,9 @@ class CardEngineRegistry(context: Context) {
         storageTotalBytes = if (b.storageTotalBytes > 0L) b.storageTotalBytes else a.storageTotalBytes,
         batteryPercent = if (b.batteryReady) b.batteryPercent else a.batteryPercent,
         batteryCharging = if (b.batteryReady) b.batteryCharging else a.batteryCharging,
+        batteryPlugged = if (b.batteryReady) b.batteryPlugged else a.batteryPlugged,
         batteryRemainingMs = if (b.batteryReady) b.batteryRemainingMs else a.batteryRemainingMs,
+        batteryUntilFullMs = if (b.batteryReady) b.batteryUntilFullMs else a.batteryUntilFullMs,
         batterySamples = if (b.batteryReady) b.batterySamples else a.batterySamples,
         batteryReady = a.batteryReady || b.batteryReady,
         recorderState = if (b.recorderBound) b.recorderState else a.recorderState,

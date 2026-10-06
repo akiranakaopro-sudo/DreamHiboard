@@ -81,10 +81,11 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
             bindNotesPreview(inflater, card, body)
         }
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
-        CardEngineId.Battery -> if (entry.size == CardSize.TwoByTwo) {
-            bindBatterySmallPreview(inflater, card, body)
-        } else {
-            bindBatteryPreview(inflater, card, body)
+        CardEngineId.Battery -> when {
+            entry.id == "batterylevelwide" -> bindBatteryLevelPreview(inflater, card, body, R.layout.card_battery_level_wide)
+            entry.id == "batterylevel" -> bindBatteryLevelPreview(inflater, card, body, R.layout.card_battery_level)
+            entry.size == CardSize.TwoByTwo -> bindBatterySmallPreview(inflater, card, body)
+            else -> bindBatteryPreview(inflater, card, body)
         }
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)
@@ -190,6 +191,22 @@ private fun bindBatterySmallPreview(inflater: LayoutInflater, card: COUICardView
             stickCount = BATTERY_STICK_COUNT_COMPACT,
         )
     }
+}
+
+private fun bindBatteryLevelPreview(
+    inflater: LayoutInflater,
+    card: COUICardView,
+    body: LinearLayout,
+    layout: Int,
+) {
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_level_card))
+    card.setContentPadding(0, 0, 0, 0)
+    val view = inflater.inflate(layout, body, true)
+    view.findViewById<TextView>(R.id.batteryStatus).setText(R.string.battery_device_label)
+    view.findViewById<TextView>(R.id.batteryPercent).text = "80%"
+    view.findViewById<TextView>(R.id.batteryRemain).text =
+        body.resources.getString(R.string.battery_use_remaining, body.resources.getString(R.string.battery_duration_hours, 24))
+    view.findViewById<BatteryLevelBar>(R.id.batteryLevelBar).progress = 0.80f
 }
 
 private fun bindRecorderPreview(

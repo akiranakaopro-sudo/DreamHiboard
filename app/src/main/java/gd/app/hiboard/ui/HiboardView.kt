@@ -329,14 +329,29 @@ class HiboardView @JvmOverloads constructor(
     private fun applyBatteryState(state: HiboardUiState) {
         val percent = state.content.batteryPercent
         val charging = state.content.batteryCharging
+        val plugged = state.content.batteryPlugged
         val remainingMs = state.content.batteryRemainingMs
+        val untilFullMs = state.content.batteryUntilFullMs
         val samples = state.content.batterySamples
-        lastBatteryKey = listOf(percent, charging, remainingMs / 3_600_000L, samples)
+        lastBatteryKey = listOf(percent, charging, plugged, remainingMs / 3_600_000L, untilFullMs / 3_600_000L, samples)
         state.board.subscribed.forEach { card ->
             if (card.engine != CardEngineId.Battery) return@forEach
             val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
             val percentView = root.findViewById<TextView>(R.id.batteryPercent) ?: return@forEach
             val label = root.findViewById<TextView>(R.id.batteryStatus) ?: return@forEach
+            val levelBar = root.findViewById<BatteryLevelBar>(R.id.batteryLevelBar)
+            if (levelBar != null) {
+                CardBinder.applyBatteryLevelStatus(
+                    percentView = percentView,
+                    label = label,
+                    remain = root.findViewById(R.id.batteryRemain) ?: return@forEach,
+                    bar = levelBar,
+                    percent = percent,
+                    plugged = plugged,
+                    remainingMs = remainingMs,
+                )
+                return@forEach
+            }
             val graph = root.findViewById<BatteryUsageGraph>(R.id.batteryGraph) ?: return@forEach
             CardBinder.applyBatteryStatus(
                 percentView = percentView,
@@ -445,7 +460,9 @@ class HiboardView @JvmOverloads constructor(
         val batteryKey = listOf(
             state.content.batteryPercent,
             state.content.batteryCharging,
+            state.content.batteryPlugged,
             state.content.batteryRemainingMs / 3_600_000L,
+            state.content.batteryUntilFullMs / 3_600_000L,
             state.content.batterySamples,
         )
         val recorderKey = state.content.recorderState
@@ -455,7 +472,9 @@ class HiboardView @JvmOverloads constructor(
             flashlightAvailable = false,
             batteryPercent = 0,
             batteryCharging = false,
+            batteryPlugged = false,
             batteryRemainingMs = -1L,
+            batteryUntilFullMs = -1L,
             batterySamples = emptyList(),
             batteryReady = false,
             recorderState = RecorderUiState.Idle,

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/batteryLevelRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_battery_level_glow"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:paddingStart="18dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="16dp">
+
+    <!-- Oppo: status sits on top (Fully charged / Charging / Should last), not a fixed title. -->
+    <TextView
+        android:id="@+id/batteryStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:text="@string/battery_device_label"
+        android:textColor="@color/hiboard_battery_level_title"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/batteryPercent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:includeFontPadding="false"
+        android:textColor="@color/hiboard_battery_level_percent"
+        android:textSize="44sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/batteryRemain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:includeFontPadding="false"
+        android:textColor="@color/hiboard_battery_level_status"
+        android:textSize="13sp" />
+
+    <gd.app.hiboard.ui.BatteryLevelBar
+        android:id="@+id/batteryLevelBar"
+        android:layout_width="match_parent"
+        android:layout_height="33dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="2dp" />
+</LinearLayout>
