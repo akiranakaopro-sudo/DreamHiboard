@@ -111,7 +111,7 @@ class BatteryReader(context: Context) {
         val plugged = sticky.isBatteryPlugged()
         val samples = persistAndLoad(level)
         val remaining = estimateRemainingMs(level, samples)
-        val untilFull = if (charging && level < 100) estimateUntilFullMs(level, samples) else -1L
+        val untilFull = if (plugged && level < 100) estimateUntilFullMs(level, samples) else -1L
         return BatterySnapshot(
             levelPercent = level,
             charging = charging,

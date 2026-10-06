@@ -312,18 +312,27 @@ class CardBinder(
             percent: Int,
             plugged: Boolean,
             remainingMs: Long,
+            untilFullMs: Long,
         ) {
             percentView.text = "$percent%"
-            val fullOnPlug = plugged && percent >= 100
-            if (fullOnPlug) {
-                label.setText(R.string.battery_fully_charged)
-                remain.visibility = View.INVISIBLE
-                remain.text = ""
-            } else {
-                label.setText(R.string.battery_device_label)
-                remain.visibility = View.VISIBLE
-                val duration = formatBatteryRemainingDuration(remain.resources, remainingMs)
-                remain.text = remain.resources.getString(R.string.battery_use_remaining, duration)
+            when {
+                plugged && percent >= 100 -> {
+                    label.setText(R.string.battery_fully_charged)
+                    remain.visibility = View.INVISIBLE
+                    remain.text = ""
+                }
+                plugged -> {
+                    label.setText(R.string.battery_charging)
+                    remain.visibility = View.VISIBLE
+                    val duration = formatBatteryRemainingDuration(remain.resources, untilFullMs)
+                    remain.text = remain.resources.getString(R.string.battery_until_full, duration)
+                }
+                else -> {
+                    label.setText(R.string.battery_device_label)
+                    remain.visibility = View.VISIBLE
+                    val duration = formatBatteryRemainingDuration(remain.resources, remainingMs)
+                    remain.text = remain.resources.getString(R.string.battery_use_remaining, duration)
+                }
             }
             bar.progress = percent / 100f
         }
@@ -478,6 +487,7 @@ class CardBinder(
             percent = state.content.batteryPercent,
             plugged = state.content.batteryPlugged,
             remainingMs = state.content.batteryRemainingMs,
+            untilFullMs = state.content.batteryUntilFullMs,
         )
         val open = View.OnClickListener { onOpenBattery() }
         view.findViewById<View>(R.id.batteryLevelRoot).setOnClickListener(open)

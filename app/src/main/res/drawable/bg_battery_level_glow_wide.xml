@@ -2,10 +2,10 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <gradient
-        android:centerX="0.11"
-        android:centerY="0.81"
+        android:centerX="0.06"
+        android:centerY="0.76"
         android:endColor="@color/hiboard_battery_level_card"
-        android:gradientRadius="160dp"
+        android:gradientRadius="200dp"
         android:startColor="@color/hiboard_battery_level_glow"
         android:type="radial" />
 </shape>

@@ -349,6 +349,7 @@ class HiboardView @JvmOverloads constructor(
                     percent = percent,
                     plugged = plugged,
                     remainingMs = remainingMs,
+                    untilFullMs = untilFullMs,
                 )
                 return@forEach
             }

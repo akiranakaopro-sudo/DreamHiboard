@@ -44,7 +44,7 @@
         android:layout_marginBottom="8dp"
         android:includeFontPadding="false"
         android:textColor="@color/hiboard_battery_level_status"
-        android:textSize="13sp" />
+        android:textSize="15sp" />
 
     <gd.app.hiboard.ui.BatteryLevelBar
         android:id="@+id/batteryLevelBar"

@@ -3,7 +3,7 @@
     android:id="@+id/batteryLevelRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_battery_level_glow"
+    android:background="@drawable/bg_battery_level_glow_wide"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
@@ -37,7 +37,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="@color/hiboard_battery_level_status"
-            android:textSize="14sp" />
+            android:textSize="16sp" />
     </LinearLayout>
 
     <TextView
