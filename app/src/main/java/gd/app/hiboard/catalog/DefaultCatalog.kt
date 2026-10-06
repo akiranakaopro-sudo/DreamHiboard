@@ -62,6 +62,7 @@ object DefaultCatalog {
             size = CardSize.FullByTwo,
             engine = CardEngineId.Battery,
             defaultSubscribed = false,
+            storeCategoryRes = R.string.widget_category_battery,
         ),
         CardCatalogEntry(
             id = "batterysmall",
@@ -72,6 +73,7 @@ object DefaultCatalog {
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Battery,
             defaultSubscribed = false,
+            storeCategoryRes = R.string.widget_category_battery,
         ),
         CardCatalogEntry(
             id = "batterylevel",
@@ -82,6 +84,7 @@ object DefaultCatalog {
             size = CardSize.TwoByTwo,
             engine = CardEngineId.Battery,
             defaultSubscribed = false,
+            storeCategoryRes = R.string.widget_category_battery,
         ),
         CardCatalogEntry(
             id = "batterylevelwide",
@@ -92,6 +95,7 @@ object DefaultCatalog {
             size = CardSize.FullByTwo,
             engine = CardEngineId.Battery,
             defaultSubscribed = false,
+            storeCategoryRes = R.string.widget_category_battery,
         ),
         CardCatalogEntry(
             id = "flashlight",

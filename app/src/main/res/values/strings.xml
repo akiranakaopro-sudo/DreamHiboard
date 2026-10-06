@@ -82,6 +82,7 @@
     <string name="widget_category_weather">Weather</string>
     <string name="widget_category_notes">All notes</string>
     <string name="widget_category_clock">Clock</string>
+    <string name="widget_category_battery">Battery</string>
 
     <!-- Widget names -->
     <string name="widget_recent_name">Recent apps</string>
