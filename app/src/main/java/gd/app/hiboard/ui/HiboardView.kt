@@ -48,6 +48,7 @@ import gd.app.hiboard.catalog.groupTitle
 import gd.app.hiboard.catalog.listCategory
 import gd.app.hiboard.catalog.name
 import gd.app.hiboard.catalog.storeAppIcon
+import gd.app.hiboard.catalog.storeRowIconRes
 import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
@@ -1279,6 +1280,16 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStoreRowIcon(icon: ImageView, engine: CardEngineId) {
+        val bundled = storeRowIconRes(engine)
+        if (bundled != null) {
+            icon.setImageResource(bundled)
+            icon.imageTintList = null
+            icon.background = null
+            icon.backgroundTintList = null
+            icon.setPadding(0, 0, 0, 0)
+            icon.scaleType = ImageView.ScaleType.FIT_CENTER
+            return
+        }
         val appIcon = storeAppIcon(context, engine)
         if (appIcon != null) {
             icon.setImageDrawable(appIcon)

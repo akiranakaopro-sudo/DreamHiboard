@@ -6,10 +6,20 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.provider.AlarmClock
+import gd.app.hiboard.R
 import gd.app.hiboard.engine.NOTE_PACKAGE
 import gd.app.hiboard.engine.RECORDER_PACKAGE
 import gd.app.hiboard.engine.SYSTEM_MANAGER_PACKAGES
 import gd.app.hiboard.model.CardEngineId
+
+/** Bundled add-widget icon when we should not use the installed app icon. */
+fun storeRowIconRes(engine: CardEngineId): Int? = when (engine) {
+    CardEngineId.Battery -> R.drawable.ic_store_battery
+    CardEngineId.Calendar -> R.drawable.ic_store_calendar
+    CardEngineId.Flashlight -> R.drawable.ic_store_flashlight
+    CardEngineId.Weather -> R.drawable.ic_store_weather
+    else -> null
+}
 
 /** Launcher icon for the app that owns this store category, if installed. */
 fun storeAppIcon(context: Context, engine: CardEngineId): Drawable? {
