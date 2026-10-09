@@ -334,7 +334,7 @@ class HiboardView @JvmOverloads constructor(
         val remainingMs = state.content.batteryRemainingMs
         val untilFullMs = state.content.batteryUntilFullMs
         val samples = state.content.batterySamples
-        lastBatteryKey = listOf(percent, charging, plugged, remainingMs / 3_600_000L, untilFullMs / 3_600_000L, samples)
+        lastBatteryKey = listOf(percent, charging, plugged, remainingMs / 60_000L, untilFullMs / 60_000L, samples)
         state.board.subscribed.forEach { card ->
             if (card.engine != CardEngineId.Battery) return@forEach
             val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
@@ -463,8 +463,8 @@ class HiboardView @JvmOverloads constructor(
             state.content.batteryPercent,
             state.content.batteryCharging,
             state.content.batteryPlugged,
-            state.content.batteryRemainingMs / 3_600_000L,
-            state.content.batteryUntilFullMs / 3_600_000L,
+            state.content.batteryRemainingMs / 60_000L,
+            state.content.batteryUntilFullMs / 60_000L,
             state.content.batterySamples,
         )
         val recorderKey = state.content.recorderState

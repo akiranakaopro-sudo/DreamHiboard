@@ -29,6 +29,7 @@ data class BatterySnapshot(
 
 private const val PREFS = "hiboard_battery"
 private const val KEY_SAMPLES = "samples"
+private const val KEY_RATE = "rate"
 /** 30‑minute sticks for the FullByTwo card. */
 const val BATTERY_STICK_COUNT = 49
 /** Hourly sticks for the 2×2 card — wider gaps than the FullByTwo grid. */
@@ -36,15 +37,20 @@ const val BATTERY_STICK_COUNT_COMPACT = 25
 private const val MAX_SAMPLES = BATTERY_STICK_COUNT
 private const val SAMPLE_INTERVAL_MS = 30L * 60L * 1000L
 private const val HISTORY_WINDOW_MS = 24L * 60L * 60L * 1000L
-/** Fallback drain assumption when sensors/history are thin (~3.5%/h). */
-private const val FALLBACK_PERCENT_PER_HOUR = 3.5f
-/** Fallback charge gain when sensors/history are thin (~20%/h). */
-private const val FALLBACK_CHARGE_PERCENT_PER_HOUR = 20f
+/** Fallback drain when sensors and recent history are both missing (~4%/h, mixed use). */
+private const val FALLBACK_PERCENT_PER_HOUR = 4f
+/** Fallback charge rate when sensors and recent history are both missing (~25%/h). */
+private const val FALLBACK_CHARGE_PERCENT_PER_HOUR = 25f
+private const val RATE_INTERVAL_MS = 60_000L
+private const val RATE_WINDOW_MS = 6L * 60L * 60L * 1000L
+private const val HOUR_MS = 3_600_000L
 
 class BatteryReader(context: Context) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val batteryManager = appContext.getSystemService(BatteryManager::class.java)
+    private var smoothedCurrentUa = 0L
+    private var smoothedForCharge = false
     private val _snapshot = MutableStateFlow(readSnapshot())
     val snapshots: StateFlow<BatterySnapshot> = _snapshot.asStateFlow()
 
@@ -94,8 +100,8 @@ class BatteryReader(context: Context) {
         if (prev.levelPercent == next.levelPercent &&
             prev.charging == next.charging &&
             prev.plugged == next.plugged &&
-            prev.remainingMs / 3_600_000L == next.remainingMs / 3_600_000L &&
-            prev.untilFullMs / 3_600_000L == next.untilFullMs / 3_600_000L &&
+            prev.remainingMs / 60_000L == next.remainingMs / 60_000L &&
+            prev.untilFullMs / 60_000L == next.untilFullMs / 60_000L &&
             prev.samples == next.samples
         ) {
             return
@@ -110,8 +116,13 @@ class BatteryReader(context: Context) {
         val charging = sticky.isBatteryCharging()
         val plugged = sticky.isBatteryPlugged()
         val samples = persistAndLoad(level)
-        val remaining = estimateRemainingMs(level, samples)
-        val untilFull = if (plugged && level < 100) estimateUntilFullMs(level, samples) else -1L
+        val rate = recordRate(level, plugged)
+        val remaining = if (plugged && charging) {
+            -1L
+        } else {
+            estimateRemainingMs(level, rate, useSensor = !plugged)
+        }
+        val untilFull = if (plugged && level < 100) estimateUntilFullMs(level, rate) else -1L
         return BatterySnapshot(
             levelPercent = level,
             charging = charging,
@@ -122,70 +133,131 @@ class BatteryReader(context: Context) {
         )
     }
 
-    private fun estimateUntilFullMs(level: Int, samples: List<BatterySample>): Long {
+    private fun estimateUntilFullMs(level: Int, rate: List<BatteryRatePoint>): Long {
         if (level >= 100) return 0L
-        sensorUntilFullMs(level)?.let { return it }
-        historyUntilFullMs(level, samples)?.let { return it }
+        systemUntilFullMs(level)?.let { return it }
+        readPowerSupplyTimeMs(toFull = true, level)?.let { return it }
+        val sensor = sensorUntilFullMs(level)
+        val history = estimateMsFromRate(rate, level, plugged = true)
+        blendBatteryEstimates(sensor, history)?.let { return it }
         val hours = (100 - level) / FALLBACK_CHARGE_PERCENT_PER_HOUR
-        return (hours * 60L * 60L * 1000L).toLong().coerceAtLeast(0L)
+        return (hours * HOUR_MS).toLong().coerceAtLeast(0L)
+    }
+
+    private fun estimateRemainingMs(level: Int, rate: List<BatteryRatePoint>, useSensor: Boolean): Long {
+        if (level <= 0) return 0L
+        val history = estimateMsFromRate(rate, level, plugged = false)
+        if (!useSensor) return history ?: fallbackUseMs(level)
+        readPowerSupplyTimeMs(toFull = false, level)?.let { return it }
+        val sensor = sensorRemainingMs(level)
+        blendBatteryEstimates(sensor, history)?.let { return it }
+        return fallbackUseMs(level)
+    }
+
+    private fun fallbackUseMs(level: Int): Long {
+        val hours = level / FALLBACK_PERCENT_PER_HOUR
+        return (hours * HOUR_MS).toLong().coerceAtLeast(0L)
+    }
+
+    private fun systemUntilFullMs(level: Int): Long? {
+        val manager = batteryManager ?: return null
+        val ms = try {
+            manager.computeChargeTimeRemaining()
+        } catch (_: RuntimeException) {
+            -1L
+        }
+        if (ms <= 0L) return null
+        return ms.takeIf { plausibleUntilFullMs(it, level) }
     }
 
     private fun sensorUntilFullMs(level: Int): Long? {
+        val currentUa = smoothedChargeOrDrainUa(charging = true) ?: return null
+        val chargeUah = chargeCounterMicroAh(level) ?: return null
+        return batteryMillisFromCounters(chargeUah, currentUa, level, toFull = true)
+    }
+
+    private fun sensorRemainingMs(level: Int): Long? {
+        val drainUa = smoothedChargeOrDrainUa(charging = false) ?: return null
+        val chargeUah = chargeCounterMicroAh(level) ?: return null
+        return batteryMillisFromCounters(chargeUah, drainUa, level, toFull = false)
+    }
+
+    private fun chargeCounterMicroAh(level: Int): Long? {
         val manager = batteryManager ?: return null
-        if (level <= 0) return null
-        val chargeUah = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
-        val currentUa = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-        if (chargeUah <= 0L || currentUa == Long.MIN_VALUE || currentUa == 0L) return null
-        val chargeUa = if (currentUa > 0L) currentUa else return null
-        val fullUah = chargeUah * 100L / level
-        val remainUah = (fullUah - chargeUah).coerceAtLeast(0L)
-        if (remainUah <= 0L) return 0L
-        return (remainUah * 3600_000L) / chargeUa
+        val raw = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+        return asMicroAmpHours(raw, level)
     }
 
-    private fun historyUntilFullMs(level: Int, samples: List<BatterySample>): Long? {
-        val charge = samples.filter { it.charging }
-        if (charge.size < 3) return null
-        val first = charge.first()
-        val last = charge.last()
-        val elapsed = last.epochMillis - first.epochMillis
-        val gained = last.levelPercent - first.levelPercent
-        if (elapsed < 15L * 60L * 1000L || gained <= 0) return null
-        val percentPerMs = gained.toDouble() / elapsed.toDouble()
-        if (percentPerMs <= 0.0) return null
-        return ((100 - level) / percentPerMs).toLong().coerceAtLeast(0L)
-    }
-
-    private fun estimateRemainingMs(level: Int, samples: List<BatterySample>): Long {
-        if (level <= 0) return 0L
-        sensorRemainingMs()?.let { return it }
-        historyRemainingMs(level, samples)?.let { return it }
-        val hours = level / FALLBACK_PERCENT_PER_HOUR
-        return (hours * 60L * 60L * 1000L).toLong().coerceAtLeast(0L)
-    }
-
-    private fun sensorRemainingMs(): Long? {
+    /** Prefer the averaged current. Magnitude is used because OEM sign conventions differ. */
+    private fun smoothedChargeOrDrainUa(charging: Boolean): Long? {
         val manager = batteryManager ?: return null
-        val chargeUah = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
-        val currentUa = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-        if (chargeUah <= 0L || currentUa == Long.MIN_VALUE || currentUa == 0L) return null
-        // Discharging current is negative on most devices.
-        val drainUa = if (currentUa < 0L) -currentUa else return null
-        if (drainUa <= 0L) return null
-        return (chargeUah * 3600_000L) / drainUa
+        if (smoothedForCharge != charging) {
+            smoothedCurrentUa = 0L
+            smoothedForCharge = charging
+        }
+        val average = asMicroAmps(manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE))
+        val now = asMicroAmps(manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW))
+        val sample = when {
+            average != null && now != null -> (average * 3L + now) / 4L
+            average != null -> average
+            else -> now
+        } ?: return null
+        smoothedCurrentUa = if (smoothedCurrentUa <= 0L) {
+            sample
+        } else {
+            (smoothedCurrentUa * 7L + sample * 3L) / 10L
+        }
+        return smoothedCurrentUa.takeIf { it > 0L }
     }
 
-    private fun historyRemainingMs(level: Int, samples: List<BatterySample>): Long? {
-        val discharge = samples.filter { !it.charging }
-        if (discharge.size < 3) return null
-        val first = discharge.first()
-        val last = discharge.last()
-        val elapsed = last.epochMillis - first.epochMillis
-        val dropped = first.levelPercent - last.levelPercent
-        if (elapsed < 30L * 60L * 1000L || dropped <= 0) return null
-        val percentPerMs = dropped.toDouble() / elapsed.toDouble()
-        if (percentPerMs <= 0.0) return null
-        return (level / percentPerMs).toLong().coerceAtLeast(0L)
+    private fun readPowerSupplyTimeMs(toFull: Boolean, level: Int): Long? {
+        val name = if (toFull) "time_to_full_now" else "time_to_empty_now"
+        val bases = arrayOf(
+            "/sys/class/power_supply/battery/",
+            "/sys/class/power_supply/bms/",
+            "/sys/class/power_supply/Battery/",
+        )
+        for (base in bases) {
+            val text = try {
+                java.io.File(base + name).takeIf { it.canRead() }?.readText()
+            } catch (_: Exception) {
+                null
+            } ?: continue
+            parsePowerSupplyTimeMs(text, level, toFull)?.let { return it }
+        }
+        return null
+    }
+
+    private fun recordRate(level: Int, plugged: Boolean): List<BatteryRatePoint> {
+        val now = System.currentTimeMillis()
+        val existing = loadRate().filter { now - it.epochMillis <= RATE_WINDOW_MS }
+        val last = existing.lastOrNull()
+        val next = when {
+            last == null || last.plugged != plugged || now - last.epochMillis >= RATE_INTERVAL_MS ->
+                (existing + BatteryRatePoint(now, level, plugged)).takeLast(400)
+            else -> existing
+        }
+        if (next != existing) saveRate(next)
+        return next
+    }
+
+    private fun loadRate(): List<BatteryRatePoint> {
+        val raw = prefs.getString(KEY_RATE, null).orEmpty()
+        if (raw.isBlank()) return emptyList()
+        return raw.split(';').mapNotNull { token ->
+            val parts = token.split(':')
+            if (parts.size < 3) return@mapNotNull null
+            val time = parts[0].toLongOrNull() ?: return@mapNotNull null
+            val level = parts[1].toIntOrNull() ?: return@mapNotNull null
+            BatteryRatePoint(time, level.coerceIn(0, 100), parts[2] == "1")
+        }
+    }
+
+    private fun saveRate(points: List<BatteryRatePoint>) {
+        val packed = points.joinToString(";") {
+            "${it.epochMillis}:${it.levelPercent}:${if (it.plugged) 1 else 0}"
+        }
+        prefs.edit().putString(KEY_RATE, packed).apply()
     }
 
     private fun persistAndLoad(level: Int): List<BatterySample> {
@@ -248,14 +320,15 @@ class BatteryReader(context: Context) {
     }
 }
 
-/** Short duration fragment used inside [R.string.battery_should_last], e.g. "19 h". */
+/** Duration fragment, e.g. "2 h 15 m" or "40 m". */
 fun formatBatteryRemainingDuration(resources: Resources, remainingMs: Long): String {
     val totalMinutes = if (remainingMs < 0L) 0L else (remainingMs / 60_000L).coerceAtLeast(0L)
     val hours = totalMinutes / 60L
-    val minutes = totalMinutes % 60L
+    val minutes = (totalMinutes % 60L).toInt()
     return when {
-        hours <= 0L -> resources.getString(R.string.battery_duration_minutes, minutes.toInt().coerceAtLeast(0))
-        else -> resources.getString(R.string.battery_duration_hours, hours.toInt())
+        hours <= 0L -> resources.getString(R.string.battery_duration_minutes, minutes.coerceAtLeast(0))
+        minutes <= 0 -> resources.getString(R.string.battery_duration_hours, hours.toInt())
+        else -> resources.getString(R.string.battery_duration_hours_minutes, hours.toInt(), minutes)
     }
 }
 
@@ -280,6 +353,147 @@ private fun Intent?.isBatteryCharging(): Boolean {
 private fun Intent?.isBatteryPlugged(): Boolean {
     if (this == null) return false
     return getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
+}
+
+internal data class BatteryRatePoint(
+    val epochMillis: Long,
+    val levelPercent: Int,
+    val plugged: Boolean,
+)
+
+/**
+ * Charge-counter and current are documented as µAh / µA, but some HALs report mAh / mA.
+ * Pick the scale that lands in a real phone range for this [levelPercent].
+ */
+internal fun asMicroAmpHours(raw: Long, levelPercent: Int): Long? {
+    if (raw == Long.MIN_VALUE || raw == 0L || levelPercent <= 0) return null
+    val abs = kotlin.math.abs(raw)
+    val pct = levelPercent.coerceIn(1, 100)
+    val minUah = pct * 8_000L
+    val maxUah = pct * 150_000L
+    val asUah = abs
+    val asMah = abs * 1_000L
+    val uahOk = asUah in minUah..maxUah
+    val mahOk = asMah in minUah..maxUah
+    return when {
+        uahOk && !mahOk -> asUah
+        mahOk && !uahOk -> asMah
+        uahOk -> asUah
+        else -> null
+    }
+}
+
+/** Current magnitude in µA. Values that only make sense as mA are scaled. */
+internal fun asMicroAmps(raw: Long): Long? {
+    if (raw == Long.MIN_VALUE || raw == 0L) return null
+    val abs = kotlin.math.abs(raw)
+    val asUa = abs
+    val asMa = abs * 1_000L
+    val uaOk = asUa in 20_000L..8_000_000L
+    val maOk = asMa in 20_000L..8_000_000L
+    return when {
+        uaOk && !maOk -> asUa
+        maOk && !uaOk -> asMa
+        uaOk -> asUa
+        else -> null
+    }
+}
+
+internal fun batteryMillisFromCounters(
+    chargeUah: Long,
+    currentUa: Long,
+    levelPercent: Int,
+    toFull: Boolean,
+): Long? {
+    if (chargeUah <= 0L || currentUa <= 0L) return null
+    val ms = if (toFull) {
+        if (levelPercent <= 0 || levelPercent >= 100) return if (levelPercent >= 100) 0L else null
+        val remainUah = chargeUah * (100 - levelPercent) / levelPercent
+        if (remainUah <= 0L) return 0L
+        remainUah * HOUR_MS / currentUa
+    } else {
+        chargeUah * HOUR_MS / currentUa
+    }
+    return ms.takeIf { if (toFull) plausibleUntilFullMs(it, levelPercent) else plausibleUseMs(it, levelPercent) }
+}
+
+internal fun plausibleUntilFullMs(ms: Long, levelPercent: Int): Boolean {
+    if (ms <= 0L || levelPercent >= 100) return ms == 0L && levelPercent >= 100
+    val deficit = (100 - levelPercent).coerceAtLeast(1)
+    val min = deficit * 5_000L
+    val max = deficit * 30L * 60_000L
+    return ms in min..max
+}
+
+internal fun plausibleUseMs(ms: Long, levelPercent: Int): Boolean {
+    if (ms <= 0L || levelPercent <= 0) return false
+    val min = levelPercent * 20_000L
+    val max = levelPercent * 120L * 60_000L
+    return ms in min..max
+}
+
+/**
+ * Kernel ABI is seconds. Some vendor nodes store minutes. Keep whichever reading
+ * is a believable time for the percent still to go.
+ */
+internal fun parsePowerSupplyTimeMs(rawText: String, levelPercent: Int, toFull: Boolean): Long? {
+    val raw = rawText.trim().toLongOrNull() ?: return null
+    if (raw <= 0L) return null
+    val asSeconds = raw * 1_000L
+    val asMinutes = raw * 60_000L
+    val secondsOk = if (toFull) plausibleUntilFullMs(asSeconds, levelPercent) else plausibleUseMs(asSeconds, levelPercent)
+    val minutesOk = if (toFull) plausibleUntilFullMs(asMinutes, levelPercent) else plausibleUseMs(asMinutes, levelPercent)
+    return when {
+        secondsOk -> asSeconds
+        minutesOk -> asMinutes
+        else -> null
+    }
+}
+
+/** Recent same-plug stretch. Needs a real percent change, not a flat seeded chart. */
+internal fun estimateMsFromRate(
+    points: List<BatteryRatePoint>,
+    levelPercent: Int,
+    plugged: Boolean,
+    now: Long = Long.MAX_VALUE,
+): Long? {
+    val same = points.filter { it.plugged == plugged && it.epochMillis <= now }
+    if (same.size < 2) return null
+    var elapsed = 0L
+    var delta = 0
+    var prev = same.last()
+    for (index in same.lastIndex - 1 downTo 0) {
+        val older = same[index]
+        val gap = prev.epochMillis - older.epochMillis
+        if (gap <= 0L || gap > 2L * HOUR_MS) break
+        val step = prev.levelPercent - older.levelPercent
+        if (plugged && step < 0) break
+        if (!plugged && step > 0) break
+        elapsed += gap
+        delta += step
+        prev = older
+        if (elapsed >= 3L * HOUR_MS) break
+    }
+    if (elapsed < 12L * 60_000L || delta == 0) return null
+    return if (plugged) {
+        if (delta < 1) return null
+        val ms = ((100 - levelPercent).toDouble() / delta.toDouble() * elapsed).toLong()
+        ms.takeIf { plausibleUntilFullMs(it, levelPercent) }
+    } else {
+        val dropped = -delta
+        if (dropped < 1) return null
+        val ms = (levelPercent.toDouble() / dropped.toDouble() * elapsed).toLong()
+        ms.takeIf { plausibleUseMs(it, levelPercent) }
+    }
+}
+
+/** Geometric mean when the two estimates agree; otherwise keep the averaged history. */
+internal fun blendBatteryEstimates(sensorMs: Long?, historyMs: Long?): Long? {
+    if (sensorMs == null) return historyMs
+    if (historyMs == null) return sensorMs
+    val ratio = sensorMs.toDouble() / historyMs.toDouble()
+    if (ratio < 0.5 || ratio > 2.0) return historyMs
+    return kotlin.math.sqrt(sensorMs.toDouble() * historyMs.toDouble()).toLong()
 }
 
 /**

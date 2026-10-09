@@ -49,6 +49,7 @@
     <string name="battery_use_remaining">%1$s 남음</string>
     <string name="battery_until_full">완충까지 %1$s</string>
     <string name="battery_duration_hours">%1$d시간</string>
+    <string name="battery_duration_hours_minutes">%1$d시간 %2$d분</string>
     <string name="battery_duration_minutes">%1$d분</string>
     <string name="battery_now">지금</string>
     <string name="battery_device_label">배터리</string>

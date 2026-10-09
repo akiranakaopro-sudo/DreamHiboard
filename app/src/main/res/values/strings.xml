@@ -51,6 +51,7 @@
     <string name="battery_use_remaining">%1$s remaining</string>
     <string name="battery_until_full">%1$s until full</string>
     <string name="battery_duration_hours">%1$d h</string>
+    <string name="battery_duration_hours_minutes">%1$d h %2$d m</string>
     <string name="battery_duration_minutes">%1$d m</string>
     <string name="battery_now">Now</string>
     <string name="battery_device_label">Battery</string>
