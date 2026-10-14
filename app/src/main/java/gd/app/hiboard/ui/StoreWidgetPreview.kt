@@ -135,14 +135,8 @@ private fun bindNotesPreview(inflater: LayoutInflater, card: COUICardView, body:
 }
 
 private fun bindStoragePreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
-    val density = body.resources.displayMetrics.density
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
-    card.setContentPadding(
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-    )
+    card.setContentPadding(0, 0, 0, 0)
     val view = inflater.inflate(R.layout.card_storage, body, true)
     view.findViewById<StorageUsageRing>(R.id.storageRing).progress = 0.21f
     view.findViewById<TextView>(R.id.storagePercent).text =

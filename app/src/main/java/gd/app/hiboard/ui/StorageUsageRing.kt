@@ -25,6 +25,31 @@ class StorageUsageRing @JvmOverloads constructor(
             invalidate()
         }
 
+    var optimizing: Boolean = false
+        private set
+
+    private var optimizeTarget = 0
+    private var optimizeShown = 0
+    private var optimizeRising = false
+    private var onOptimizePercent: ((Int) -> Unit)? = null
+
+    private val optimizeStep = Runnable { stepOptimize() }
+
+    /**
+     * Same sweep as System Manager's circle: one percent every 10ms down to 0,
+     * a short pause, then back up to [targetPercent].
+     */
+    fun playOptimizeSweep(targetPercent: Int, onPercent: (Int) -> Unit) {
+        if (optimizing) return
+        optimizing = true
+        optimizeTarget = targetPercent.coerceIn(0, 100)
+        optimizeShown = optimizeTarget
+        optimizeRising = false
+        onOptimizePercent = onPercent
+        removeCallbacks(optimizeStep)
+        post(optimizeStep)
+    }
+
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -49,6 +74,13 @@ class StorageUsageRing @JvmOverloads constructor(
         val height = MeasureSpec.getSize(heightMeasureSpec)
         val size = minOf(width, height)
         setMeasuredDimension(size, size)
+    }
+
+    override fun onDetachedFromWindow() {
+        removeCallbacks(optimizeStep)
+        optimizing = false
+        onOptimizePercent = null
+        super.onDetachedFromWindow()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -111,8 +143,41 @@ class StorageUsageRing @JvmOverloads constructor(
         )
     }
 
+    private fun stepOptimize() {
+        if (!optimizing) return
+        if (!optimizeRising) {
+            optimizeShown = (optimizeShown - 1).coerceAtLeast(0)
+            publishOptimize()
+            if (optimizeShown == 0) {
+                optimizeRising = true
+                postDelayed(optimizeStep, PAUSE_AT_ZERO_MS)
+                return
+            }
+        } else {
+            optimizeShown = (optimizeShown + 1).coerceAtMost(optimizeTarget)
+            publishOptimize()
+            if (optimizeShown == optimizeTarget) {
+                optimizing = false
+                onOptimizePercent = null
+                return
+            }
+        }
+        postDelayed(optimizeStep, STEP_MS)
+    }
+
+    private fun publishOptimize() {
+        progress = optimizeShown / 100f
+        onOptimizePercent?.invoke(optimizeShown)
+    }
+
     private companion object {
         /** Degrees clockwise from 12 o'clock — 6.5 o'clock. */
         const val START_ANGLE_FROM_TOP = 195f
+
+        /** System Manager posts the circle runnable every 10ms. */
+        const val STEP_MS = 10L
+
+        /** Pause on zero, including the following frame gap. */
+        const val PAUSE_AT_ZERO_MS = 110L
     }
 }

@@ -45,6 +45,8 @@
     <string name="flashlight_unavailable">No flash</string>
     <string name="storage_label">Storage</string>
     <string name="storage_cleanup">Clean up</string>
+    <string name="storage_optimized">Clean up finished, %1$s memory was freed</string>
+    <string name="storage_already_clean">System is already clean</string>
     <string name="battery_charging">Charging</string>
     <string name="battery_fully_charged">Full charged</string>
     <string name="battery_should_last">Should last %1$s</string>

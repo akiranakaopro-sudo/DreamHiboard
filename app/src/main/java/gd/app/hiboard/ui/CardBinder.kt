@@ -31,6 +31,7 @@ import gd.app.hiboard.engine.densifyBatterySamples
 import gd.app.hiboard.engine.formatBatteryRemainingDuration
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
+import gd.app.hiboard.engine.optimizeRam
 import gd.app.hiboard.engine.recorderPrimaryCommand
 import gd.app.hiboard.model.BatterySample
 import gd.app.hiboard.model.CardEngineId
@@ -38,6 +39,7 @@ import gd.app.hiboard.model.CardInstance
 import gd.app.hiboard.model.CardSize
 import gd.app.hiboard.model.RecorderUiState
 import gd.app.hiboard.model.ShortcutApp
+import kotlin.math.roundToInt
 class CardBinder(
     private val onOpenNotes: () -> Unit,
     private val onOpenNote: (Long) -> Unit,
@@ -369,31 +371,35 @@ class CardBinder(
         body: LinearLayout,
         state: HiboardUiState,
     ) {
-        val density = body.resources.displayMetrics.density
         (root as? COUICardView)?.apply {
             setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
-            setContentPadding(
-                (14 * density).toInt(),
-                (14 * density).toInt(),
-                (14 * density).toInt(),
-                (14 * density).toInt(),
-            )
+            // The rocket overlay fills the card. Inset only the storage content.
+            setContentPadding(0, 0, 0, 0)
         }
         val view = inflater.inflate(R.layout.card_storage, body, true)
         val total = state.content.storageTotalBytes
         val used = state.content.storageUsedBytes
         val displayUsed = (used - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
         val displayTotal = (total - STORAGE_DISPLAY_OFFSET_BYTES).coerceAtLeast(0L)
-        view.findViewById<StorageUsageRing>(R.id.storageRing).progress =
-            if (displayTotal <= 0L) {
-                0f
-            } else {
-                (displayUsed.toDouble() / displayTotal).toFloat().coerceIn(0f, 1f)
-            }
-        view.findViewById<TextView>(R.id.storagePercent).text = formatStoragePercent(used, total)
+        val targetPercent = if (displayTotal <= 0L) {
+            0
+        } else {
+            ((displayUsed.toDouble() / displayTotal) * 100.0).roundToInt().coerceIn(0, 100)
+        }
+        val ring = view.findViewById<StorageUsageRing>(R.id.storageRing)
+        val percentView = view.findViewById<TextView>(R.id.storagePercent)
+        ring.progress = targetPercent / 100f
+        percentView.text = formatStoragePercent(used, total)
         view.findViewById<TextView>(R.id.storageUsage).text = formatStoragePair(used, total)
         val rocket = view.findViewById<StorageRocketOverlay>(R.id.storageRocket)
-        val optimize = View.OnClickListener { rocket.launch() }
+        val optimize = View.OnClickListener {
+            if (ring.optimizing) return@OnClickListener
+            optimizeRam(root.context)
+            rocket.launch()
+            ring.playOptimizeSweep(targetPercent) { shown ->
+                percentView.text = "$shown%"
+            }
+        }
         view.findViewById<View>(R.id.storageRoot).setOnClickListener(optimize)
         root.setOnClickListener(optimize)
     }

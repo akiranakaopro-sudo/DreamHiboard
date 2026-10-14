@@ -43,6 +43,8 @@
     <string name="flashlight_unavailable">플래시 없음</string>
     <string name="storage_label">저장 공간</string>
     <string name="storage_cleanup">정리</string>
+    <string name="storage_optimized">정리가 끝났습니다. 메모리 %1$s를 확보했습니다</string>
+    <string name="storage_already_clean">시스템이 이미 깨끗합니다</string>
     <string name="battery_charging">충전 중</string>
     <string name="battery_fully_charged">충전 완료</string>
     <string name="battery_should_last">%1$s 사용 가능</string>
