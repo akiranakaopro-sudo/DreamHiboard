@@ -130,7 +130,6 @@ class HiboardView @JvmOverloads constructor(
             onOpenNote = { launchIntent(this, viewModel.openNote(it)) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
-            onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
             onOpenBattery = { launchIntent(this, viewModel.openBattery()) },
             onRecorderCommand = { command -> sendRecorder(viewModel, command) },
             recorderLive = viewModel::recorderLive,

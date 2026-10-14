@@ -43,7 +43,6 @@ class CardBinder(
     private val onOpenNote: (Long) -> Unit,
     private val onCreateNote: () -> Unit,
     private val onToggleFlashlight: () -> Unit,
-    private val onOpenStorage: () -> Unit,
     private val onOpenBattery: () -> Unit,
     private val onRecorderCommand: (RecorderCommand) -> Unit,
     private val recorderLive: () -> RecorderStatus,
@@ -393,9 +392,10 @@ class CardBinder(
             }
         view.findViewById<TextView>(R.id.storagePercent).text = formatStoragePercent(used, total)
         view.findViewById<TextView>(R.id.storageUsage).text = formatStoragePair(used, total)
-        val open = View.OnClickListener { onOpenStorage() }
-        view.findViewById<View>(R.id.storageRoot).setOnClickListener(open)
-        root.setOnClickListener(open)
+        val rocket = view.findViewById<StorageRocketOverlay>(R.id.storageRocket)
+        val optimize = View.OnClickListener { rocket.launch() }
+        view.findViewById<View>(R.id.storageRoot).setOnClickListener(optimize)
+        root.setOnClickListener(optimize)
     }
 
     private fun bindBattery(
