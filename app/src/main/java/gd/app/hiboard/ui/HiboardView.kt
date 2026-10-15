@@ -115,8 +115,9 @@ class HiboardView @JvmOverloads constructor(
         backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val headerBottom = (12 * resources.displayMetrics.density).toInt()
             binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
-            binding.boardScroll.updatePadding(bottom = bars.bottom)
+            binding.boardHeader.updatePadding(bottom = bars.bottom + headerBottom)
             binding.storeListPane.updatePadding(bottom = bars.bottom)
             binding.storeDetailPane.updatePadding(bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
@@ -1006,7 +1007,7 @@ class HiboardView @JvmOverloads constructor(
     private fun animateStorePeek(detail: Boolean) {
         val sheet = binding.storeRoot
         val target = if (detail) storeDetailPeekMargin() else 0
-        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin ?: 0
+        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0
         storePeekAnimator?.cancel()
         if (from == target) {
             applyStorePeekMargin(target)
@@ -1024,7 +1025,8 @@ class HiboardView @JvmOverloads constructor(
 
     private fun applyStorePeekMargin(margin: Int) {
         binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            if (topMargin != margin) topMargin = margin
+            if (topMargin != 0) topMargin = 0
+            if (bottomMargin != margin) bottomMargin = margin
         }
     }
 
@@ -1044,8 +1046,7 @@ class HiboardView @JvmOverloads constructor(
 
     private fun storeDetailPeekMargin(): Int {
         val density = resources.displayMetrics.density
-        val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
-        return peek + (20 * density).toInt()
+        return binding.boardHeader.height.takeIf { it > 0 } ?: (96 * density).toInt()
     }
 
     private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
