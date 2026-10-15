@@ -91,6 +91,7 @@ class HiboardView @JvmOverloads constructor(
     private var storeDetailPick: String? = null
     private var detailMemberKey: String? = null
     private var storeTopInset = 0
+    private var storeDetailInsetAnimator: ValueAnimator? = null
     private var storeSheetDragging = false
     private var storeSheetDragDownY = 0f
     private var storeSheetDragStartTy = 0f
@@ -124,7 +125,7 @@ class HiboardView @JvmOverloads constructor(
             binding.boardHeader.post { extendBoardUnderHeader() }
             storeTopInset = bars.top
             binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = storeTopInset
+                topMargin = storeTopMargin(storeDetailOpen)
             }
             binding.storeListPane.updatePadding(top = 0, bottom = bars.bottom)
             binding.storeDetailPane.updatePadding(top = 0, bottom = bars.bottom)
@@ -664,6 +665,7 @@ class HiboardView @JvmOverloads constructor(
         storeSheetOpen = show
         storeSheetDragging = false
         sheet.animate().cancel()
+        storeDetailInsetAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
             ?: height.takeIf { it > 0 }?.toFloat()
             ?: resources.displayMetrics.heightPixels.toFloat()
@@ -1020,17 +1022,43 @@ class HiboardView @JvmOverloads constructor(
                 }
                 .start()
         }
-        applyStorePeekMargin(0)
+        animateStoreDetailInset(showDetail)
     }
 
-    private fun applyStorePeekMargin(margin: Int) {
+    private fun animateStoreDetailInset(detail: Boolean) {
+        val target = storeTopMargin(detail)
+        val from = (binding.storeRoot.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin
+            ?: storeTopInset
+        storeDetailInsetAnimator?.cancel()
+        if (from == target) {
+            applyStoreTopMargin(target)
+            return
+        }
+        storeDetailInsetAnimator = ValueAnimator.ofInt(from, target).apply {
+            duration = STORE_DETAIL_INSET_MS
+            interpolator = COUIMoveEaseInterpolator()
+            addUpdateListener { animator ->
+                applyStoreTopMargin(animator.animatedValue as Int)
+            }
+            start()
+        }
+    }
+
+    private fun storeTopMargin(detail: Boolean): Int {
+        val detailInset = if (detail) (80 * resources.displayMetrics.density).toInt() else 0
+        return storeTopInset + detailInset
+    }
+
+    private fun applyStoreTopMargin(margin: Int) {
         binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            if (topMargin != storeTopInset) topMargin = storeTopInset
-            if (bottomMargin != margin) bottomMargin = margin
+            if (topMargin != margin) topMargin = margin
+            if (bottomMargin != 0) bottomMargin = 0
         }
     }
 
     private fun resetStorePanes(showDetail: Boolean) {
+        storeDetailInsetAnimator?.cancel()
+        storeDetailInsetAnimator = null
         binding.storeListPane.animate().cancel()
         binding.storeDetailPane.animate().cancel()
         binding.storeListPane.translationY = 0f
@@ -1039,7 +1067,7 @@ class HiboardView @JvmOverloads constructor(
         binding.storeDetailPane.alpha = 1f
         binding.storeListPane.isVisible = !showDetail
         binding.storeDetailPane.isVisible = showDetail
-        applyStorePeekMargin(0)
+        applyStoreTopMargin(storeTopMargin(showDetail))
     }
 
     private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
@@ -1434,6 +1462,7 @@ class HiboardView @JvmOverloads constructor(
         const val STORE_SLIDE_OUT_MS = 280L
         const val STORE_DISMISS_FRACTION = 0.18f
         const val STORE_DISMISS_VELOCITY = 900f
+        const val STORE_DETAIL_INSET_MS = 420L
         const val STORE_FADE_MS = 320L
         const val STORE_FADE_DELAY_MS = 40L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }
