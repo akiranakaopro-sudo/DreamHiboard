@@ -234,7 +234,7 @@ class CardBinder(
         val row = view.findViewById<LinearLayout>(R.id.recentRow)
         row.removeAllViews()
         val pm = body.context.packageManager
-        val labelColor = body.context.getColor(R.color.hiboard_bar_ink)
+        val labelColor = body.context.getColor(R.color.hiboard_chrome)
         state.content.recentApps.take(RECENT_APP_LIMIT).forEach { app ->
             val item = inflater.inflate(R.layout.item_recent_app, row, false)
             item.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
