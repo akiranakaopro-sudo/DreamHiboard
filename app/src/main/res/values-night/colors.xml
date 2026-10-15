@@ -24,9 +24,9 @@
     <color name="hiboard_flashlight_label_on">#FFE7A3</color>
     <color name="hiboard_flashlight_icon_off">#8A97AB</color>
     <color name="hiboard_flashlight_icon_on">#FFD56A</color>
-    <color name="hiboard_storage_card">#FFFFFFFF</color>
-    <color name="hiboard_storage_title">#021135</color>
-    <color name="hiboard_storage_usage">#8E97A4</color>
+    <color name="hiboard_storage_card">#33FFFFFF</color>
+    <color name="hiboard_storage_title">#FFFFFFFF</color>
+    <color name="hiboard_storage_usage">#FFFFFFFF</color>
     <color name="hiboard_storage_accent">#0562FE</color>
     <color name="hiboard_storage_chevron">#C5CDD8</color>
     <color name="hiboard_storage_ring_track">#E9EDF6</color>

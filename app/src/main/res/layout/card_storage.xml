@@ -39,6 +39,7 @@
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
+                android:alpha="0.3"
                 android:src="@drawable/ic_storage_watermark" />
 
             <gd.app.hiboard.ui.StorageUsageRing
