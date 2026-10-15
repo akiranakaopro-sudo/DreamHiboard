@@ -4,6 +4,9 @@
     <color name="hiboard_chrome">#FFFFFFFF</color>
     <color name="hiboard_chrome_hint">#C8D1E9</color>
     <color name="hiboard_chrome_fill">#95A6D4</color>
+    <color name="hiboard_bar_fill">#4DFFFFFF</color>
+    <color name="hiboard_bar_ink">#021135</color>
+    <color name="hiboard_bar_hint">#99021135</color>
     <color name="hiboard_card">@color/coui_color_card_background</color>
     <color name="hiboard_text">@color/coui_color_label_primary</color>
     <color name="hiboard_muted">@color/coui_color_label_secondary</color>

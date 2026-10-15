@@ -102,16 +102,15 @@ class HiboardView @JvmOverloads constructor(
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
-        val chrome = context.getColor(R.color.hiboard_chrome)
+        val barInk = context.getColor(R.color.hiboard_bar_ink)
+        val barFill = context.getColor(R.color.hiboard_bar_fill)
         binding.searchBar.searchEditText.hint = context.getString(R.string.header_search_hint)
-        binding.searchBar.searchEditText.setHintTextColor(context.getColor(R.color.hiboard_chrome_hint))
-        binding.searchBar.searchEditText.setTextColor(chrome)
+        binding.searchBar.searchEditText.setHintTextColor(context.getColor(R.color.hiboard_bar_hint))
+        binding.searchBar.searchEditText.setTextColor(barInk)
         binding.searchBar.setSearchViewIcon(context.getDrawable(R.drawable.ic_search_chrome))
-        binding.searchBar.setSearchBackgroundColor(
-            ColorStateList.valueOf(context.getColor(R.color.hiboard_chrome_fill)),
-        )
-        binding.addButton.setTextColor(chrome)
-        binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
+        binding.searchBar.setSearchBackgroundColor(ColorStateList.valueOf(barFill))
+        binding.addButton.setTextColor(barInk)
+        binding.addButton.setDrawableColor(barFill)
         backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

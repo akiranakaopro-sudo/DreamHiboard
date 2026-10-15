@@ -148,9 +148,9 @@
                 android:gravity="center"
                 android:contentDescription="@string/add_widget"
                 android:text="@string/add_widget_symbol"
-                android:textColor="@color/hiboard_chrome"
+                android:textColor="@color/hiboard_bar_ink"
                 android:textSize="20sp"
-                app:drawableColor="@color/hiboard_chrome_fill"
+                app:drawableColor="@color/hiboard_bar_fill"
                 app:drawableRadius="-1dp" />
         </LinearLayout>
     </LinearLayout>
