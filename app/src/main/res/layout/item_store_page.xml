@@ -21,7 +21,7 @@
             android:clipToPadding="false"
             android:orientation="vertical"
             android:paddingEnd="36dp"
-            android:paddingBottom="24dp" />
+            android:paddingBottom="72dp" />
     </gd.app.hiboard.ui.StoreListScrollView>
 
     <LinearLayout

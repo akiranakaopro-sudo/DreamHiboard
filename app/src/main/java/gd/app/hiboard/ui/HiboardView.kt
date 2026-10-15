@@ -90,7 +90,7 @@ class HiboardView @JvmOverloads constructor(
     private var openedDetailId: String? = null
     private var storeDetailPick: String? = null
     private var detailMemberKey: String? = null
-    private var storePeekAnimator: ValueAnimator? = null
+    private var storeTopInset = 0
     private var storeSheetDragging = false
     private var storeSheetDragDownY = 0f
     private var storeSheetDragStartTy = 0f
@@ -122,8 +122,12 @@ class HiboardView @JvmOverloads constructor(
             binding.boardHeader.updatePadding(bottom = bars.bottom + headerBottom)
             binding.boardScroll.clipToPadding = false
             binding.boardHeader.post { extendBoardUnderHeader() }
-            binding.storeListPane.updatePadding(top = bars.top, bottom = bars.bottom)
-            binding.storeDetailPane.updatePadding(top = bars.top, bottom = bars.bottom)
+            storeTopInset = bars.top
+            binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = storeTopInset
+            }
+            binding.storeListPane.updatePadding(top = 0, bottom = bars.bottom)
+            binding.storeDetailPane.updatePadding(top = 0, bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
     }
@@ -660,7 +664,6 @@ class HiboardView @JvmOverloads constructor(
         storeSheetOpen = show
         storeSheetDragging = false
         sheet.animate().cancel()
-        storePeekAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
             ?: height.takeIf { it > 0 }?.toFloat()
             ?: resources.displayMetrics.heightPixels.toFloat()
@@ -837,7 +840,7 @@ class HiboardView @JvmOverloads constructor(
     ) {
         list.removeAllViews()
         val density = resources.displayMetrics.density
-        list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
+        list.setPadding(0, 0, (36 * density).toInt(), (72 * density).toInt())
         indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
         val sections = widgetStoreCategories(resources, catalog, query, groupId)
@@ -1017,38 +1020,17 @@ class HiboardView @JvmOverloads constructor(
                 }
                 .start()
         }
-        animateStorePeek(showDetail)
-    }
-
-    private fun animateStorePeek(detail: Boolean) {
-        val sheet = binding.storeRoot
-        val target = if (detail) storeDetailPeekMargin() else 0
-        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0
-        storePeekAnimator?.cancel()
-        if (from == target) {
-            applyStorePeekMargin(target)
-            return
-        }
-        storePeekAnimator = ValueAnimator.ofInt(from, target).apply {
-            duration = STORE_PEEK_MS
-            interpolator = COUIMoveEaseInterpolator()
-            addUpdateListener { animator ->
-                applyStorePeekMargin(animator.animatedValue as Int)
-            }
-            start()
-        }
+        applyStorePeekMargin(0)
     }
 
     private fun applyStorePeekMargin(margin: Int) {
         binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            if (topMargin != 0) topMargin = 0
+            if (topMargin != storeTopInset) topMargin = storeTopInset
             if (bottomMargin != margin) bottomMargin = margin
         }
     }
 
     private fun resetStorePanes(showDetail: Boolean) {
-        storePeekAnimator?.cancel()
-        storePeekAnimator = null
         binding.storeListPane.animate().cancel()
         binding.storeDetailPane.animate().cancel()
         binding.storeListPane.translationY = 0f
@@ -1057,12 +1039,7 @@ class HiboardView @JvmOverloads constructor(
         binding.storeDetailPane.alpha = 1f
         binding.storeListPane.isVisible = !showDetail
         binding.storeDetailPane.isVisible = showDetail
-        applyStorePeekMargin(if (showDetail) storeDetailPeekMargin() else 0)
-    }
-
-    private fun storeDetailPeekMargin(): Int {
-        val density = resources.displayMetrics.density
-        return binding.boardHeader.height.takeIf { it > 0 } ?: (96 * density).toInt()
+        applyStorePeekMargin(0)
     }
 
     private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
@@ -1166,7 +1143,7 @@ class HiboardView @JvmOverloads constructor(
         list.clipToPadding = false
         list.removeAllViews()
         val padH = (16 * density).toInt()
-        list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        list.setPadding(padH, (12 * density).toInt(), padH, (72 * density).toInt())
         // Wide notes variants stay reachable from the All notes detail pager.
         val entries = widgetStoreSections(resources, catalog, query = "", groupId).flatMap { it.entries }
             .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
@@ -1457,7 +1434,6 @@ class HiboardView @JvmOverloads constructor(
         const val STORE_SLIDE_OUT_MS = 280L
         const val STORE_DISMISS_FRACTION = 0.18f
         const val STORE_DISMISS_VELOCITY = 900f
-        const val STORE_PEEK_MS = 420L
         const val STORE_FADE_MS = 320L
         const val STORE_FADE_DELAY_MS = 40L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }

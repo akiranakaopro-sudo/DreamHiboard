@@ -290,6 +290,15 @@
                         android:paddingEnd="16dp"
                         android:paddingStart="8dp" />
                 </FrameLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/bg_store_bottom_fade"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:importantForAccessibility="no" />
             </FrameLayout>
         </LinearLayout>
 
