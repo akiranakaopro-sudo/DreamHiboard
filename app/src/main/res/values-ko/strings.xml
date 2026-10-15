@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hiboard</string>
+    <string name="app_name">QuickGlance</string>
     <string name="header_search_hint">통합 검색</string>
     <string name="edit_done">완료</string>
     <string name="edit">편집</string>

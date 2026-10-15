@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hiboard</string>
+    <string name="app_name">QuickGlance</string>
     <string name="header_search_hint">Global search</string>
     <string name="edit_done">Done</string>
     <string name="edit">Edit</string>
