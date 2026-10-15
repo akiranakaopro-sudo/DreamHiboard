@@ -210,6 +210,7 @@ class BoardBackdrop(
             sCachedBlurredWallpaper = null
             clearWallpaperSourceCache(context.applicationContext)
         }
+        notifyBlurChanged()
         Thread({
             ensureBlurredWallpaper(context.applicationContext)
             if (!released) {
@@ -239,8 +240,31 @@ class BoardBackdrop(
         private const val WALLPAPER_CACHE_NAME = "wallpaper.bin"
 
         private val BLUR_LOCK = Any()
+        private val blurListeners = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
         @Volatile
         private var sCachedBlurredWallpaper: Drawable? = null
+
+        fun peekBlurBitmap(): Bitmap? {
+            val cached = sCachedBlurredWallpaper as? BitmapDrawable ?: return null
+            return cached.bitmap?.takeIf { !it.isRecycled }
+        }
+
+        fun addBlurListener(listener: () -> Unit) {
+            blurListeners.add(listener)
+        }
+
+        fun removeBlurListener(listener: () -> Unit) {
+            blurListeners.remove(listener)
+        }
+
+        private fun notifyBlurChanged() {
+            val emit = { blurListeners.forEach { it() } }
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                emit()
+            } else {
+                Handler(Looper.getMainLooper()).post(emit)
+            }
+        }
 
         fun prefetch(context: Context?) {
             if (context == null || sCachedBlurredWallpaper != null) {
@@ -280,14 +304,21 @@ class BoardBackdrop(
             if (sCachedBlurredWallpaper != null) {
                 return
             }
-            synchronized(BLUR_LOCK) {
+            val changed = synchronized(BLUR_LOCK) {
                 if (sCachedBlurredWallpaper != null) {
-                    return
+                    false
+                } else {
+                    val wallpaper = loadBlurredWallpaperBackground(context)
+                    if (wallpaper != null) {
+                        sCachedBlurredWallpaper = wallpaper
+                        true
+                    } else {
+                        false
+                    }
                 }
-                val wallpaper = loadBlurredWallpaperBackground(context)
-                if (wallpaper != null) {
-                    sCachedBlurredWallpaper = wallpaper
-                }
+            }
+            if (changed) {
+                notifyBlurChanged()
             }
         }
 

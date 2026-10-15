@@ -96,21 +96,23 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
         </gd.app.hiboard.ui.SpringScrollView>
+    </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/boardHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:elevation="0dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:outlineProvider="none"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="12dp"
-            android:translationZ="0dp">
+    <LinearLayout
+        android:id="@+id/boardHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:outlineProvider="none"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
+        android:translationZ="0dp">
 
             <com.coui.appcompat.searchview.COUISearchBar
                 android:id="@+id/searchBar"
@@ -152,7 +154,6 @@
                 android:textSize="20sp"
                 app:drawableColor="@color/hiboard_bar_fill"
                 app:drawableRadius="-1dp" />
-        </LinearLayout>
     </LinearLayout>
 
     <FrameLayout

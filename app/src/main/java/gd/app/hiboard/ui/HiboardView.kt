@@ -99,6 +99,7 @@ class HiboardView @JvmOverloads constructor(
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
     private var backdrop: BoardBackdrop? = null
+    private var frostFade: FrostFadeDrawable? = null
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
@@ -111,15 +112,25 @@ class HiboardView @JvmOverloads constructor(
         binding.searchBar.setSearchBackgroundColor(ColorStateList.valueOf(barFill))
         binding.addButton.setTextColor(barInk)
         binding.addButton.setDrawableColor(barFill)
+        frostFade = FrostFadeDrawable(binding.boardHeader).also { binding.boardHeader.background = it }
         backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val headerBottom = (12 * resources.displayMetrics.density).toInt()
             binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
             binding.boardHeader.updatePadding(bottom = bars.bottom + headerBottom)
+            binding.boardScroll.clipToPadding = false
+            binding.boardHeader.post { extendBoardUnderHeader() }
             binding.storeListPane.updatePadding(bottom = bars.bottom)
             binding.storeDetailPane.updatePadding(bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
+        }
+    }
+
+    private fun extendBoardUnderHeader() {
+        val cover = binding.boardHeader.height
+        if (cover > 0 && binding.boardScroll.paddingBottom != cover) {
+            binding.boardScroll.updatePadding(bottom = cover)
         }
     }
 
@@ -195,6 +206,9 @@ class HiboardView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (frostFade == null) {
+            frostFade = FrostFadeDrawable(binding.boardHeader).also { binding.boardHeader.background = it }
+        }
         if (backdrop == null) {
             backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         }
@@ -202,6 +216,8 @@ class HiboardView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
+        frostFade?.detach()
+        frostFade = null
         backdrop?.release()
         backdrop = null
         setStoreNavBarContrast(false)
