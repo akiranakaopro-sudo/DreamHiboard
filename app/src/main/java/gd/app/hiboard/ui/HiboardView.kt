@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
@@ -96,6 +97,8 @@ class HiboardView @JvmOverloads constructor(
     private var storeSheetVelocity: VelocityTracker? = null
     private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
+    /** In-hierarchy menu for the launcher overlay (PopupWindow cannot present on that panel). */
+    private var cardMenuLayer: View? = null
     private var viewModel: HiboardViewModel? = null
 
     /** Invoked when the user wants to leave Hiboard for the launcher home (back). */
@@ -376,7 +379,6 @@ class HiboardView @JvmOverloads constructor(
 
     private fun showCardMenu(card: CardInstance, anchor: View, viewModel: HiboardViewModel) {
         dismissCardMenu()
-        val popup = COUIPopupListWindow(context)
         val actions = buildList {
             if (card.engine == CardEngineId.Notes) {
                 add(Triple(R.string.edit_widget, R.drawable.ic_widget_edit) { showNoteFolderPicker(card, viewModel) })
@@ -384,6 +386,21 @@ class HiboardView @JvmOverloads constructor(
             add(Triple(R.string.remove_widget, R.drawable.ic_widget_remove) { viewModel.unsubscribe(card.catalogId) })
             add(Triple(R.string.widget_details, R.drawable.ic_widget_info) { showWidgetDetails(card) })
         }
+        // Overlay host is TYPE_APPLICATION_PANEL + FLAG_NOT_FOCUSABLE. A separate PopupWindow
+        // (even SUB_PANEL) does not present there on MTK — Activity works, glance overlay does
+        // not. Drag works because it stays in this view tree; host the menu the same way.
+        if (isLauncherOverlayHost()) {
+            showCardMenuEmbedded(actions, anchor)
+            return
+        }
+        showCardMenuPopup(actions, anchor)
+    }
+
+    private fun showCardMenuPopup(
+        actions: List<Triple<Int, Int, () -> Unit>>,
+        anchor: View,
+    ) {
+        val popup = COUIPopupListWindow(couiContext(anchor.context))
         popup.setItemList(
             actions.map { (title, icon, _) ->
                 PopupListItem.Builder()
@@ -401,22 +418,132 @@ class HiboardView @JvmOverloads constructor(
         cardMenu = popup
         fun present() {
             if (cardMenu !== popup || !anchor.isAttachedToWindow || anchor.windowToken == null) return
-            // Host is TYPE_APPLICATION_PANEL (launcher overlay). Default popup type
-            // TYPE_APPLICATION cannot attach to that token → BadTokenException.
-            popup.windowLayoutType = WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL
             try {
                 popup.show(anchor)
             } catch (e: WindowManager.BadTokenException) {
-                Log.w(TAG, "card menu show failed (overlay token)", e)
+                Log.w(TAG, "card menu show failed", e)
                 if (cardMenu === popup) cardMenu = null
             }
         }
-        if (anchor.windowToken != null) {
-            present()
-        } else {
-            anchor.post { present() }
+        if (anchor.windowToken != null) present() else anchor.post { present() }
+    }
+
+    private fun showCardMenuEmbedded(
+        actions: List<Triple<Int, Int, () -> Unit>>,
+        anchor: View,
+    ) {
+        val themed = couiContext(context)
+        val inflater = LayoutInflater.from(themed)
+        val scrim = FrameLayout(themed).apply {
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            isClickable = true
+            isFocusable = false
+            // Above board chrome / plate; drag uses the same tree successfully.
+            elevation = 64f
+            setOnClickListener { dismissCardMenu() }
+        }
+        val menuWidth = resources.getDimensionPixelSize(
+            com.coui.appcompat.R.dimen.coui_popup_list_window_width_with_icon,
+        )
+        val menu = LinearLayout(themed).apply {
+            orientation = LinearLayout.VERTICAL
+            background = ContextCompat.getDrawable(
+                themed,
+                com.coui.appcompat.R.drawable.coui_popup_window_background,
+            )
+            elevation = resources.getDimension(
+                com.coui.appcompat.R.dimen.support_shadow_size_level_popup,
+            )
+            isClickable = true
+            layoutParams = FrameLayout.LayoutParams(
+                menuWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+        actions.forEachIndexed { index, (title, icon, action) ->
+            val row = inflater.inflate(
+                com.coui.appcompat.R.layout.coui_popup_list_window_item,
+                menu,
+                false,
+            )
+            row.findViewById<TextView>(com.coui.appcompat.R.id.popup_list_window_item_title)
+                .text = context.getString(title)
+            row.findViewById<TextView>(com.coui.appcompat.R.id.popup_list_window_item_description)
+                .visibility = View.GONE
+            row.findViewById<ImageView>(com.coui.appcompat.R.id.popup_list_window_item_icon)
+                .setImageDrawable(ContextCompat.getDrawable(context, icon))
+            row.setOnClickListener {
+                dismissCardMenu()
+                action()
+            }
+            menu.addView(row)
+            if (index != actions.lastIndex) {
+                // Light separator matching COUI popup rows.
+                menu.addView(
+                    View(themed).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            1,
+                        ).also { it.marginStart = (20 * resources.displayMetrics.density).toInt() }
+                        setBackgroundColor(0x1A000000)
+                    },
+                )
+            }
+        }
+        scrim.addView(menu)
+        addView(scrim)
+        cardMenuLayer = scrim
+        scrim.post {
+            if (cardMenuLayer !== scrim) return@post
+            positionEmbeddedMenu(menu, anchor, menuWidth)
+            menu.alpha = 0f
+            menu.scaleX = 0.85f
+            menu.scaleY = 0.85f
+            menu.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(180)
+                .start()
         }
     }
+
+    private fun positionEmbeddedMenu(menu: View, anchor: View, menuWidth: Int) {
+        val loc = IntArray(2)
+        val rootLoc = IntArray(2)
+        anchor.getLocationInWindow(loc)
+        getLocationInWindow(rootLoc)
+        val anchorLeft = loc[0] - rootLoc[0]
+        val anchorTop = loc[1] - rootLoc[1]
+        menu.measure(
+            View.MeasureSpec.makeMeasureSpec(menuWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val menuHeight = menu.measuredHeight
+        val margin = (12 * resources.displayMetrics.density).toInt()
+        var x = anchorLeft + (anchor.width - menuWidth) / 2
+        var y = anchorTop - menuHeight - margin
+        if (y < margin) {
+            y = anchorTop + anchor.height + margin
+        }
+        x = x.coerceIn(margin, (width - menuWidth - margin).coerceAtLeast(margin))
+        y = y.coerceIn(margin, (height - menuHeight - margin).coerceAtLeast(margin))
+        val lp = menu.layoutParams as FrameLayout.LayoutParams
+        lp.width = menuWidth
+        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT
+        lp.leftMargin = x
+        lp.topMargin = y
+        lp.gravity = Gravity.TOP or Gravity.START
+        menu.layoutParams = lp
+        menu.pivotX = menuWidth / 2f
+        menu.pivotY = if (y >= anchorTop) 0f else menuHeight.toFloat()
+    }
+
+    /** Overlay uses Application context; [HiboardActivity] uses an Activity context. */
+    private fun isLauncherOverlayHost(): Boolean = context.findActivity() == null
 
     private fun showNoteFolderPicker(card: CardInstance, viewModel: HiboardViewModel) {
         val state = viewModel.state.value
@@ -473,6 +600,10 @@ class HiboardView @JvmOverloads constructor(
     private fun dismissCardMenu() {
         cardMenu?.dismiss()
         cardMenu = null
+        cardMenuLayer?.let { layer ->
+            (layer.parent as? ViewGroup)?.removeView(layer)
+        }
+        cardMenuLayer = null
     }
 
     private fun toggleFlashlight(viewModel: HiboardViewModel) {
