@@ -68,8 +68,8 @@ class FrostFadeDrawable(
             bounds.top.toFloat(),
             0f,
             bounds.bottom.toFloat(),
-            intArrayOf(Color.TRANSPARENT, 0xEEFFFFFF.toInt(), Color.WHITE, Color.WHITE),
-            floatArrayOf(0f, 0.28f, 0.36f, 1f),
+            intArrayOf(Color.TRANSPARENT, 0xAAFFFFFF.toInt(), Color.WHITE, Color.WHITE),
+            floatArrayOf(0f, 0.14f, 0.32f, 1f),
             Shader.TileMode.CLAMP,
         )
         canvas.drawRect(bounds, maskPaint)
