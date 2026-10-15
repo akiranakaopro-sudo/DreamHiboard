@@ -98,6 +98,7 @@ class HiboardView @JvmOverloads constructor(
     private var storePagerAdapter: StorePagerAdapter? = null
     private var cardMenu: COUIPopupListWindow? = null
     private var viewModel: HiboardViewModel? = null
+    private var backdrop: BoardBackdrop? = null
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
@@ -111,6 +112,7 @@ class HiboardView @JvmOverloads constructor(
         )
         binding.addButton.setTextColor(chrome)
         binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
+        backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
@@ -193,10 +195,15 @@ class HiboardView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (backdrop == null) {
+            backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
+        }
         ViewCompat.requestApplyInsets(this)
     }
 
     override fun onDetachedFromWindow() {
+        backdrop?.release()
+        backdrop = null
         setStoreNavBarContrast(false)
         dismissCardMenu()
         collectJob?.cancel()

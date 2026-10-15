@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import gd.app.hiboard.host.HostEvent
+import gd.app.hiboard.ui.BoardBackdrop
 import gd.app.hiboard.ui.HiboardView
 import gd.app.hiboard.ui.HiboardViewModel
 import kotlinx.coroutines.awaitCancellation
@@ -26,6 +27,7 @@ class HiboardActivity : AppCompatActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        BoardBackdrop.applyCachedToWindow(this)
         val view = HiboardView(this)
         view.bind(viewModel, this)
         setContentView(view)
