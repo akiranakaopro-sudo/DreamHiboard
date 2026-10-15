@@ -1,5 +1,7 @@
 package gd.app.hiboard.model
 
+import androidx.annotation.StringRes
+
 /**
  * 4-column grid sizes, mapped from ColorOS `CardSizeOf`.
  *
@@ -27,6 +29,7 @@ enum class CardEngineId {
     RecentApps,
     Flashlight,
     Storage,
+    Battery,
     Recorder,
     Contacts,
     Calendar,
@@ -56,15 +59,15 @@ enum class CardAction {
 data class CardCatalogEntry(
     val id: String,
     val groupId: String,
-    val groupTitle: String,
-    val name: String,
-    val description: String,
+    @StringRes val groupTitleRes: Int,
+    @StringRes val nameRes: Int,
+    @StringRes val descriptionRes: Int,
     val size: CardSize,
     val engine: CardEngineId,
     val defaultSubscribed: Boolean,
     val resizable: Boolean = false,
     val locked: Boolean = false,
-    val storeCategory: String = "",
+    @StringRes val storeCategoryRes: Int = 0,
 )
 
 /** Placed instance — ColorOS `CardInfo`. */
@@ -95,6 +98,12 @@ data class BoardContact(
     val name: String,
     val lookupUri: String,
     val photoUri: String? = null,
+)
+
+data class BatterySample(
+    val epochMillis: Long,
+    val levelPercent: Int,
+    val charging: Boolean = false,
 )
 
 data class WeatherDayContent(
@@ -130,6 +139,13 @@ data class CardContent(
     val flashlightAvailable: Boolean = false,
     val storageUsedBytes: Long = 0L,
     val storageTotalBytes: Long = 0L,
+    val batteryPercent: Int = 0,
+    val batteryCharging: Boolean = false,
+    val batteryPlugged: Boolean = false,
+    val batteryRemainingMs: Long = -1L,
+    val batteryUntilFullMs: Long = -1L,
+    val batterySamples: List<BatterySample> = emptyList(),
+    val batteryReady: Boolean = false,
     val recorderState: RecorderUiState = RecorderUiState.Idle,
     val recorderElapsedMs: Long = 0L,
     val recorderBound: Boolean = false,

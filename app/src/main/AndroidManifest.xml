@@ -24,6 +24,19 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="gd.app.soundrecorder.permission.CONTROL_RECORDING" />
+    <uses-permission
+        android:name="android.permission.READ_WALLPAPER_INTERNAL"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <uses-permission
+        android:name="android.permission.GET_TASKS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.REAL_GET_TASKS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.REMOVE_TASKS"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -39,6 +52,10 @@
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
         </intent>
         <intent>
             <action android:name="android.intent.action.DIAL" />
@@ -92,10 +109,12 @@
         <package android:name="cn.kuwo.player" />
         <package android:name="com.android.music" />
         <package android:name="com.google.android.apps.youtube.music" />
+
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.APP_MUSIC" />
         </intent>
+
         <package android:name="gd.app.soundrecorder" />
         <package android:name="gd.app.systemmanager" />
         <package android:name="gd.app.phonemanager" />
@@ -138,11 +157,16 @@
              HiboardViewController is the equivalent embed contract. -->
         <activity
             android:name=".HiboardActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Hiboard">
 
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -155,6 +179,7 @@
 
         <activity
             android:name=".deeplink.DeeplinkActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Hiboard.Translucent">

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.CardEngineRegistry
+import gd.app.hiboard.ui.BoardBackdrop
 
 class HiboardApp : Application() {
     lateinit var boardRepository: BoardRepository
@@ -17,6 +18,7 @@ class HiboardApp : Application() {
         instance = this
         boardRepository = BoardRepository(this)
         engines = CardEngineRegistry(this)
+        BoardBackdrop.prefetch(this)
     }
 
     companion object {

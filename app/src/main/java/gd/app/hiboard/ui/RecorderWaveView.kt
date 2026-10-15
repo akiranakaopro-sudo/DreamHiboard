@@ -3,13 +3,11 @@ package gd.app.hiboard.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.Choreographer
 import android.view.View
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import gd.app.hiboard.R
 import gd.app.hiboard.engine.RecorderStatus
 import gd.app.hiboard.engine.RecorderWaveSession
@@ -35,12 +33,7 @@ class RecorderWaveView @JvmOverloads constructor(
     private val density = resources.displayMetrics.density
     private val pxPerMs = (17.5f * density) / 500f
     private val ampPitchPx = (17.5f * density) / 5f
-    private val barWidthPx = 2.2f * density
-    private val minBarH = 1.2f * density
-    private val emptyPadHalfH = 0.5f * density
     private val sampleMs = 100L
-    private val flagDrawable: Drawable? =
-        ContextCompat.getDrawable(context, R.drawable.ic_recorder_flag_small)?.mutate()
 
     private val idleTickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -53,17 +46,6 @@ class RecorderWaveView @JvmOverloads constructor(
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = context.getColor(R.color.hiboard_recorder_wave)
-        alpha = 165
-    }
-    private val dimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = context.getColor(R.color.hiboard_recorder_wave)
-        alpha = 70
-    }
-    private val markLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = context.getColor(R.color.hiboard_recorder_flag)
-        alpha = 0x4C
     }
 
     private val frameCallback = object : Choreographer.FrameCallback {
@@ -192,17 +174,8 @@ class RecorderWaveView @JvmOverloads constructor(
             while (tMs <= lastMs) {
                 val x = cx + (tMs * pxPerMs - scrollX)
                 if (x >= -ampPitchPx && x <= width + ampPitchPx) {
-                    val left = x - barWidthPx * 0.5f
                     if (tMs < 0f || tMs > elapsedMs) {
-                        canvas.drawRoundRect(
-                            left,
-                            cy - emptyPadHalfH,
-                            left + barWidthPx,
-                            cy + emptyPadHalfH,
-                            barWidthPx,
-                            barWidthPx,
-                            dimPaint,
-                        )
+                        drawIdleDot(canvas, x, cy, width)
                     } else {
                         val bucket = (tMs / sampleMs).toLong()
                         val isLive = recording && bucket == liveBucket
@@ -213,57 +186,67 @@ class RecorderWaveView @JvmOverloads constructor(
                             tape.bars[bucket.toInt().coerceIn(0, n - 1)].bornAt
                         }
                         val grow = if (isLive) 1f else growFactor(bornAt)
-                        val half = (amp.coerceIn(0f, 1f) * maxHalf * grow).coerceAtLeast(minBarH * 0.5f)
+                        val halfW = idleDotHalfW(width)
+                        val minHalf = idleDotHalfH(width)
+                        val half = (amp.coerceIn(0f, 1f) * maxHalf * grow).coerceAtLeast(minHalf)
                         canvas.drawRoundRect(
-                            left,
+                            x - halfW,
                             cy - half,
-                            left + barWidthPx,
+                            x + halfW,
                             cy + half,
-                            barWidthPx,
-                            barWidthPx,
+                            halfW,
+                            halfW,
                             barPaint,
                         )
                     }
                 }
                 tMs += sampleMs
             }
-            drawFlags(canvas, cx, scrollX, height)
+            drawFlags(canvas, cx, cy, width, scrollX)
         }
-        val tickWidth = (width * CURSOR_WIDTH).coerceAtLeast(density)
-        val tickHalf = width * CURSOR_HALF
-        val left = cx - tickWidth * 0.5f
-        canvas.drawRect(left, cy - tickHalf, left + tickWidth, cy + tickHalf, tickPaint)
+        drawTracker(canvas, cx, cy, width)
+    }
+
+    private fun idleDotHalfW(width: Float): Float =
+        (width * IDLE_TICK_WIDTH).coerceAtLeast(density * 0.8f) * 0.5f
+
+    private fun idleDotHalfH(width: Float): Float = width * IDLE_TICK_HALF
+
+    private fun trackerWidth(width: Float): Float =
+        (width * CURSOR_WIDTH).coerceAtLeast(density)
+
+    private fun trackerHalfH(width: Float): Float = width * CURSOR_HALF
+
+    private fun drawIdleDot(canvas: Canvas, x: Float, cy: Float, width: Float) {
+        val halfW = idleDotHalfW(width)
+        val halfH = idleDotHalfH(width)
+        canvas.drawRect(x - halfW, cy - halfH, x + halfW, cy + halfH, idleTickPaint)
+    }
+
+    private fun drawTracker(canvas: Canvas, x: Float, cy: Float, width: Float) {
+        val tickWidth = trackerWidth(width)
+        val tickHalf = trackerHalfH(width)
+        canvas.drawRect(x - tickWidth * 0.5f, cy - tickHalf, x + tickWidth * 0.5f, cy + tickHalf, tickPaint)
     }
 
     private fun drawIdleTicks(canvas: Canvas, cx: Float, cy: Float, width: Float) {
         val pitch = width * IDLE_PITCH
-        val halfW = (width * IDLE_TICK_WIDTH).coerceAtLeast(density * 0.8f) * 0.5f
-        val halfH = width * IDLE_TICK_HALF
         val reach = width * (0.5f - IDLE_INSET)
         var offset = pitch
         while (offset <= reach) {
-            canvas.drawRect(cx - offset - halfW, cy - halfH, cx - offset + halfW, cy + halfH, idleTickPaint)
-            canvas.drawRect(cx + offset - halfW, cy - halfH, cx + offset + halfW, cy + halfH, idleTickPaint)
+            drawIdleDot(canvas, cx - offset, cy, width)
+            drawIdleDot(canvas, cx + offset, cy, width)
             offset += pitch
         }
     }
 
-    private fun drawFlags(canvas: Canvas, centerX: Float, scrollX: Float, height: Float) {
+    private fun drawFlags(canvas: Canvas, centerX: Float, cy: Float, width: Float, scrollX: Float) {
         if (markTimes.isEmpty()) return
-        val flag = flagDrawable
-        val flagH = (10f * density).toInt()
-        val flagW = (10f * density).toInt()
-        val rx = barWidthPx
+        val reach = trackerWidth(width) * 4f
         for (t in markTimes) {
             val x = centerX + (t * pxPerMs - scrollX)
-            if (x < -rx * 4f || x > width + rx * 4f) continue
-            canvas.drawRoundRect(x, 0f, x + rx, height, rx, rx, markLinePaint)
-            if (flag != null) {
-                val top = (1.5f * density).toInt()
-                val left = (x - flagW * 0.15f).toInt()
-                flag.setBounds(left, top, left + flagW, top + flagH)
-                flag.draw(canvas)
-            }
+            if (x < -reach || x > this.width + reach) continue
+            drawTracker(canvas, x, cy, width)
         }
     }
 

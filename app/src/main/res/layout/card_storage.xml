@@ -9,7 +9,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="14dp">
 
         <TextView
             android:id="@+id/storageTitle"
@@ -38,6 +39,7 @@
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
+                android:alpha="0.3"
                 android:src="@drawable/ic_storage_watermark" />
 
             <gd.app.hiboard.ui.StorageUsageRing
@@ -76,4 +78,12 @@
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
+
+    <gd.app.hiboard.ui.StorageRocketOverlay
+        android:id="@+id/storageRocket"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone" />
 </FrameLayout>

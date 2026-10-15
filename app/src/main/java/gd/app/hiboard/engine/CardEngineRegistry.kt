@@ -32,6 +32,7 @@ class CardEngineRegistry(context: Context) {
     private val weather = WeatherStore.get(appContext)
     private val flashlight = FlashlightController(appContext)
     private val storage = StorageReader(appContext)
+    private val battery = BatteryReader(appContext)
     private val recorder = RecorderClient(appContext)
     private val contacts = ContactsRepository(appContext)
     private val engines: Map<CardEngineId, CardEngine> = mapOf(
@@ -68,6 +69,18 @@ class CardEngineRegistry(context: Context) {
                 // Free RAM moves every read; keep only the 0.1 GB the card shows so it compares equal.
                 storageUsedBytes = (status.usedBytes + STORAGE_STEP_BYTES / 2) / STORAGE_STEP_BYTES * STORAGE_STEP_BYTES,
                 storageTotalBytes = status.totalBytes,
+            )
+        },
+        CardEngineId.Battery to CardEngine {
+            val snap = battery.snapshot()
+            CardContent(
+                batteryPercent = snap.levelPercent,
+                batteryCharging = snap.charging,
+                batteryPlugged = snap.plugged,
+                batteryRemainingMs = snap.remainingMs,
+                batteryUntilFullMs = snap.untilFullMs,
+                batterySamples = snap.samples,
+                batteryReady = true,
             )
         },
         CardEngineId.Recorder to CardEngine {
@@ -156,6 +169,7 @@ class CardEngineRegistry(context: Context) {
     val flashlightOn = flashlight.on
     val flashlightAvailable: Boolean
         get() = flashlight.available
+    val batterySnapshots = battery.snapshots
     val recorderStatus = recorder.status
     val notesRevisions = notes.revisions
     val noteFolderSelections = noteFolderStore.selections
@@ -166,6 +180,8 @@ class CardEngineRegistry(context: Context) {
     fun toggleFlashlight(): FlashlightToggle = flashlight.toggle()
 
     fun openSystemManager(): Intent? = storage.openSystemManager()
+
+    fun openBattery(): Intent? = battery.openBattery()
 
     fun sendRecorder(command: RecorderCommand): RecorderSendResult = recorder.send(command)
 
@@ -212,6 +228,13 @@ class CardEngineRegistry(context: Context) {
         flashlightAvailable = b.flashlightAvailable || a.flashlightAvailable,
         storageUsedBytes = if (b.storageTotalBytes > 0L) b.storageUsedBytes else a.storageUsedBytes,
         storageTotalBytes = if (b.storageTotalBytes > 0L) b.storageTotalBytes else a.storageTotalBytes,
+        batteryPercent = if (b.batteryReady) b.batteryPercent else a.batteryPercent,
+        batteryCharging = if (b.batteryReady) b.batteryCharging else a.batteryCharging,
+        batteryPlugged = if (b.batteryReady) b.batteryPlugged else a.batteryPlugged,
+        batteryRemainingMs = if (b.batteryReady) b.batteryRemainingMs else a.batteryRemainingMs,
+        batteryUntilFullMs = if (b.batteryReady) b.batteryUntilFullMs else a.batteryUntilFullMs,
+        batterySamples = if (b.batteryReady) b.batterySamples else a.batterySamples,
+        batteryReady = a.batteryReady || b.batteryReady,
         recorderState = if (b.recorderBound) b.recorderState else a.recorderState,
         recorderElapsedMs = if (b.recorderBound) b.recorderElapsedMs else a.recorderElapsedMs,
         recorderBound = a.recorderBound || b.recorderBound,

@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import gd.app.hiboard.host.HostEvent
+import gd.app.hiboard.ui.BoardBackdrop
 import gd.app.hiboard.ui.HiboardView
 import gd.app.hiboard.ui.HiboardViewModel
 import kotlinx.coroutines.awaitCancellation
@@ -31,6 +32,7 @@ class HiboardActivity : AppCompatActivity() {
             finish()
             return
         }
+        BoardBackdrop.applyCachedToWindow(this)
         val view = HiboardView(this)
         view.bind(viewModel, this)
         setContentView(view)
@@ -89,7 +91,7 @@ class HiboardActivity : AppCompatActivity() {
         viewModel.applyDeeplink(
             cardId = card ?: host.takeIf {
                 it in setOf(
-                    "weather", "weathersquare", "notes", "noteswide", "noteslarge", "recent", "flashlight", "storage", "recorder",
+                    "weather", "weathersquare", "notes", "noteswide", "noteslarge", "recent", "flashlight", "storage", "battery", "batterysmall", "batterylevel", "batterylevelwide", "recorder",
                     "contacts", "calendar", "clock", "weatherclock", "weatherclocksquare", "localtime", "romanclock", "weatherdial", "music",
                 )
             },

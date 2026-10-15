@@ -47,8 +47,12 @@ import gd.app.hiboard.R
 import gd.app.hiboard.overlay.CouiOverscroll
 import gd.app.hiboard.catalog.DefaultCatalog
 import gd.app.hiboard.catalog.WidgetStoreCategory
+import gd.app.hiboard.catalog.description
+import gd.app.hiboard.catalog.groupTitle
 import gd.app.hiboard.catalog.listCategory
+import gd.app.hiboard.catalog.name
 import gd.app.hiboard.catalog.storeAppIcon
+import gd.app.hiboard.catalog.storeRowIconRes
 import gd.app.hiboard.catalog.widgetStoreCategories
 import gd.app.hiboard.catalog.widgetStoreSections
 import gd.app.hiboard.catalog.widgetStoreTabIndex
@@ -82,6 +86,7 @@ class HiboardView @JvmOverloads constructor(
     private var lastContent: CardContent? = null
     private var lastNoteFolders: Map<String, String> = emptyMap()
     private var lastFlashKey: Any? = null
+    private var lastBatteryKey: Any? = null
     private var lastRecorderKey: RecorderUiState? = null
     private var lastStoreKey: Any? = null
     private var lastStoreSearchOpen = false
@@ -90,7 +95,8 @@ class HiboardView @JvmOverloads constructor(
     private var openedDetailId: String? = null
     private var storeDetailPick: String? = null
     private var detailMemberKey: String? = null
-    private var storePeekAnimator: ValueAnimator? = null
+    private var storeTopInset = 0
+    private var storeDetailInsetAnimator: ValueAnimator? = null
     private var storeSheetDragging = false
     private var storeSheetDragDownY = 0f
     private var storeSheetDragStartTy = 0f
@@ -100,6 +106,8 @@ class HiboardView @JvmOverloads constructor(
     /** In-hierarchy menu for the launcher overlay (PopupWindow cannot present on that panel). */
     private var cardMenuLayer: View? = null
     private var viewModel: HiboardViewModel? = null
+    private var backdrop: BoardBackdrop? = null
+    private var frostFade: FrostFadeDrawable? = null
 
     /** Invoked when the user wants to leave Hiboard for the launcher home (back). */
     var onNavigateHome: (() -> Unit)? = null
@@ -138,23 +146,39 @@ class HiboardView @JvmOverloads constructor(
 
     init {
         binding.searchBar.setUseResponsivePadding(false)
-        val chrome = context.getColor(R.color.hiboard_chrome)
+        val barInk = context.getColor(R.color.hiboard_bar_ink)
+        val barFill = context.getColor(R.color.hiboard_bar_fill)
         binding.searchBar.searchEditText.hint = context.getString(R.string.header_search_hint)
-        binding.searchBar.searchEditText.setHintTextColor(context.getColor(R.color.hiboard_chrome_hint))
-        binding.searchBar.searchEditText.setTextColor(chrome)
+        binding.searchBar.searchEditText.setHintTextColor(context.getColor(R.color.hiboard_bar_hint))
+        binding.searchBar.searchEditText.setTextColor(barInk)
         binding.searchBar.setSearchViewIcon(context.getDrawable(R.drawable.ic_search_chrome))
-        binding.searchBar.setSearchBackgroundColor(
-            ColorStateList.valueOf(context.getColor(R.color.hiboard_chrome_fill)),
-        )
-        binding.addButton.setTextColor(chrome)
-        binding.addButton.setDrawableColor(context.getColor(R.color.hiboard_chrome_fill))
+        binding.searchBar.setSearchBackgroundColor(ColorStateList.valueOf(barFill))
+        binding.addButton.setTextColor(barInk)
+        binding.addButton.setDrawableColor(barFill)
+        frostFade = FrostFadeDrawable(binding.boardHeader).also { binding.boardHeader.background = it }
+        backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
-            binding.boardScroll.updatePadding(bottom = bars.bottom)
-            binding.storeListPane.updatePadding(bottom = bars.bottom)
-            binding.storeDetailPane.updatePadding(bottom = bars.bottom)
+            val headerBottom = (12 * resources.displayMetrics.density).toInt()
+            binding.root.updatePadding(left = bars.left, top = 0, right = bars.right)
+            binding.boardScroll.updatePadding(top = bars.top)
+            binding.boardHeader.updatePadding(bottom = bars.bottom + headerBottom)
+            binding.boardScroll.clipToPadding = false
+            binding.boardHeader.post { extendBoardUnderHeader() }
+            storeTopInset = bars.top
+            binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = storeTopMargin(storeDetailOpen)
+            }
+            binding.storeListPane.updatePadding(top = 0, bottom = bars.bottom)
+            binding.storeDetailPane.updatePadding(top = 0, bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
+        }
+    }
+
+    private fun extendBoardUnderHeader() {
+        val cover = binding.boardHeader.height
+        if (cover > 0 && binding.boardScroll.paddingBottom != cover) {
+            binding.boardScroll.updatePadding(bottom = cover)
         }
     }
 
@@ -172,7 +196,7 @@ class HiboardView @JvmOverloads constructor(
             onOpenNote = { launchIntent(this, viewModel.openNote(it)) },
             onCreateNote = { launchIntent(this, viewModel.createNote()) },
             onToggleFlashlight = { toggleFlashlight(viewModel) },
-            onOpenStorage = { launchIntent(this, viewModel.openSystemManager()) },
+            onOpenBattery = { launchIntent(this, viewModel.openBattery()) },
             onRecorderCommand = { command -> sendRecorder(viewModel, command) },
             recorderLive = viewModel::recorderLive,
             onOpenRecorder = { launchIntent(this, viewModel.openRecorder()) },
@@ -218,6 +242,7 @@ class HiboardView @JvmOverloads constructor(
         binding.subscribedGrid.onDragEnded = {
             lastGridKey = null
             lastFlashKey = null
+            lastBatteryKey = null
             lastRecorderKey = null
             viewModel.exitEdit()
         }
@@ -367,10 +392,20 @@ class HiboardView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (frostFade == null) {
+            frostFade = FrostFadeDrawable(binding.boardHeader).also { binding.boardHeader.background = it }
+        }
+        if (backdrop == null) {
+            backdrop = BoardBackdrop(context, binding.blurBackdrop, binding.blurLayer).also { it.apply() }
+        }
         ViewCompat.requestApplyInsets(this)
     }
 
     override fun onDetachedFromWindow() {
+        frostFade?.detach()
+        frostFade = null
+        backdrop?.release()
+        backdrop = null
         setStoreNavBarContrast(false)
         dismissCardMenu()
         collectJob?.cancel()
@@ -562,9 +597,9 @@ class HiboardView @JvmOverloads constructor(
             entry.size.columns,
             entry.size.rows,
         )
-        val body = listOf(entry.description, sizeLine).filter { it.isNotBlank() }.joinToString("\n")
+        val body = listOf(entry.description(context), sizeLine).filter { it.isNotBlank() }.joinToString("\n")
         val dialog = COUIAlertDialogBuilder(context)
-            .setTitle(entry.name)
+            .setTitle(entry.name(context))
             .setMessage(body)
             .setPositiveButton(android.R.string.ok, null)
             .create()
@@ -643,6 +678,47 @@ class HiboardView @JvmOverloads constructor(
             val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
             val view = root.findViewById<View>(R.id.recorderRoot) ?: return@forEach
             binder.applyRecorder(view, state.content.recorderState, state.content.recorderElapsedMs)
+        }
+    }
+
+    private fun applyBatteryState(state: HiboardUiState) {
+        val percent = state.content.batteryPercent
+        val charging = state.content.batteryCharging
+        val plugged = state.content.batteryPlugged
+        val remainingMs = state.content.batteryRemainingMs
+        val untilFullMs = state.content.batteryUntilFullMs
+        val samples = state.content.batterySamples
+        lastBatteryKey = listOf(percent, charging, plugged, remainingMs / 60_000L, untilFullMs / 60_000L, samples)
+        state.board.subscribed.forEach { card ->
+            if (card.engine != CardEngineId.Battery) return@forEach
+            val root = binding.subscribedGrid.findViewWithTag<View>(card.instanceId) ?: return@forEach
+            val percentView = root.findViewById<TextView>(R.id.batteryPercent) ?: return@forEach
+            val label = root.findViewById<TextView>(R.id.batteryStatus) ?: return@forEach
+            val levelBar = root.findViewById<BatteryLevelBar>(R.id.batteryLevelBar)
+            if (levelBar != null) {
+                CardBinder.applyBatteryLevelStatus(
+                    percentView = percentView,
+                    label = label,
+                    remain = root.findViewById(R.id.batteryRemain) ?: return@forEach,
+                    bar = levelBar,
+                    percent = percent,
+                    plugged = plugged,
+                    remainingMs = remainingMs,
+                    untilFullMs = untilFullMs,
+                )
+                return@forEach
+            }
+            val graph = root.findViewById<BatteryUsageGraph>(R.id.batteryGraph) ?: return@forEach
+            CardBinder.applyBatteryStatus(
+                percentView = percentView,
+                icon = root.findViewById(R.id.batteryStatusIcon),
+                label = label,
+                graph = graph,
+                percent = percent,
+                charging = charging,
+                remainingMs = remainingMs,
+                samples = samples,
+            )
         }
     }
 
@@ -737,11 +813,26 @@ class HiboardView @JvmOverloads constructor(
             state.board.subscribed.any { it.engine == CardEngineId.RecentApps }
         val dragging = binding.subscribedGrid.isDragging
         val flashKey = state.content.flashlightOn to state.content.flashlightAvailable
+        val batteryKey = listOf(
+            state.content.batteryPercent,
+            state.content.batteryCharging,
+            state.content.batteryPlugged,
+            state.content.batteryRemainingMs / 60_000L,
+            state.content.batteryUntilFullMs / 60_000L,
+            state.content.batterySamples,
+        )
         val recorderKey = state.content.recorderState
         val gridKey = listOf(state.board, state.editMode)
         val content = state.content.copy(
             flashlightOn = false,
             flashlightAvailable = false,
+            batteryPercent = 0,
+            batteryCharging = false,
+            batteryPlugged = false,
+            batteryRemainingMs = -1L,
+            batteryUntilFullMs = -1L,
+            batterySamples = emptyList(),
+            batteryReady = false,
             recorderState = RecorderUiState.Idle,
             recorderElapsedMs = 0L,
         )
@@ -750,6 +841,7 @@ class HiboardView @JvmOverloads constructor(
             lastGridKey = gridKey
             lastContent = content
             lastFlashKey = flashKey
+            lastBatteryKey = batteryKey
             lastRecorderKey = recorderKey
             lastNoteFolders = state.noteFolderSelections
             binding.subscribedGrid.setCards(state.board.subscribed) { card ->
@@ -784,6 +876,10 @@ class HiboardView @JvmOverloads constructor(
                 lastFlashKey = flashKey
                 applyFlashlightArt(state)
             }
+            if (batteryKey != lastBatteryKey) {
+                lastBatteryKey = batteryKey
+                applyBatteryState(state)
+            }
             if (recorderKey != lastRecorderKey) {
                 lastRecorderKey = recorderKey
                 applyRecorderState(state, binder)
@@ -810,6 +906,7 @@ class HiboardView @JvmOverloads constructor(
         CardEngineId.RecentApps -> content.recentApps
         CardEngineId.Storage -> content.storageUsedBytes to content.storageTotalBytes
         CardEngineId.Contacts -> Triple(content.contacts, content.contactsPermitted, content.contactsReady)
+        CardEngineId.Battery,
         CardEngineId.Flashlight,
         CardEngineId.Recorder,
         CardEngineId.Calendar,
@@ -899,7 +996,7 @@ class HiboardView @JvmOverloads constructor(
             draggingClose = false
         }
         sheet.animate().cancel()
-        storePeekAnimator?.cancel()
+        storeDetailInsetAnimator?.cancel()
         val distance = sheet.height.takeIf { it > 0 }?.toFloat()
             ?: height.takeIf { it > 0 }?.toFloat()
             ?: resources.displayMetrics.heightPixels.toFloat()
@@ -1076,10 +1173,10 @@ class HiboardView @JvmOverloads constructor(
     ) {
         list.removeAllViews()
         val density = resources.displayMetrics.density
-        list.setPadding(0, 0, (36 * density).toInt(), (24 * density).toInt())
+        list.setPadding(0, 0, (36 * density).toInt(), (72 * density).toInt())
         indexBar.isVisible = true
         val inflater = LayoutInflater.from(context)
-        val sections = widgetStoreCategories(catalog, query, groupId)
+        val sections = widgetStoreCategories(resources, catalog, query, groupId)
         bindStoreIndex(indexBar, list, scroll, sections.map { it.letter }.toSet())
         if (sections.isEmpty()) {
             val empty = TextView(context).apply {
@@ -1159,7 +1256,9 @@ class HiboardView @JvmOverloads constructor(
             binding.storeDetailIndicator.isVisible = false
             return
         }
-        val members = state.catalog.filter { !it.locked && it.listCategory() == focus.listCategory() }
+        val members = state.catalog.filter {
+            !it.locked && it.listCategory(context) == focus.listCategory(context)
+        }
         if (members.isEmpty()) return
         if (state.storeDetailId != openedDetailId) {
             openedDetailId = state.storeDetailId
@@ -1183,9 +1282,9 @@ class HiboardView @JvmOverloads constructor(
 
     private fun applyDetailSelection(entry: CardCatalogEntry, viewModel: HiboardViewModel) {
         val added = viewModel.state.value.board.subscribed.any { it.catalogId == entry.id }
-        binding.storeDetailTitle.text = entry.groupTitle
-        binding.storeDetailHeadline.text = entry.name
-        binding.storeDetailDesc.text = entry.description
+        binding.storeDetailTitle.text = entry.groupTitle(context)
+        binding.storeDetailHeadline.text = entry.name(context)
+        binding.storeDetailDesc.text = entry.description(context)
         binding.storeDetailAdd.text = context.getString(
             if (added) R.string.store_added else R.string.store_add_to_board,
         )
@@ -1254,37 +1353,43 @@ class HiboardView @JvmOverloads constructor(
                 }
                 .start()
         }
-        animateStorePeek(showDetail)
+        animateStoreDetailInset(showDetail)
     }
 
-    private fun animateStorePeek(detail: Boolean) {
-        val sheet = binding.storeRoot
-        val target = if (detail) storeDetailPeekMargin() else 0
-        val from = (sheet.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin ?: 0
-        storePeekAnimator?.cancel()
+    private fun animateStoreDetailInset(detail: Boolean) {
+        val target = storeTopMargin(detail)
+        val from = (binding.storeRoot.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin
+            ?: storeTopInset
+        storeDetailInsetAnimator?.cancel()
         if (from == target) {
-            applyStorePeekMargin(target)
+            applyStoreTopMargin(target)
             return
         }
-        storePeekAnimator = ValueAnimator.ofInt(from, target).apply {
-            duration = STORE_PEEK_MS
+        storeDetailInsetAnimator = ValueAnimator.ofInt(from, target).apply {
+            duration = STORE_DETAIL_INSET_MS
             interpolator = COUIMoveEaseInterpolator()
             addUpdateListener { animator ->
-                applyStorePeekMargin(animator.animatedValue as Int)
+                applyStoreTopMargin(animator.animatedValue as Int)
             }
             start()
         }
     }
 
-    private fun applyStorePeekMargin(margin: Int) {
+    private fun storeTopMargin(detail: Boolean): Int {
+        val detailInset = if (detail) (80 * resources.displayMetrics.density).toInt() else 0
+        return storeTopInset + detailInset
+    }
+
+    private fun applyStoreTopMargin(margin: Int) {
         binding.storeRoot.updateLayoutParams<ViewGroup.MarginLayoutParams> {
             if (topMargin != margin) topMargin = margin
+            if (bottomMargin != 0) bottomMargin = 0
         }
     }
 
     private fun resetStorePanes(showDetail: Boolean) {
-        storePeekAnimator?.cancel()
-        storePeekAnimator = null
+        storeDetailInsetAnimator?.cancel()
+        storeDetailInsetAnimator = null
         binding.storeListPane.animate().cancel()
         binding.storeDetailPane.animate().cancel()
         binding.storeListPane.translationY = 0f
@@ -1293,13 +1398,7 @@ class HiboardView @JvmOverloads constructor(
         binding.storeDetailPane.alpha = 1f
         binding.storeListPane.isVisible = !showDetail
         binding.storeDetailPane.isVisible = showDetail
-        applyStorePeekMargin(if (showDetail) storeDetailPeekMargin() else 0)
-    }
-
-    private fun storeDetailPeekMargin(): Int {
-        val density = resources.displayMetrics.density
-        val peek = binding.boardHeader.bottom.takeIf { it > 0 } ?: (96 * density).toInt()
-        return peek + (20 * density).toInt()
+        applyStoreTopMargin(storeTopMargin(showDetail))
     }
 
     private fun fillStoreDetailPreview(entry: CardCatalogEntry) {
@@ -1403,9 +1502,9 @@ class HiboardView @JvmOverloads constructor(
         list.clipToPadding = false
         list.removeAllViews()
         val padH = (16 * density).toInt()
-        list.setPadding(padH, (12 * density).toInt(), padH, (24 * density).toInt())
+        list.setPadding(padH, (12 * density).toInt(), padH, (72 * density).toInt())
         // Wide notes variants stay reachable from the All notes detail pager.
-        val entries = widgetStoreSections(catalog, query = "", groupId).flatMap { it.entries }
+        val entries = widgetStoreSections(resources, catalog, query = "", groupId).flatMap { it.entries }
             .filterNot { it.engine == CardEngineId.Notes && it.size.columns >= 4 }
             .sortedBy { entry -> STORE_GALLERY_ORDER.indexOf(entry.id).let { if (it < 0) Int.MAX_VALUE else it } }
         if (entries.isEmpty()) {
@@ -1494,7 +1593,7 @@ class HiboardView @JvmOverloads constructor(
         val (cardW, cardH) = storePreviewDims(entry, boardWidth, density)
         val block = LayoutInflater.from(context).inflate(R.layout.item_store_widget, parent, false)
         val openDetail = View.OnClickListener { viewModel.openStoreDetail(entry.id) }
-        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name
+        block.findViewById<TextView>(R.id.widgetPreviewName).text = entry.name(context)
         val host = block.findViewById<FrameLayout>(R.id.widgetPreview)
         host.addView(createStoreWidgetPreview(host, entry, cardW, cardH))
         host.setOnClickListener(openDetail)
@@ -1540,6 +1639,16 @@ class HiboardView @JvmOverloads constructor(
     }
 
     private fun bindStoreRowIcon(icon: ImageView, engine: CardEngineId) {
+        val bundled = storeRowIconRes(engine)
+        if (bundled != null) {
+            icon.setImageResource(bundled)
+            icon.imageTintList = null
+            icon.background = null
+            icon.backgroundTintList = null
+            icon.setPadding(0, 0, 0, 0)
+            icon.scaleType = ImageView.ScaleType.FIT_CENTER
+            return
+        }
         val appIcon = storeAppIcon(context, engine)
         if (appIcon != null) {
             icon.setImageDrawable(appIcon)
@@ -1565,6 +1674,7 @@ class HiboardView @JvmOverloads constructor(
             CardEngineId.Weather -> Triple(R.drawable.ic_weather_sunny, null, 0xFFD6ECFF.toInt())
             CardEngineId.Notes -> Triple(R.drawable.ic_notes_mark, null, context.getColor(R.color.hiboard_notes_card))
             CardEngineId.Storage -> Triple(R.drawable.ic_storage_clean, context.getColor(R.color.hiboard_storage_title), Color.WHITE)
+            CardEngineId.Battery -> Triple(R.drawable.ic_battery_charge, context.getColor(R.color.hiboard_battery_charging), Color.WHITE)
             CardEngineId.Recorder -> Triple(R.drawable.ic_recorder_record, 0xFFE32E27.toInt(), 0xFFFFE8E6.toInt())
             CardEngineId.Flashlight -> Triple(
                 R.drawable.ic_flashlight,
@@ -1684,7 +1794,7 @@ class HiboardView @JvmOverloads constructor(
         const val STORE_SLIDE_OUT_MS = 280L
         const val STORE_DISMISS_FRACTION = 0.18f
         const val STORE_DISMISS_VELOCITY = 900f
-        const val STORE_PEEK_MS = 420L
+        const val STORE_DETAIL_INSET_MS = 420L
         const val STORE_FADE_MS = 320L
         const val STORE_FADE_DELAY_MS = 40L
         val INDEX_LETTERS = (('A'..'Z') + '#').map { it.toString() }

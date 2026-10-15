@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import gd.app.hiboard.HiboardApp
 import gd.app.hiboard.catalog.DefaultCatalog
+import gd.app.hiboard.catalog.name
 import gd.app.hiboard.data.BoardRepository
 import gd.app.hiboard.engine.ALL_NOTES_FOLDER
 import gd.app.hiboard.engine.CardEngineRegistry
@@ -83,6 +84,23 @@ class HiboardViewModel(
             }
         }
         viewModelScope.launch {
+            engines.batterySnapshots.collect { snap ->
+                _state.update {
+                    it.copy(
+                        content = it.content.copy(
+                            batteryPercent = snap.levelPercent,
+                            batteryCharging = snap.charging,
+                            batteryPlugged = snap.plugged,
+                            batteryRemainingMs = snap.remainingMs,
+                            batteryUntilFullMs = snap.untilFullMs,
+                            batterySamples = snap.samples,
+                            batteryReady = true,
+                        ),
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
             engines.notesRevisions.collect { refreshContent(CardAction.Bind) }
         }
         viewModelScope.launch {
@@ -137,8 +155,8 @@ class HiboardViewModel(
 
     /**
      * Re-queries card data on [loader]; contacts, notes and usage stats can take hundreds of
-     * milliseconds. Flashlight and recorder fields are driven by their own flows, so keep the
-     * current values instead of a snapshot that may be stale by the time the query returns.
+     * milliseconds. Flashlight, battery and recorder fields are driven by their own flows, so keep
+     * the current values instead of a snapshot that may be stale by the time the query returns.
      */
     private fun refreshContent(action: CardAction, syncRecents: Boolean = false) {
         viewModelScope.launch {
@@ -151,6 +169,13 @@ class HiboardViewModel(
                     content = fresh.copy(
                         flashlightOn = it.content.flashlightOn,
                         flashlightAvailable = it.content.flashlightAvailable,
+                        batteryPercent = it.content.batteryPercent,
+                        batteryCharging = it.content.batteryCharging,
+                        batteryPlugged = it.content.batteryPlugged,
+                        batteryRemainingMs = it.content.batteryRemainingMs,
+                        batteryUntilFullMs = it.content.batteryUntilFullMs,
+                        batterySamples = it.content.batterySamples,
+                        batteryReady = it.content.batteryReady,
                         recorderState = it.content.recorderState,
                         recorderElapsedMs = it.content.recorderElapsedMs,
                         recorderBound = it.content.recorderBound,
@@ -244,7 +269,7 @@ class HiboardViewModel(
                 val incoming = CardInstance(
                     instanceId = UUID.nameUUIDFromBytes("${CardArea.Subscribe}:$catalogId".toByteArray()).toString(),
                     catalogId = entry.id,
-                    displayName = entry.name,
+                    displayName = entry.name(HiboardApp.instance),
                     size = entry.size,
                     area = CardArea.Subscribe,
                     engine = entry.engine,
@@ -366,6 +391,8 @@ class HiboardViewModel(
     }
 
     fun openSystemManager() = engines.openSystemManager()
+
+    fun openBattery() = engines.openBattery()
 
     fun sendRecorder(command: RecorderCommand): RecorderSendResult = engines.sendRecorder(command)
 

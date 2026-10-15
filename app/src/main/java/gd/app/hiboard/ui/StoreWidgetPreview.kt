@@ -16,6 +16,9 @@ import gd.app.hiboard.engine.formatRecorderTime
 import gd.app.hiboard.engine.formatStoragePair
 import gd.app.hiboard.engine.formatStoragePercent
 import gd.app.hiboard.engine.monthPageToday
+import gd.app.hiboard.engine.BATTERY_STICK_COUNT_COMPACT
+import gd.app.hiboard.engine.densifyBatterySamples
+import gd.app.hiboard.engine.previewBatterySamples
 import gd.app.hiboard.engine.resolved
 import gd.app.hiboard.model.CardCatalogEntry
 import gd.app.hiboard.model.CardEngineId
@@ -78,6 +81,12 @@ fun createStoreWidgetPreview(parent: ViewGroup, entry: CardCatalogEntry, width: 
             bindNotesPreview(inflater, card, body)
         }
         CardEngineId.Storage -> bindStoragePreview(inflater, card, body)
+        CardEngineId.Battery -> when {
+            entry.id == "batterylevelwide" -> bindBatteryLevelPreview(inflater, card, body, R.layout.card_battery_level_wide)
+            entry.id == "batterylevel" -> bindBatteryLevelPreview(inflater, card, body, R.layout.card_battery_level)
+            entry.size == CardSize.TwoByTwo -> bindBatterySmallPreview(inflater, card, body)
+            else -> bindBatteryPreview(inflater, card, body)
+        }
         CardEngineId.Recorder -> bindRecorderPreview(inflater, card, body)
         CardEngineId.Flashlight -> bindFlashlightPreview(inflater, card, body)
         CardEngineId.RecentApps -> Unit
@@ -126,20 +135,72 @@ private fun bindNotesPreview(inflater: LayoutInflater, card: COUICardView, body:
 }
 
 private fun bindStoragePreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
-    val density = body.resources.displayMetrics.density
     card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_storage_card))
-    card.setContentPadding(
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-        (14 * density).toInt(),
-    )
+    card.setContentPadding(0, 0, 0, 0)
     val view = inflater.inflate(R.layout.card_storage, body, true)
     view.findViewById<StorageUsageRing>(R.id.storageRing).progress = 0.21f
     view.findViewById<TextView>(R.id.storagePercent).text =
         formatStoragePercent(2_900_000_000L, 12_400_000_000L)
     view.findViewById<TextView>(R.id.storageUsage).text =
         formatStoragePair(2_900_000_000L, 12_400_000_000L)
+}
+
+private fun bindBatteryPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
+    val density = body.resources.displayMetrics.density
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_card))
+    card.setContentPadding(
+        (16 * density).toInt(),
+        (14 * density).toInt(),
+        (16 * density).toInt(),
+        (12 * density).toInt(),
+    )
+    val view = inflater.inflate(R.layout.card_battery, body, true)
+    view.findViewById<TextView>(R.id.batteryPercent).text = "63%"
+    view.findViewById<ImageView>(R.id.batteryStatusIcon).setImageResource(R.drawable.ic_battery_charge)
+    view.findViewById<TextView>(R.id.batteryStatus).setText(R.string.battery_charging)
+    view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).apply {
+        compact = false
+        samples = densifyBatterySamples(previewBatterySamples(level = 63, chargingNow = true), currentLevel = 63)
+    }
+}
+
+private fun bindBatterySmallPreview(inflater: LayoutInflater, card: COUICardView, body: LinearLayout) {
+    val density = body.resources.displayMetrics.density
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_card))
+    card.setContentPadding(
+        (14 * density).toInt(),
+        (12 * density).toInt(),
+        (14 * density).toInt(),
+        (10 * density).toInt(),
+    )
+    val view = inflater.inflate(R.layout.card_battery_small, body, true)
+    view.findViewById<TextView>(R.id.batteryPercent).text = "53%"
+    view.findViewById<TextView>(R.id.batteryStatus).text =
+        body.resources.getString(R.string.battery_should_last, body.resources.getString(R.string.battery_duration_hours, 12))
+    view.findViewById<BatteryUsageGraph>(R.id.batteryGraph).apply {
+        compact = true
+        samples = densifyBatterySamples(
+            previewBatterySamples(level = 53),
+            currentLevel = 53,
+            stickCount = BATTERY_STICK_COUNT_COMPACT,
+        )
+    }
+}
+
+private fun bindBatteryLevelPreview(
+    inflater: LayoutInflater,
+    card: COUICardView,
+    body: LinearLayout,
+    layout: Int,
+) {
+    card.setCardBackgroundColor(body.context.getColor(R.color.hiboard_battery_level_card))
+    card.setContentPadding(0, 0, 0, 0)
+    val view = inflater.inflate(layout, body, true)
+    view.findViewById<TextView>(R.id.batteryStatus).setText(R.string.battery_device_label)
+    view.findViewById<TextView>(R.id.batteryPercent).text = "80%"
+    view.findViewById<TextView>(R.id.batteryRemain).text =
+        body.resources.getString(R.string.battery_use_remaining, body.resources.getString(R.string.battery_duration_hours, 24))
+    view.findViewById<BatteryLevelBar>(R.id.batteryLevelBar).progress = 0.80f
 }
 
 private fun bindRecorderPreview(
