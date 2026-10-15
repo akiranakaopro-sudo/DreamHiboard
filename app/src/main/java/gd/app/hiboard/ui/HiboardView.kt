@@ -117,12 +117,13 @@ class HiboardView @JvmOverloads constructor(
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val headerBottom = (12 * resources.displayMetrics.density).toInt()
-            binding.root.updatePadding(left = bars.left, top = bars.top, right = bars.right)
+            binding.root.updatePadding(left = bars.left, top = 0, right = bars.right)
+            binding.boardScroll.updatePadding(top = bars.top)
             binding.boardHeader.updatePadding(bottom = bars.bottom + headerBottom)
             binding.boardScroll.clipToPadding = false
             binding.boardHeader.post { extendBoardUnderHeader() }
-            binding.storeListPane.updatePadding(bottom = bars.bottom)
-            binding.storeDetailPane.updatePadding(bottom = bars.bottom)
+            binding.storeListPane.updatePadding(top = bars.top, bottom = bars.bottom)
+            binding.storeDetailPane.updatePadding(top = bars.top, bottom = bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
     }
